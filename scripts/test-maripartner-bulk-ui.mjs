@@ -37,6 +37,7 @@ try {
     const context = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: "reduce" });
     const page = await context.newPage();
     let submittedBatch = null;
+    await page.addInitScript(() => localStorage.setItem("allona.theme", "sunset"));
     await page.route("https://cdn.jsdelivr.net/**", (route) => route.fulfill({ contentType: "application/javascript", body: "window.supabase={};" }));
     await page.route("**/js/supabase-client.js*", (route) => route.fulfill({ contentType: "application/javascript", body: "" }));
     await page.route("**/js/auth.js*", (route) => route.fulfill({
@@ -52,35 +53,42 @@ try {
       }
       return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(workspace) });
     });
-    await page.goto(`${target}?view=jobs`, { waitUntil: "networkidle" });
-    await page.waitForSelector("[data-mp-jobs-list]");
-    await page.locator('[data-mp-open="job-bulk-create"]').click();
+    await page.goto(`${target}?view=operations`, { waitUntil: "networkidle" });
+    await page.waitForSelector(".mp-quick-action-group");
+    assert.equal(await page.locator(".mp-quick-action-group > button").count(), 2);
+    await page.locator('.mp-quick-action-group [data-mp-open="job-bulk-create"]').click();
     await page.waitForSelector("[data-mp-job-bulk-form]");
 
-    const themeExpectations = {
-      ocean: { body: "rgb(2, 11, 24)", panel: "rgb(7, 29, 51)", input: "rgb(6, 25, 44)" },
-      white: { body: "rgb(237, 247, 252)", panel: "rgb(255, 255, 255)", input: "rgb(255, 255, 255)" },
-      sunset: { body: "rgb(23, 8, 18)", panel: "rgb(50, 21, 41)", input: "rgb(41, 16, 32)" },
-      turquoise: { body: "rgb(2, 23, 24)", panel: "rgb(8, 55, 54)", input: "rgb(6, 47, 48)" }
-    };
-    const renderedThemes = {};
-    for (const theme of Object.keys(themeExpectations)) {
+    assert.equal(await page.locator(".platform-control--theme").count(), 0);
+    for (const theme of ["ocean", "sunset", "turquoise"]) {
       await page.evaluate((selected) => window.Allona.platform.setTheme(selected), theme);
-      await page.waitForFunction((selected) => document.body.dataset.theme === selected && document.documentElement.dataset.theme === selected, theme);
-      renderedThemes[theme] = await page.evaluate(() => ({
-        htmlTheme: document.documentElement.dataset.theme,
-        bodyTheme: document.body.dataset.theme,
-        body: getComputedStyle(document.body).backgroundColor,
-        panel: getComputedStyle(document.querySelector(".mp-stats article")).backgroundColor,
-        input: getComputedStyle(document.querySelector('[data-mp-job-bulk-form] input')).backgroundColor
-      }));
-      assert.deepEqual(renderedThemes[theme], { htmlTheme: theme, bodyTheme: theme, ...themeExpectations[theme] });
-      if (screenshotDir && width === 1440) {
-        await page.screenshot({ path: `${screenshotDir}/maripartner-${theme}-1440.png`, fullPage: true });
-      }
+      await page.waitForFunction(() => document.body.dataset.theme === "white" && document.documentElement.dataset.theme === "white");
     }
-    assert.equal(new Set(Object.values(renderedThemes).map((theme) => `${theme.body}|${theme.panel}|${theme.input}`)).size, 4);
-    await page.evaluate(() => window.Allona.platform.setTheme("ocean"));
+    const themeLock = await page.evaluate(() => ({
+      htmlTheme: document.documentElement.dataset.theme,
+      bodyTheme: document.body.dataset.theme,
+      partnerThemeLocked: document.documentElement.dataset.partnerThemeLocked,
+      visibleThemeControls: document.querySelectorAll(".platform-control--theme, [data-theme-select], [data-theme-option]").length,
+      exposedThemes: window.Allona.platform.themes.map((theme) => theme.code),
+      preservedGlobalPreference: localStorage.getItem("allona.theme"),
+      body: getComputedStyle(document.body).backgroundColor,
+      panel: getComputedStyle(document.querySelector(".mp-stats article")).backgroundColor,
+      input: getComputedStyle(document.querySelector('[data-mp-job-bulk-form] input')).backgroundColor
+    }));
+    assert.deepEqual(themeLock, {
+      htmlTheme: "white",
+      bodyTheme: "white",
+      partnerThemeLocked: "true",
+      visibleThemeControls: 0,
+      exposedThemes: ["white"],
+      preservedGlobalPreference: "sunset",
+      body: "rgb(237, 247, 252)",
+      panel: "rgb(255, 255, 255)",
+      input: "rgb(255, 255, 255)"
+    });
+    if (screenshotDir) {
+      await page.screenshot({ path: `${screenshotDir}/maripartner-white-${width}.png`, fullPage: false });
+    }
 
     const firstGroup = page.locator("[data-mp-bulk-vessel]").first();
     await firstGroup.locator('[name="vessel_profile_id"]').selectOption(vesselId);
@@ -104,6 +112,9 @@ try {
     const layout = await page.evaluate(() => {
       const drawer = document.querySelector("[data-mp-drawer]").getBoundingClientRect();
       const form = document.querySelector("[data-mp-job-bulk-form]").getBoundingClientRect();
+      const quickActions = document.querySelector(".mp-quick-action-group").getBoundingClientRect();
+      const commonGrid = document.querySelector(".mp-bulk-common-grid");
+      const footerButtons = [...document.querySelectorAll(".mp-bulk-footer > button")].map((button) => button.getBoundingClientRect().height);
       return {
         viewport: innerWidth,
         scrollWidth: document.documentElement.scrollWidth,
@@ -111,6 +122,11 @@ try {
         drawerRight: drawer.right,
         formLeft: form.left,
         formRight: form.right,
+        drawerWidth: drawer.width,
+        quickActionsLeft: quickActions.left,
+        quickActionsRight: quickActions.right,
+        commonGridColumns: getComputedStyle(commonGrid).gridTemplateColumns.split(" ").length,
+        tallestFooterButton: Math.max(...footerButtons),
         groups: document.querySelectorAll("[data-mp-bulk-vessel]").length,
         positions: document.querySelectorAll("[data-mp-bulk-position]").length,
         summary: document.querySelector("[data-mp-bulk-summary]").textContent.trim()
@@ -119,6 +135,10 @@ try {
     assert.ok(layout.scrollWidth <= width + 1, `${width}px görünümünde yatay taşma var`);
     assert.ok(layout.drawerLeft >= -1 && layout.drawerRight <= width + 1, `${width}px çekmece görünüm alanından taşıyor`);
     assert.ok(layout.formLeft >= -1 && layout.formRight <= width + 1, `${width}px toplu ilan formu taşıyor`);
+    assert.ok(layout.quickActionsLeft >= -1 && layout.quickActionsRight <= width + 1, `${width}px ilan buton grubu taşıyor`);
+    assert.ok(layout.drawerWidth <= (width <= 720 ? width : 980) + 2, `${width}px toplu ilan çekmecesi gereğinden geniş`);
+    assert.equal(layout.commonGridColumns, width <= 390 ? 1 : 3);
+    assert.ok(layout.tallestFooterButton <= 48, `${width}px toplu ilan işlem butonları gereğinden yüksek`);
     assert.equal(layout.groups, 1);
     assert.equal(layout.positions, 2);
     assert.match(layout.summary, /2 bağımsız ilan · toplam 3 açık pozisyon/);
@@ -129,7 +149,7 @@ try {
     assert.deepEqual(submittedBatch.jobs.map((job) => job.openings_count), [2, 1]);
     assert.equal(new Set(submittedBatch.jobs.map((job) => job.client_listing_id)).size, 2);
     assert.ok(submittedBatch.jobs.every((job) => job.vessel_profile_id === vesselId));
-    process.stdout.write(`MariPartner toplu ilan ve tema ${width}px: ${JSON.stringify({ layout, renderedThemes })}\n`);
+    process.stdout.write(`MariPartner toplu ilan ve açık tema kilidi ${width}px: ${JSON.stringify({ layout, themeLock })}\n`);
     await context.close();
   }
 } finally {

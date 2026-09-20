@@ -16,6 +16,9 @@ const personalLockMigrationUrl = new URL("../../../supabase/migrations/202609161
 const cvFormUrl = new URL("../../../js/maritime-cv-form.js", import.meta.url);
 const cvAccountUrl = new URL("../../../js/maritime-cv-account.js", import.meta.url);
 const cvPageUrl = new URL("../../../pages/ecosystem/maritime-cv.html", import.meta.url);
+const cvDraftUrl = new URL("../../../js/maritime-cv-draft.js", import.meta.url);
+const cvControlsUrl = new URL("../../../js/maritime-cv-controls.js", import.meta.url);
+const cvDraftMigrationUrl = new URL("../../../supabase/migrations/20260920234500_persist_maritime_cv_drafts.sql", import.meta.url);
 
 test("smart account writes remain customer-only, reviewable, and separated from final submission", async () => {
   const [migration, firewall] = await Promise.all([readFile(migrationUrl, "utf8"), readFile(firewallMigrationUrl, "utf8")]);
@@ -125,6 +128,68 @@ test("Maritime CV locks personal fields and clear preserves identity after first
   assert.match(page, /data-cv-identity-lock-notice/);
   assert.match(page, /data-cv-identity-support-dialog/);
   assert.match(page, /js\/cv-access\.js/);
+});
+
+test("Maritime CV drafts persist until explicit clear and expose matching bottom actions", async () => {
+  const [draftSource, form, account, controls, page] = await Promise.all([
+    readFile(cvDraftUrl, "utf8"),
+    readFile(cvFormUrl, "utf8"),
+    readFile(cvAccountUrl, "utf8"),
+    readFile(cvControlsUrl, "utf8"),
+    readFile(cvPageUrl, "utf8")
+  ]);
+  const makeStorage = () => {
+    const values = new Map();
+    return {
+      getItem: (key) => values.has(key) ? values.get(key) : null,
+      setItem: (key, value) => values.set(key, String(value)),
+      removeItem: (key) => values.delete(key),
+      clear: () => values.clear()
+    };
+  };
+  const localStorage = makeStorage();
+  const sessionStorage = makeStorage();
+  const browser = { localStorage, sessionStorage };
+  vm.runInNewContext(draftSource, { window: browser, Date, JSON, Set, Math });
+  assert.equal(browser.AllonaMaritimeCvDraft.write({ fields: { firstName: "Deniz" } }), true);
+  sessionStorage.clear();
+  assert.equal(browser.AllonaMaritimeCvDraft.read().fields.firstName, "Deniz");
+  browser.AllonaMaritimeCvDraft.clear();
+  assert.equal(browser.AllonaMaritimeCvDraft.read(), null);
+  assert.match(draftSource, /window\.localStorage\.setItem\(storageKey/);
+  assert.match(draftSource, /maxAgeMs: null/);
+  assert.match(form, /validateMaritimeCV\(\{ announce:false \}\)/);
+  assert.match(form, /finalize:readyForGlobalCv/);
+  assert.match(account, /\/v1\/maritime\/cv-profile\/draft/);
+  assert.match(account, /window\.AllonaMaritimeCvDraft\?\.write/);
+  assert.equal((page.match(/data-cv-save/g) || []).length, 2);
+  assert.equal((page.match(/data-cv-pdf/g) || []).length, 2);
+  assert.match(page, /data-cv-back-to-top/);
+  assert.match(controls, /querySelectorAll\("\[data-cv-save\]"\)/);
+  assert.match(controls, /querySelectorAll\("\[data-cv-pdf\]"\)/);
+  assert.match(controls, /prefers-reduced-motion: reduce/);
+});
+
+test("Maritime CV draft persistence is server-side, identity-safe, and Global CV ready", async () => {
+  const [route, migration] = await Promise.all([
+    readFile(routeUrl, "utf8"),
+    readFile(cvDraftMigrationUrl, "utf8")
+  ]);
+  assert.match(route, /app\.put\("\/v1\/maritime\/cv-profile\/draft"/);
+  assert.match(route, /manualCvDraftRequestSchema/);
+  assert.match(route, /save_maritime_cv_draft/);
+  assert.match(route, /persistedIdentityLock/);
+  assert.match(route, /global_cv_readiness: readiness/);
+  assert.match(route, /storedProfile\?\.profile_payload\?\.manual_cv/);
+  assert.match(migration, /create or replace function public\.save_maritime_cv_draft/);
+  assert.match(migration, /source_document_ids = maritime_cv_profiles\.source_document_ids/);
+  assert.match(migration, /maritime_cv_person_fingerprint/);
+  assert.match(migration, /maritime_cv_identity_snapshot_hash/);
+  assert.match(migration, /\{contact,permanent_address\}/);
+  assert.match(migration, /\{contact,nearest_airport\}/);
+  assert.match(migration, /MARITIME_IDENTITY_ALREADY_REGISTERED/);
+  assert.match(migration, /revoke all on function public\.save_maritime_cv_draft[^;]+from public, anon, authenticated/);
+  assert.match(migration, /grant execute on function public\.save_maritime_cv_draft[^;]+to service_role/);
 });
 
 test("Maritime CV personal lock upgrades existing identities without weakening duplicate-person protection", async () => {

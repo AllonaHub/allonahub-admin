@@ -1,18 +1,22 @@
 (function () {
   "use strict";
 
-  const storageKey = "allonahub.maritime.cvDraft.v3";
+  const storageKey = "allonahub.maritime.cvDraft.v4";
+  const sessionStorageKey = "allonahub.maritime.cvDraft.v3";
   const legacyStorageKey = "allonahub_maritime_cv_v2";
-  const version = 3;
+  const version = 4;
   const moduleKey = "maritime";
-  const maxAgeMs = 2 * 60 * 60 * 1000;
   const maxSerializedLength = 4 * 1024 * 1024;
   const maxPhotoBytes = 12 * 1024 * 1024;
   const maxPhotoDataUrlLength = Math.ceil(maxPhotoBytes * 4 / 3) + 128;
   const photoTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 
-  function removeSessionDraft() {
+  function removeStoredDrafts() {
     try {
+      window.localStorage.removeItem(storageKey);
+    } catch (error) {}
+    try {
+      window.sessionStorage.removeItem(sessionStorageKey);
       window.sessionStorage.removeItem(storageKey);
     } catch (error) {}
   }
@@ -37,14 +41,7 @@
     if (!envelope || envelope.version !== version || envelope.module_key !== moduleKey) return false;
     if (!envelope.data || typeof envelope.data !== "object" || Array.isArray(envelope.data)) return false;
     const updatedAt = Date.parse(String(envelope.updated_at || ""));
-    const expiresAt = Date.parse(String(envelope.expires_at || ""));
-    const age = Date.now() - updatedAt;
-    return Number.isFinite(updatedAt)
-      && Number.isFinite(expiresAt)
-      && age >= -5 * 60 * 1000
-      && age <= maxAgeMs
-      && expiresAt > Date.now()
-      && expiresAt <= updatedAt + maxAgeMs + 1000;
+    return Number.isFinite(updatedAt) && updatedAt <= Date.now() + 5 * 60 * 1000;
   }
 
   function write(data) {
@@ -54,32 +51,47 @@
       version,
       module_key: moduleKey,
       updated_at: updatedAt.toISOString(),
-      expires_at: new Date(updatedAt.getTime() + maxAgeMs).toISOString(),
       data
     };
 
     try {
       const serialized = JSON.stringify(envelope);
       if (serialized.length > maxSerializedLength) return false;
-      window.sessionStorage.setItem(storageKey, serialized);
+      window.localStorage.setItem(storageKey, serialized);
       return true;
     } catch (error) {
       return false;
     }
   }
 
-  function readSessionDraft() {
+  function readPersistentDraft() {
     let envelope = null;
     try {
-      envelope = parseObject(window.sessionStorage.getItem(storageKey));
+      envelope = parseObject(window.localStorage.getItem(storageKey));
     } catch (error) {
       return null;
     }
     if (!validEnvelope(envelope)) {
-      removeSessionDraft();
+      try { window.localStorage.removeItem(storageKey); } catch (error) {}
       return null;
     }
     return envelope.data;
+  }
+
+  function migrateSessionDraft() {
+    let envelope = null;
+    try {
+      envelope = parseObject(window.sessionStorage.getItem(sessionStorageKey));
+      window.sessionStorage.removeItem(sessionStorageKey);
+    } catch (error) {
+      return null;
+    }
+    const data = envelope && envelope.module_key === moduleKey && envelope.data && typeof envelope.data === "object"
+      ? envelope.data
+      : null;
+    if (!data) return null;
+    write(data);
+    return data;
   }
 
   function migrateLegacyDraft() {
@@ -99,11 +111,11 @@
   }
 
   function read() {
-    return readSessionDraft() || migrateLegacyDraft();
+    return readPersistentDraft() || migrateSessionDraft() || migrateLegacyDraft();
   }
 
   function clear() {
-    removeSessionDraft();
+    removeStoredDrafts();
     removeLegacyDraft();
   }
 
@@ -127,7 +139,7 @@
     isAllowedPhotoFile,
     isSafePhotoDataUrl,
     legacyStorageKey,
-    maxAgeMs,
+    maxAgeMs: null,
     maxPhotoBytes,
     read,
     storageKey,

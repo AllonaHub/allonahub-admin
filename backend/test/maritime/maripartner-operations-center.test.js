@@ -30,11 +30,12 @@ test("MariPartner exposes exactly eight primary navigation entries", () => {
   ]);
 });
 
-test("operations center uses real data hooks and five distinct primary actions", () => {
+test("operations center keeps bulk creation beside the primary new-job action", () => {
   const html = read("pages/partner/maripartner.html");
   const actions = html.match(/<section class="mp-quick-actions"[\s\S]*?<\/section>/)?.[0] || "";
-  assert.equal((actions.match(/<button/g) || []).length, 5);
-  for (const label of ["Yeni İlan Oluştur", "Hazır Aday Bul", "Acil Personel Bul", "Eşleşmeleri Gör", "Bekleyen İşlemleri Gör"]) assert.match(actions, new RegExp(label));
+  assert.equal((actions.match(/<button/g) || []).length, 6);
+  assert.match(actions, /class="mp-quick-action-group"/);
+  for (const label of ["Yeni İlan", "Toplu İlan", "Hazır Aday Bul", "Acil Personel Bul", "Eşleşmeleri Gör", "Bekleyen İşlemleri Gör"]) assert.match(actions, new RegExp(label));
   for (const counter of ["ready_to_join", "pending_interviews", "pending_offers", "urgent_replacements", "active_crew", "upcoming_relief"]) assert.match(html, new RegExp(`data-mp-count="${counter}"`));
 });
 
@@ -75,16 +76,17 @@ test("operations control migration is server-only and idempotency-backed", () =>
   assert.match(route, /\.eq\("recipient_user_id", access\.ctx\.user\.id\)/);
 });
 
-test("MariPartner keeps URL state, theme controls and responsive safeguards", () => {
+test("MariPartner keeps URL state, a locked light theme and responsive safeguards", () => {
   const html = read("pages/partner/maripartner.html");
   const script = read("js/maripartner.js");
   const platform = read("js/platform.js");
   const css = read("css/maripartner.css");
   assert.match(html, /data-platform-controls-slot="home"/);
   assert.match(html, /js\/platform\.js/);
-  assert.match(html, /css\/maripartner\.css\?v=20260920-maripartner-job6/);
-  assert.match(html, /js\/platform\.js\?v=20260920-maripartner6/);
-  assert.match(html, /js\/maripartner-i18n\.js\?v=20260920-maripartner-job5/);
+  assert.match(html, /data-theme="white" data-partner-theme-locked="true"/);
+  assert.match(html, /css\/maripartner\.css\?v=20260920-maripartner-job7/);
+  assert.match(html, /js\/platform\.js\?v=20260920-partner-light1/);
+  assert.match(html, /js\/maripartner-i18n\.js\?v=20260920-maripartner-job6/);
   assert.match(script, /searchParams\.set\("view"/);
   assert.match(script, /searchParams\.set\("tab"/);
   assert.match(css, /@media \(max-width: 1100px\)/);
@@ -95,24 +97,39 @@ test("MariPartner keeps URL state, theme controls and responsive safeguards", ()
   assert.match(script, /popstate/);
   assert.match(script, /focusable/);
   assert.match(script, /legacyViewAliases/);
+  assert.match(platform, /PARTNER_THEME_LOCKED/);
+  assert.match(platform, /const selected = PARTNER_THEME_LOCKED \? "white"/);
+  assert.match(platform, /PARTNER_THEME_LOCKED \? "" : `<div class="platform-control platform-control--theme"/);
+  assert.match(platform, /themes: PARTNER_THEME_LOCKED \? themes\.filter/);
   assert.match(platform, /document\.documentElement\.setAttribute\("data-theme", selected\)/);
 });
 
-test("MariPartner uses one theme-aware page plane instead of detached header and sidebar surfaces", () => {
+test("MariPartner uses one light page plane instead of detached header and sidebar surfaces", () => {
   const css = read("css/maripartner.css");
   for (const token of ["--mp-canvas", "--mp-panel", "--mp-panel-soft", "--mp-input", "--mp-raised", "--mp-header-surface"]) assert.match(css, new RegExp(token));
   assert.match(css, /\.mp-app-shell[^}]*background:\s*var\(--mp-canvas\)/s);
   assert.match(css, /\.mp-sidebar[^}]*background:\s*var\(--mp-canvas\)/s);
   assert.match(css, /\.mp-hero[^}]*background:\s*transparent[^}]*border-bottom:\s*1px solid var\(--mp-line\)[^}]*box-shadow:\s*none/s);
-  for (const theme of ["ocean", "white", "sunset", "turquoise"]) {
-    assert.match(css, new RegExp(`data-theme="${theme}"[^}]*--mp-canvas:[^}]*--mp-panel:[^}]*--mp-input:`));
-  }
-  assert.match(css, /data-theme="ocean"[^}]*--mp-canvas:\s*#020b18/);
   assert.match(css, /data-theme="white"[^}]*--mp-canvas:\s*#edf7fc/);
-  assert.match(css, /data-theme="sunset"[^}]*--mp-canvas:\s*#170812/);
-  assert.match(css, /data-theme="turquoise"[^}]*--mp-canvas:\s*#021718/);
   assert.match(css, /\.mp-drawer[^}]*background:\s*var\(--mp-paper\)/);
   assert.doesNotMatch(css, /body\.mp-body\[data-theme\] \.mp-drawer[^}]*background:\s*#f5f8fb/);
+});
+
+test("all partner pages are marked for the light theme and platform controls enforce it", () => {
+  const pages = [
+    "e-donusum.html", "index.html", "kurucu-uyelik.html", "maripartner.html", "maritime-partner.html", "maritime-review.html", "partner-cargo-settings.html",
+    "partner-integration-premium.html", "partner-order-detail.html", "partner-orders.html", "partner-panel.html",
+    "partner-premium-checkout.html", "partner-product-detail.html", "partner-products.html", "partner-uyelik.html",
+    "partner.html", "pay.html", "pazaryeri-satis.html"
+  ];
+  for (const page of pages) {
+    const html = read(`pages/partner/${page}`);
+    assert.match(html, /data-theme="white"/i, `${page} açık temayla başlamalı`);
+    assert.match(html, /data-partner-theme-locked="true"/i, `${page} tema kilidine sahip olmalı`);
+    if (/js\/platform\.js/.test(html)) {
+      assert.match(html, /platform\.js\?v=20260920-partner-light1/, `${page} kilitli platform sürümünü kullanmalı`);
+    }
+  }
 });
 
 test("MariPartner translates authored and dynamic UI in all nine platform languages", () => {
@@ -120,7 +137,7 @@ test("MariPartner translates authored and dynamic UI in all nine platform langua
   const panel = read("js/maripartner.js");
   const route = read("backend/src/routes/maritime-partner-center.js");
   for (const language of ["tr", "az", "kk", "uz", "ky", "en", "de", "ru", "ar"]) assert.match(client, new RegExp(`"${language}"`));
-  for (const phrase of ["Operasyon Merkezi", "Personel Merkezi", "Finans ve Faturalandırma", "Şirket Hesabı", "Güvenli eşleşmeler"]) assert.match(client, new RegExp(phrase));
+  for (const phrase of ["Operasyon Merkezi", "Personel Merkezi", "Finans ve Faturalandırma", "Şirket Hesabı", "Güvenli eşleşmeler", "Yeni İlan", "Tek pozisyon", "Toplu İlan", "Birden çok rütbe"]) assert.match(client, new RegExp(phrase));
   assert.match(client, /allona:language-changed/);
   assert.match(client, /MutationObserver/);
   assert.match(client, /ui-translations/);

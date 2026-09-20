@@ -34,14 +34,12 @@
     "generate-summary": "generateSummary"
   });
 
-  function setPdfBusy(button, busy) {
-    if (!button) return;
-    button.disabled = busy;
-    if (busy) {
-      button.setAttribute("aria-busy", "true");
-    } else {
-      button.removeAttribute("aria-busy");
-    }
+  function setPdfBusy(busy) {
+    document.querySelectorAll("[data-cv-pdf]").forEach((button) => {
+      button.disabled = busy;
+      if (busy) button.setAttribute("aria-busy", "true");
+      else button.removeAttribute("aria-busy");
+    });
   }
 
   function message(key, fallback) {
@@ -79,7 +77,6 @@
       return;
     }
 
-    const button = document.getElementById("cvPdfButton");
     if (!window.AllonaMaritimePdfNames || typeof window.AllonaMaritimePdfNames.maritimeCv !== "function") {
       window.alert(message("pdfGenerationFailed", "The PDF could not be created. Please try again."));
       return;
@@ -89,7 +86,7 @@
     const fileName = window.AllonaMaritimePdfNames.maritimeCv(firstName, familyName);
 
     pdfDownloadInProgress = true;
-    setPdfBusy(button, true);
+    setPdfBusy(true);
     document.body.classList.add("pdf-capture");
 
     try {
@@ -157,7 +154,7 @@
     } finally {
       document.body.classList.remove("pdf-capture");
       pdfDownloadInProgress = false;
-      setPdfBusy(button, false);
+      setPdfBusy(false);
     }
   }
 
@@ -221,8 +218,13 @@
     document.getElementById("langSelect")?.addEventListener("change", event => {
       callGlobal("changeLanguage", event.currentTarget.value);
     });
-    document.getElementById("cvSaveButton")?.addEventListener("click", () => callGlobal("saveCV"));
-    document.getElementById("cvPdfButton")?.addEventListener("click", downloadPDF);
+    document.querySelectorAll("[data-cv-save]").forEach(button => button.addEventListener("click", () => callGlobal("saveCV")));
+    document.querySelectorAll("[data-cv-pdf]").forEach(button => button.addEventListener("click", downloadPDF));
+    document.querySelectorAll("[data-cv-back-to-top]").forEach(button => button.addEventListener("click", () => {
+      const behavior = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+      document.getElementById("cvEditor")?.scrollTo({ top:0, behavior });
+      window.scrollTo({ top:0, behavior });
+    }));
     document.getElementById("cvResetButton")?.addEventListener("click", () => callGlobal("resetForm"));
     const editor = document.getElementById("cvEditor");
     editor?.addEventListener("input", handleEditorInput);

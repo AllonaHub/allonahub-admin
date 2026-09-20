@@ -751,6 +751,7 @@
     state.activePanel = panel;
     setActiveNavigation(panel);
     const wrap = $("[data-mp-drawer-wrap]");
+    $("[data-mp-drawer]")?.classList.toggle("mp-drawer--bulk", panel === "job-bulk-create");
     if (wrap.hidden) state.lastFocus = trigger || document.activeElement;
     const body = $("[data-mp-drawer-body]");
     $("[data-mp-drawer-title]").textContent = t(titles[panel]);

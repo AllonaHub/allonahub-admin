@@ -409,11 +409,14 @@ function trustedVesselPhotoSourceUrl(value){
     removePhotoFailed:"The photo could not be removed from your account. Please try again.",
     photoRemoved:"The profile photo was removed.",
     saveDraft:"Save",
+    backToTop:"Back to top",
     downloadPdf:"Download PDF · $7",
     clearForm:"Clear",
     cvLanguage:"CV language",
     photoAlt:"CV profile photo",
-    draftSaved:"CV draft will be kept in this tab for 2 hours.",
+    draftSaved:"Your Maritime CV draft will remain saved until you clear it.",
+    accountDraftSaved:"Your Maritime CV draft was saved. Complete the required fields to create Global CV.",
+    accountDraftSavedFinalFailed:"Your draft was saved, but secure finalization was not completed. Verify the missing fields or device confirmation and save again.",
     accountSaved:"Your Maritime CV and photo were saved to your account.",
     accountSaving:"Saving Maritime CV to your account...",
     accountLoading:"Loading your saved Maritime CV...",
@@ -704,11 +707,14 @@ function trustedVesselPhotoSourceUrl(value){
     removePhotoFailed:"Fotoğraf hesabınızdan silinemedi. Lütfen yeniden deneyin.",
     photoRemoved:"Profil fotoğrafı silindi.",
     saveDraft:"Kaydet",
+    backToTop:"Başa Dön",
     downloadPdf:"PDF İndir · 7 USD",
     clearForm:"Temizle",
     cvLanguage:"CV dili",
     photoAlt:"CV profil fotoğrafı",
-    draftSaved:"CV taslağı bu sekmede 2 saat saklanacak.",
+    draftSaved:"Maritime CV taslağınız siz temizleyene kadar kayıtlı kalır.",
+    accountDraftSaved:"Maritime CV taslağınız kaydedildi. Global CV oluşturmak için zorunlu alanları tamamlayın.",
+    accountDraftSavedFinalFailed:"Taslağınız kaydedildi ancak güvenli son kayıt tamamlanamadı. Eksik alanları veya cihaz doğrulamasını kontrol edip yeniden kaydedin.",
     accountSaved:"Maritime CV bilgileriniz ve fotoğrafınız hesabınıza kaydedildi.",
     accountSaving:"Maritime CV hesabınıza kaydediliyor...",
     accountLoading:"Kayıtlı Maritime CV bilgileriniz yükleniyor...",
@@ -1000,11 +1006,14 @@ function trustedVesselPhotoSourceUrl(value){
     removePhotoFailed:"Şəkil hesabınızdan silinə bilmədi. Yenidən cəhd edin.",
     photoRemoved:"Profil şəkli silindi.",
     saveDraft:"Yadda saxla",
+    backToTop:"Başa qayıt",
     downloadPdf:"PDF endir · 7 USD",
     clearForm:"Təmizlə",
     cvLanguage:"CV dili",
     photoAlt:"CV profil fotosu",
-    draftSaved:"CV qaralaması bu tabda 2 saat saxlanacaq.",
+    draftSaved:"Maritime CV qaralamanız siz təmizləyənədək yadda saxlanacaq.",
+    accountDraftSaved:"Maritime CV qaralamanız yadda saxlanıldı. Global CV yaratmaq üçün məcburi sahələri tamamlayın.",
+    accountDraftSavedFinalFailed:"Qaralamanız yadda saxlanıldı, lakin təhlükəsiz yekun qeyd tamamlanmadı. Çatışmayan sahələri və ya cihaz təsdiqini yoxlayıb yenidən yadda saxlayın.",
     accountSaved:"Maritime CV məlumatlarınız və şəkliniz hesabınıza yazıldı.",
     accountSaving:"Maritime CV hesabınıza yazılır...",
     accountLoading:"Saxlanmış Maritime CV məlumatlarınız yüklənir...",
@@ -1295,11 +1304,14 @@ function trustedVesselPhotoSourceUrl(value){
     removePhotoFailed:"Не удалось удалить фотографию из учетной записи. Повторите попытку.",
     photoRemoved:"Фотография профиля удалена.",
     saveDraft:"Сохранить",
+    backToTop:"В начало",
     downloadPdf:"Скачать PDF · 7 USD",
     clearForm:"Очистить",
     cvLanguage:"Язык CV",
     photoAlt:"Фото профиля CV",
-    draftSaved:"Черновик CV будет храниться в этой вкладке 2 часа.",
+    draftSaved:"Черновик Maritime CV будет храниться, пока вы сами его не очистите.",
+    accountDraftSaved:"Черновик Maritime CV сохранён. Заполните обязательные поля, чтобы создать Global CV.",
+    accountDraftSavedFinalFailed:"Черновик сохранён, но защищённое финальное сохранение не завершено. Проверьте недостающие поля или подтверждение устройства и сохраните снова.",
     accountSaved:"Maritime CV и фотография сохранены в вашей учетной записи.",
     accountSaving:"Maritime CV сохраняется в вашей учетной записи...",
     accountLoading:"Загружается сохранённый Maritime CV...",
@@ -2426,7 +2438,7 @@ function validateMaritimeCV(options){
 }
 
 async function saveCV(){
-  if(!validateMaritimeCV()) return;
+  const readyForGlobalCv = validateMaritimeCV({ announce:false });
   if(autoSaveTimer){
     window.clearTimeout(autoSaveTimer);
     autoSaveTimer = 0;
@@ -2434,8 +2446,8 @@ async function saveCV(){
   const localSaved = persistCV();
   if(window.AllonaMaritimeCvAccount && typeof window.AllonaMaritimeCvAccount.save === "function"){
     try{
-      await window.AllonaMaritimeCvAccount.save(getCVData());
-      alert(t("accountSaved"));
+      const result = await window.AllonaMaritimeCvAccount.save(getCVData(), { finalize:readyForGlobalCv });
+      alert(t(result?.finalized ? "accountSaved" : "accountDraftSaved"));
     } catch(error){
       const errorKeys = {
         AUTH_REQUIRED:"accountLoginRequired",
@@ -2450,7 +2462,7 @@ async function saveCV(){
         MARITIME_PASSKEY_VERIFICATION_FAILED:"passkeyFailed",
         MARITIME_PASSKEY_SECURITY_UNAVAILABLE:"passkeyUnavailable"
       };
-      alert(t(errorKeys[error && error.code] || "accountSaveFailed"));
+      alert(t(error?.draftSaved ? "accountDraftSavedFinalFailed" : (errorKeys[error && error.code] || "accountSaveFailed")));
     }
     return;
   }

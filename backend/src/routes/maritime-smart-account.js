@@ -69,14 +69,15 @@ function restrictedStringRecord(allowedKeys, maxLength) {
     }
   });
 }
-const manualCvSchema = z.object({
+const manualCvDraftSchema = z.object({
   lang: z.enum(["tr", "az", "kk", "uz", "ky", "en", "de", "ru", "ar"]).default("tr"),
   summaryMode: z.enum(["auto", "custom"]).default("auto"),
   fields: restrictedStringRecord(manualCvFieldKeys, 2000),
   additionalData: z.array(restrictedStringRecord(manualCvRowKeys.additional, 300)).max(50).default([]),
   stcwData: z.array(restrictedStringRecord(manualCvRowKeys.stcw, 300)).max(50).default([]),
   seaData: z.array(restrictedStringRecord(manualCvRowKeys.sea, 300)).max(50).default([])
-}).strict().superRefine((value, context) => {
+}).strict();
+const manualCvSchema = manualCvDraftSchema.superRefine((value, context) => {
   const experienceIds = new Set();
   value.seaData.forEach((row, index) => {
     const contentKeys = [...manualCvRowKeys.sea].filter((key) => !["rowId", "lookupProvider", "lookupFetchedAt", "serviceDocumentStatus", "saved"].includes(key));
@@ -103,6 +104,7 @@ const manualCvSchema = z.object({
     if (row.signon && row.signoff && row.signoff < row.signon) context.addIssue({ code: z.ZodIssueCode.custom, path: ["seaData", index, "signoff"], message: "Ayrılış tarihi katılış tarihinden önce olamaz." });
   });
 });
+const manualCvDraftRequestSchema = z.object({ cv: manualCvDraftSchema, confirmation: z.literal(true) }).strict();
 const manualCvRequestSchema = z.object({ cv: manualCvSchema, confirmation: z.literal(true) }).strict();
 const maritimeReferenceRequestSchema = z.object({
   experience: restrictedStringRecord(manualCvRowKeys.sea, 300).superRefine((row, context) => {
@@ -627,6 +629,17 @@ async function hasStoredProfilePhoto(userId) {
     .from(MARITIME_PROFILE_PHOTO_BUCKET)
     .list(`users/${userId}`, { limit: 20, search: "profile.webp" });
   return !result.error && Array.isArray(result.data) && result.data.some((item) => item?.name === "profile.webp");
+}
+
+async function invalidateMaritimeCvDerivedState(userId, now = new Date().toISOString()) {
+  assertDb(await supabaseAdmin.from("maritime_smart_account_runs")
+    .update({ status: "superseded" })
+    .eq("seafarer_user_id", userId)
+    .in("status", ["draft", "user_confirmed"]), "Eski Global CV taslağı kapatılamadı.");
+  assertDb(await supabaseAdmin.from("maritime_match_results")
+    .update({ hard_gate_status: "stale", stale_after: now })
+    .eq("seafarer_user_id", userId)
+    .neq("hard_gate_status", "stale"), "Eski iş eşleşmeleri kapatılamadı.");
 }
 
 async function requireCustomer(request, action) {
@@ -1240,6 +1253,67 @@ export function registerMaritimeSmartAccountRoutes(app) {
     return { ok: true, review: partnerReviewPublic(review) };
   });
 
+  app.put("/v1/maritime/cv-profile/draft", {
+    config: { rateLimit: { max: 40, timeWindow: "10 minutes" } }
+  }, async (request) => {
+    const ctx = await requireCustomer(request, "maritime.cv_profile.draft_save");
+    const deviceKey = requestDeviceKey(request);
+    const input = manualCvDraftRequestSchema.parse(request.body || {});
+    const [currentProfile, currentIdentityLock] = await Promise.all([
+      supabaseAdmin
+        .from("maritime_cv_profiles")
+        .select("profile_payload")
+        .eq("seafarer_user_id", ctx.user.id)
+        .maybeSingle(),
+      supabaseAdmin
+        .from("maritime_cv_identity_locks")
+        .select("locked_at,identity_version")
+        .eq("user_id", ctx.user.id)
+        .maybeSingle()
+    ]);
+    const savedProfile = assertDb(currentProfile, "Mevcut Maritime CV taslağı okunamadı.");
+    const savedIdentityLock = assertDb(currentIdentityLock, "Maritime CV kimlik kilidi okunamadı.");
+    enforceSavedPersonalDetails(savedIdentityLock, savedProfile, input.cv);
+    await assertOwnedSeaServiceDocuments(ctx.user.id, input.cv.seaData);
+    const payload = manualCvPayload(input.cv);
+    const photoReady = await hasStoredProfilePhoto(ctx.user.id);
+    const readiness = maritimeGlobalPassportReadiness(payload, { hasPhoto: photoReady });
+    const profile = assertIdentitySecurity(await supabaseAdmin.rpc("save_maritime_cv_draft", {
+      p_user_id: ctx.user.id,
+      p_profile_payload: payload,
+      p_completion_percent: manualCvCompletion(payload),
+      p_device_key: deviceKey,
+      p_user_agent: String(request.headers["user-agent"] || "").slice(0, 500)
+    }), "Maritime CV taslağı güvenli biçimde kaydedilemedi.");
+    const persistedIdentityLock = assertDb(await supabaseAdmin
+      .from("maritime_cv_identity_locks")
+      .select("locked_at,identity_version")
+      .eq("user_id", ctx.user.id)
+      .maybeSingle(), "Maritime CV kimlik kilidi yeniden okunamadı.");
+    await invalidateMaritimeCvDerivedState(ctx.user.id);
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "maritime.cv_profile_draft_saved",
+      resourceType: "maritime_cv_profile",
+      metadata: { source: "user_entered_maritime_cv", completion_percent: profile.completion_percent, ready_for_global_cv: readiness.ready }
+    });
+    return {
+      ok: true,
+      cv: input.cv,
+      profile,
+      profile_photo_ready: photoReady,
+      global_cv_readiness: readiness,
+      identity_lock: {
+        locked: Boolean(persistedIdentityLock),
+        locked_at: persistedIdentityLock?.locked_at || null,
+        version: persistedIdentityLock?.identity_version || null,
+        fields: persistedIdentityLock ? maritimeIdentityLockedFields : []
+      }
+    };
+  });
+
   app.put("/v1/maritime/cv-profile", {
     config: { rateLimit: { max: 20, timeWindow: "10 minutes" } }
   }, async (request) => {
@@ -1283,14 +1357,12 @@ export function registerMaritimeSmartAccountRoutes(app) {
       .select("locked_at,identity_version")
       .eq("user_id", ctx.user.id)
       .maybeSingle(), "Maritime CV kimlik kilidi okunamadı.");
-    assertDb(await supabaseAdmin.from("maritime_smart_account_runs")
-      .update({ status: "superseded" })
+    await invalidateMaritimeCvDerivedState(ctx.user.id, now);
+    const storedProfile = assertDb(await supabaseAdmin
+      .from("maritime_cv_profiles")
+      .select("profile_payload,profile_status,completion_percent,last_user_confirmed_at,updated_at")
       .eq("seafarer_user_id", ctx.user.id)
-      .in("status", ["draft", "user_confirmed"]), "Eski Global CV taslağı kapatılamadı.");
-    assertDb(await supabaseAdmin.from("maritime_match_results")
-      .update({ hard_gate_status: "stale", stale_after: now })
-      .eq("seafarer_user_id", ctx.user.id)
-      .neq("hard_gate_status", "stale"), "Eski iş eşleşmeleri kapatılamadı.");
+      .maybeSingle(), "Kaydedilen Maritime CV yeniden doğrulanamadı.");
     await auditEvent({
       request,
       actorId: ctx.user.id,
@@ -1326,8 +1398,9 @@ export function registerMaritimeSmartAccountRoutes(app) {
     }
     return {
       ok: true,
-      cv: input.cv,
-      profile,
+      cv: storedProfile?.profile_payload?.manual_cv || input.cv,
+      profile: storedProfile || profile,
+      global_cv_readiness: maritimeGlobalPassportReadiness(storedProfile?.profile_payload || payload, { hasPhoto: true }),
       reference_notifications: referenceNotifications.map((item) => ({
         request_id: item.request_id || null,
         claim_id: item.claim_id || null,

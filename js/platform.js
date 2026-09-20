@@ -51,6 +51,11 @@
     { code: "sunset", label: "Gün Batımı" },
     { code: "turquoise", label: "Turkuaz" }
   ];
+  const PARTNER_THEME_LOCKED = Boolean(
+    document.body?.dataset.partnerThemeLocked === "true"
+    || /\/pages\/partner\//.test(window.location.pathname)
+    || /^partner\./i.test(window.location.hostname)
+  );
   const themeAliases = {
     neon: "ocean",
     allona: "ocean",
@@ -77,11 +82,11 @@
   const initialLanguage = languages.some((item) => item.code === storedLanguage) ? storedLanguage : "tr";
   const state = {
     language: initialLanguage,
-    theme: normalizeTheme(localStorage.getItem(THEME_KEY)),
+    theme: PARTNER_THEME_LOCKED ? "white" : normalizeTheme(localStorage.getItem(THEME_KEY)),
     currency: currencyForLanguage(initialLanguage),
     packs: {}
   };
-  localStorage.setItem(THEME_KEY, state.theme);
+  if (!PARTNER_THEME_LOCKED) localStorage.setItem(THEME_KEY, state.theme);
   localStorage.setItem(CURRENCY_KEY, state.currency);
   const MODULE_PARTNER_ADS_KEY = "allona.modulePartnerAds";
   const moduleAdCampaigns = [
@@ -461,10 +466,19 @@
     document.head.appendChild(link);
   }
 
+  function enforcePartnerThemeLock() {
+    if (!PARTNER_THEME_LOCKED) return;
+    document.documentElement.dataset.partnerThemeLocked = "true";
+    document.querySelectorAll(".platform-control--theme, [data-theme-select], [data-theme-option]").forEach((node) => {
+      const control = node.closest(".platform-control--theme");
+      (control || node).remove();
+    });
+  }
+
   function applyTheme(theme) {
-    const selected = normalizeTheme(theme);
+    const selected = PARTNER_THEME_LOCKED ? "white" : normalizeTheme(theme);
     state.theme = selected;
-    localStorage.setItem(THEME_KEY, selected);
+    if (!PARTNER_THEME_LOCKED) localStorage.setItem(THEME_KEY, selected);
     document.documentElement.setAttribute("data-theme", selected);
     document.body.setAttribute("data-theme", selected);
     document.querySelectorAll("[data-theme-select]").forEach((node) => {
@@ -477,6 +491,7 @@
       node.classList.toggle("is-active", node.dataset.themeOption === selected);
       node.setAttribute("aria-checked", node.dataset.themeOption === selected ? "true" : "false");
     });
+    enforcePartnerThemeLock();
   }
 
   function currentCurrency() {
@@ -889,7 +904,7 @@
             ${languages.map((item) => `<button type="button" role="menuitemradio" aria-checked="${item.code === state.language ? "true" : "false"}" class="platform-menu-item ${item.code === state.language ? "is-active" : ""}" data-language-option="${item.code}">${item.label}</button>`).join("")}
           </div>
         </div>
-        <div class="platform-control platform-control--theme" data-platform-control>
+        ${PARTNER_THEME_LOCKED ? "" : `<div class="platform-control platform-control--theme" data-platform-control>
           <button class="platform-control-btn platform-theme-btn" type="button" data-platform-menu-toggle aria-label="Tema seçimi" aria-haspopup="menu" aria-expanded="false">
             <span class="platform-theme-dot" aria-hidden="true"></span>
             <span class="platform-control-value" data-theme-current>${currentTheme().label}</span>
@@ -897,7 +912,7 @@
           <div class="platform-menu platform-menu--wide" data-platform-menu role="menu" aria-label="Tema seçimi">
             ${themes.map((item) => `<button type="button" role="menuitemradio" aria-checked="${item.code === state.theme ? "true" : "false"}" class="platform-menu-item ${item.code === state.theme ? "is-active" : ""}" data-theme-option="${item.code}"><span class="platform-theme-swatch platform-theme-swatch--${item.code}" aria-hidden="true"></span>${item.label}</button>`).join("")}
           </div>
-        </div>
+        </div>`}
       </div>
     `;
   }
@@ -1024,7 +1039,10 @@
   }
 
   function mountControls() {
-    if (document.querySelector("[data-platform-controls]")) return;
+    if (document.querySelector("[data-platform-controls]")) {
+      enforcePartnerThemeLock();
+      return;
+    }
     const standaloneHeader = document.querySelector("body > header:not(.site-header)");
     const standaloneBrand = standaloneHeader && standaloneHeader.querySelector(".logo, .brand");
     if (standaloneBrand) {
@@ -1034,12 +1052,14 @@
       standaloneBrand.insertAdjacentElement("afterend", homeSlot);
       homeSlot.innerHTML = controlsMarkup("home");
       bindControlValues();
+      enforcePartnerThemeLock();
       return;
     }
     const slot = document.querySelector("[data-platform-controls-slot]");
     if (slot) {
       slot.innerHTML = controlsMarkup(slot.dataset.platformControlsSlot || "");
       bindControlValues();
+      enforcePartnerThemeLock();
       return;
     }
     if (mountLegacyMobileControls()) return;
@@ -1047,6 +1067,7 @@
     if (account) {
       account.insertAdjacentHTML("afterend", controlsMarkup(account.classList.contains("login") ? "home" : ""));
       bindControlValues();
+      enforcePartnerThemeLock();
     }
   }
 
@@ -1397,7 +1418,7 @@
   App.platform = {
     languages,
     currencies: currencyOptions,
-    themes,
+    themes: PARTNER_THEME_LOCKED ? themes.filter((item) => item.code === "white") : themes,
     setLanguage: applyLanguage,
     setCurrency: applyCurrency,
     getCurrency: currentCurrency,

@@ -6,6 +6,14 @@
   let saving = false;
   let statusCopyState = null;
 
+  function setSaveButtonsBusy(busy) {
+    document.querySelectorAll("[data-cv-save]").forEach((button) => {
+      button.disabled = busy;
+      if (busy) button.setAttribute("aria-busy", "true");
+      else button.removeAttribute("aria-busy");
+    });
+  }
+
   function copy(key, fallback) {
     return typeof window.t === "function" ? window.t(key) : fallback;
   }
@@ -206,17 +214,29 @@
     });
   }
 
-  async function save(data) {
+  async function save(data, options = {}) {
     if (saving) return;
+    const finalize = options.finalize !== false;
     saving = true;
-    const button = document.getElementById("cvSaveButton");
-    if (button) button.disabled = true;
+    setSaveButtonsBusy(true);
     setCopyStatus("accountSaving", "Saving Maritime CV to your account...", "progress");
+    let draftSaved = false;
     try {
       const photo = document.getElementById("photoInput")?.files?.[0] || null;
       if (photo) await savePhoto(photo);
       const cleanCv = JSON.parse(JSON.stringify(data || {}));
       delete cleanCv.photo;
+      const draftResult = await api("/v1/maritime/cv-profile/draft", {
+        method: "PUT",
+        body: JSON.stringify({ cv: cleanCv, confirmation: true })
+      });
+      draftSaved = true;
+      if (window.AllonaMaritimeCvDraft?.write) window.AllonaMaritimeCvDraft.write(draftResult.cv || data);
+      applyIdentityLock(draftResult.identity_lock);
+      if (!finalize) {
+        setCopyStatus("accountDraftSaved", "Your Maritime CV draft was saved. Complete the required fields to create Global CV.", "success");
+        return { ...draftResult, finalized: false };
+      }
       const proof = await passkeyProof();
       const result = await api("/v1/maritime/cv-profile", {
         method: "PUT",
@@ -224,15 +244,21 @@
         body: JSON.stringify({ cv: cleanCv, confirmation: true })
       });
       applyIdentityLock(result.identity_lock);
+      if (window.AllonaMaritimeCvDraft?.write) window.AllonaMaritimeCvDraft.write(result.cv || data);
       setCopyStatus("accountSaved", "Your Maritime CV and photo were saved to your account.", "success");
-      return result;
+      return { ...result, finalized: true };
     } catch (error) {
       statusCopyState = null;
-      setStatus(identityErrorMessage(error), "error");
+      if (draftSaved) {
+        error.draftSaved = true;
+        setStatus(copy("accountDraftSavedFinalFailed", "Your draft was saved, but secure finalization was not completed. Verify the missing fields or device confirmation and save again."), "warning");
+      } else {
+        setStatus(identityErrorMessage(error), "error");
+      }
       throw error;
     } finally {
       saving = false;
-      if (button) button.disabled = false;
+      setSaveButtonsBusy(false);
     }
   }
 
@@ -250,6 +276,7 @@
     try {
       const result = await api("/v1/maritime/cv-profile", { method: "GET" });
       if (result.cv && window.applyMaritimeCVData) window.applyMaritimeCVData(result.cv);
+      if (result.cv && window.AllonaMaritimeCvDraft?.write) window.AllonaMaritimeCvDraft.write(result.cv);
       applyIdentityLock(result.identity_lock);
       showPhoto(result.profile_photo_url);
       setCopyStatus(result.cv ? "accountLoaded" : "accountStart", result.cv ? "Your saved Maritime CV is open." : "Complete the relevant fields to add your Maritime CV to your account.", result.cv ? "success" : "info");
