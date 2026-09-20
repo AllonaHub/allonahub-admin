@@ -19,7 +19,14 @@
     ["employment_confirmed", "Adayın şirkette çalıştığını doğruluyor musunuz?"], ["rank_confirmed", "Beyan edilen görev/rütbe doğru mu?"],
     ["service_dates_confirmed", "Hizmet tarihleri doğru mu?"], ["completed_contract", "Kontratını tamamladı mı?"], ["eligible_for_rehire", "Yeniden işe almayı değerlendirir misiniz?"]
   ];
-  const jobRankLabels = Object.freeze({ master: "Kaptan", chief_officer: "Baş Zabit", second_officer: "İkinci Zabit", third_officer: "Üçüncü Zabit", chief_engineer: "Baş Mühendis", second_engineer: "İkinci Mühendis", third_engineer: "Üçüncü Mühendis", oiler: "Yağcı / Motorman", able_seaman: "Usta Gemici", ordinary_seaman: "Gemici", cook: "Aşçı", electrician: "Elektrik Zabiti" });
+  const jobRankLabels = Object.freeze({
+    master: "Kaptan", chief_officer: "Baş Zabit", second_officer: "İkinci Zabit", third_officer: "Üçüncü Zabit", deck_cadet: "Güverte Kadeti",
+    bosun: "Reis / Güverte Lostromosu", able_seaman: "Usta Gemici", ordinary_seaman: "Gemici", deck_boy: "Miço / Güverte Tayfası",
+    chief_engineer: "Baş Mühendis", second_engineer: "İkinci Mühendis", third_engineer: "Üçüncü Mühendis", fourth_engineer: "Dördüncü Mühendis", engine_cadet: "Makine Kadeti",
+    engine_bosun: "Makine Lostromosu", able_engine_rating: "Usta Yağcı / Usta Makine Tayfası (STCW III/5)", motorman: "Motorman / Motorcu", oiler: "Yağcı", wiper: "Silici / Makine Tayfası",
+    fitter: "Fitter", welder: "Kaynakçı", eto: "Elektro-Teknik Zabiti (ETO)", electro_technical_rating: "Elektro-Teknik Tayfa (ETR)", pumpman: "Pompaman / Pumpman",
+    chief_cook: "Baş Aşçı", cook: "Aşçı", steward: "Kamarot / Steward", electrician: "Elektro-Teknik Zabiti (eski kayıt)"
+  });
   const tradingAreaLabels = Object.freeze({ worldwide: "Dünya geneli", mediterranean: "Akdeniz", black_sea: "Karadeniz", north_sea_baltic: "Kuzey Denizi ve Baltık", north_atlantic: "Kuzey Atlantik", south_atlantic: "Güney Atlantik", red_sea_gulf_of_aden: "Kızıldeniz ve Aden Körfezi", arabian_gulf_indian_ocean: "Basra Körfezi ve Hint Okyanusu", west_africa_gulf_of_guinea: "Batı Afrika ve Gine Körfezi", east_africa: "Doğu Afrika", southeast_asia: "Güneydoğu Asya", east_asia: "Doğu Asya", australia_pacific: "Avustralya ve Pasifik", north_america: "Kuzey Amerika", central_south_america_caribbean: "Orta/Güney Amerika ve Karayipler", domestic_coastal: "Kabotaj / kıyı seferi", other: "Diğer rota" });
   const coreCertificates = Object.freeze([
     ["SP", "SP · Uluslararası Emniyet Yönetimi"], ["SH", "SH · Belirlenmiş Güvenlik Görevleri"], ["SI", "SI · Güvenlik Farkındalığı"],
@@ -30,15 +37,17 @@
     "III/1": "STCW III/1 · Makine Vardiyası Zabiti", "III/2": "STCW III/2 · Baş / İkinci Mühendis", "III/4": "STCW III/4 · Makine Vardiya Tayfası", "III/5": "STCW III/5 · Usta Makine Tayfası", "III/6": "STCW III/6 · Elektro-Teknik Zabit", "III/7": "STCW III/7 · Elektro-Teknik Tayfa",
     "IV/2": "STCW IV/2 · GMDSS Genel Telsiz Operatörü", "VI/2-1": "STCW VI/2-1 · Can Kurtarma Araçları", "VI/3": "STCW VI/3 · İleri Yangınla Mücadele", "VI/4-1": "STCW VI/4-1 · Tıbbi İlk Yardım", "VI/4-2": "STCW VI/4-2 · Gemide Tıbbi Bakım", "VI/5": "STCW VI/5 · Gemi Güvenlik Zabiti", "VI/6-1": "STCW VI/6-1 · Güvenlik Farkındalığı", "VI/6-2": "STCW VI/6-2 · Belirlenmiş Güvenlik Görevleri",
     "V/1-1-BASIC": "STCW V/1-1 · Petrol/Kimyasal Tanker Temel", "V/1-1-OIL-ADV": "STCW V/1-1 · Petrol Tankeri İleri", "V/1-1-CHEM-ADV": "STCW V/1-1 · Kimyasal Tanker İleri", "V/1-2-BASIC": "STCW V/1-2 · Gaz Tankeri Temel", "V/1-2-GAS-ADV": "STCW V/1-2 · Gaz Tankeri İleri", "V/2": "STCW V/2 · Yolcu Gemileri", "V/3-BASIC": "STCW V/3 · IGF Temel", "V/3-ADV": "STCW V/3 · IGF İleri", "V/4-BASIC": "STCW V/4 · Kutup Suları Temel", "V/4-ADV": "STCW V/4 · Kutup Suları İleri",
-    ECDIS: "ECDIS Eğitimi", "RADAR-ARPA": "Radar ve ARPA Eğitimi", BRM: "Köprüüstü Kaynak Yönetimi", ERM: "Makine Dairesi Kaynak Yönetimi", SA: "SA · Kimyasal Tanker", "SHIP-COOK": "Gemi Aşçısı Yeterlilik Belgesi", "ADVANCED-DP": "İleri DP Yeterliliği"
+    ECDIS: "ECDIS Eğitimi", "RADAR-ARPA": "Radar ve ARPA Eğitimi", BRM: "Köprüüstü Kaynak Yönetimi", ERM: "Makine Dairesi Kaynak Yönetimi", SA: "SA · Kimyasal Tanker", "SHIP-COOK": "Gemi Aşçısı Yeterlilik Belgesi", FITTER: "Fitter Mesleki Yeterlilik Belgesi", WELDER: "Kaynakçı Mesleki Yeterlilik Belgesi", "FOOD-HYG": "Gıda Hijyeni ve Mutfak Güvenliği", "ADVANCED-DP": "İleri DP Yeterliliği"
   });
   const rankCertificates = Object.freeze({
     master: ["II/2", "IV/2", "VI/2-1", "VI/3", "VI/4-2", "VI/5", "ECDIS", "RADAR-ARPA", "BRM"],
     chief_officer: ["II/2", "IV/2", "VI/2-1", "VI/3", "VI/4-1", "ECDIS", "RADAR-ARPA", "BRM"],
     second_officer: ["II/1", "IV/2", "VI/2-1", "VI/3", "VI/4-1", "ECDIS", "RADAR-ARPA", "BRM"],
     third_officer: ["II/1", "IV/2", "VI/2-1", "VI/3", "VI/4-1", "ECDIS", "RADAR-ARPA", "BRM"],
-    chief_engineer: ["III/2", "VI/2-1", "VI/3", "VI/4-1", "ERM"], second_engineer: ["III/2", "VI/2-1", "VI/3", "VI/4-1", "ERM"], third_engineer: ["III/1", "VI/2-1", "VI/3", "VI/4-1", "ERM"],
-    oiler: ["III/4"], able_seaman: ["II/5", "VI/2-1"], ordinary_seaman: ["II/4"], cook: ["SHIP-COOK"], electrician: ["III/6", "VI/2-1", "VI/3", "VI/4-1"]
+    deck_cadet: [], bosun: ["II/5", "VI/2-1"], able_seaman: ["II/5", "VI/2-1"], ordinary_seaman: ["II/4"], deck_boy: [],
+    chief_engineer: ["III/2", "VI/2-1", "VI/3", "VI/4-1", "ERM"], second_engineer: ["III/2", "VI/2-1", "VI/3", "VI/4-1", "ERM"], third_engineer: ["III/1", "VI/2-1", "VI/3", "VI/4-1", "ERM"], fourth_engineer: ["III/1", "VI/2-1", "VI/3", "VI/4-1", "ERM"],
+    engine_cadet: [], engine_bosun: ["III/5", "VI/2-1"], able_engine_rating: ["III/5", "VI/2-1"], motorman: ["III/4"], oiler: ["III/4"], wiper: [], fitter: ["III/4"], welder: [],
+    eto: ["III/6", "VI/2-1", "VI/3", "VI/4-1"], electro_technical_rating: ["III/7"], pumpman: ["II/4"], chief_cook: ["SHIP-COOK"], cook: ["SHIP-COOK"], steward: [], electrician: ["III/6", "VI/2-1", "VI/3", "VI/4-1"]
   });
   const optionalCertificates = Object.freeze(Object.entries(certificateCatalog));
   const $ = (selector, root) => (root || document).querySelector(selector);
@@ -217,8 +226,11 @@
   function optionalCertificateCodesForRank(rankCode) {
     const vesselSpecific = ["SA", "V/1-1-BASIC", "V/1-1-OIL-ADV", "V/1-1-CHEM-ADV", "V/1-2-BASIC", "V/1-2-GAS-ADV", "V/2", "V/3-BASIC", "V/3-ADV", "V/4-BASIC", "V/4-ADV"];
     if (["master", "chief_officer", "second_officer", "third_officer"].includes(rankCode)) return [...vesselSpecific, "ADVANCED-DP"];
-    if (["chief_engineer", "second_engineer", "third_engineer", "electrician"].includes(rankCode)) return vesselSpecific;
-    if (["oiler", "able_seaman", "ordinary_seaman", "cook"].includes(rankCode)) return ["V/1-1-BASIC", "V/1-2-BASIC", "V/2", "V/3-BASIC", "V/4-BASIC"];
+    if (["chief_engineer", "second_engineer", "third_engineer", "fourth_engineer", "eto", "electrician"].includes(rankCode)) return vesselSpecific;
+    if (rankCode === "fitter") return ["FITTER", "WELDER", "V/1-1-BASIC", "V/1-2-BASIC", "V/3-BASIC"];
+    if (rankCode === "welder") return ["WELDER", "FITTER", "V/1-1-BASIC", "V/1-2-BASIC", "V/3-BASIC"];
+    if (["chief_cook", "cook", "steward"].includes(rankCode)) return ["FOOD-HYG", "V/2"];
+    if (["deck_cadet", "bosun", "able_seaman", "ordinary_seaman", "deck_boy", "engine_cadet", "engine_bosun", "able_engine_rating", "motorman", "oiler", "wiper", "electro_technical_rating", "pumpman"].includes(rankCode)) return ["V/1-1-BASIC", "V/1-2-BASIC", "V/2", "V/3-BASIC", "V/4-BASIC"];
     return [];
   }
 

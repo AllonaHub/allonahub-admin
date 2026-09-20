@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import {
+  MARIPARTNER_JOB_RANKS,
+  MARIPARTNER_RANK_CERTIFICATE_CODES,
   MARIPARTNER_CONTRACT_OPTIONS,
   buildMariPartnerJobPresentation,
   canReadMariPartnerFinance,
@@ -78,7 +80,7 @@ test("MariPartner keeps URL state, theme controls and responsive safeguards", ()
   const css = read("css/maripartner.css");
   assert.match(html, /data-platform-controls-slot="home"/);
   assert.match(html, /js\/platform\.js/);
-  assert.match(html, /js\/maripartner-i18n\.js\?v=20260920-maripartner-job3/);
+  assert.match(html, /js\/maripartner-i18n\.js\?v=20260920-maripartner-job4/);
   assert.match(script, /searchParams\.set\("view"/);
   assert.match(script, /searchParams\.set\("tab"/);
   assert.match(css, /@media \(max-width: 1100px\)/);
@@ -142,7 +144,7 @@ test("job creation records operational requirements and invites only against ope
 
 test("smart job presentation never exposes vessel identity and converts experience months for matching", () => {
   const result = buildMariPartnerJobPresentation({
-    rank_code: "oiler",
+    rank_code: "able_engine_rating",
     minimum_sea_service_months: 6,
     salary_amount: 3500,
     salary_currency: "USD",
@@ -160,11 +162,11 @@ test("smart job presentation never exposes vessel identity and converts experien
     flag_state: "Vanuatu",
     metadata: { deadweight: 8200, gross_tonnage: 5100, year_built: 2006 }
   });
-  assert.equal(result.title, "Yağcı / Motorman");
+  assert.equal(result.title, "Usta Yağcı / Usta Makine Tayfası (STCW III/5)");
   assert.equal(result.minimum_sea_service_days, 180);
   assert.equal(result.public_vessel.deadweight, 8200);
   assert.equal(result.route.contract_label, "4+1 aylık kontrat");
-  assert.match(result.summary, /en az 6 ay deniz hizmeti bulunan Yağcı \/ Motorman/);
+  assert.match(result.summary, /en az 6 ay deniz hizmeti bulunan Usta Yağcı \/ Usta Makine Tayfası \(STCW III\/5\)/);
   assert.doesNotMatch(JSON.stringify(result), /Gizli Gemi|9389370/);
 });
 
@@ -179,6 +181,26 @@ test("vessel certificate recommendations stay optional and rank aware", () => {
   assert.deepEqual(recommendedVesselCertificateCodes("Chemical Tanker", "chief_engineer"), ["SA", "V/1-1-BASIC", "V/1-1-CHEM-ADV"]);
   assert.deepEqual(recommendedVesselCertificateCodes("Chemical Tanker", "oiler"), ["SA", "V/1-1-BASIC"]);
   assert.deepEqual(recommendedVesselCertificateCodes("LNG Tanker", "master"), ["V/1-2-BASIC", "V/1-2-GAS-ADV"]);
+});
+
+test("partner job ranks cover cadets, deck and engine ratings, tanker crew, electrical and hotel roles", () => {
+  const html = read("pages/partner/maripartner.html");
+  const script = read("js/maripartner.js");
+  const expected = [
+    "deck_cadet", "bosun", "deck_boy", "fourth_engineer", "engine_cadet", "engine_bosun",
+    "able_engine_rating", "motorman", "oiler", "wiper", "fitter", "welder", "eto",
+    "electro_technical_rating", "pumpman", "chief_cook", "cook", "steward"
+  ];
+  expected.forEach((rank) => {
+    assert.ok(MARIPARTNER_JOB_RANKS[rank], `${rank} must be accepted by the server`);
+    assert.ok(Array.isArray(MARIPARTNER_RANK_CERTIFICATE_CODES[rank]), `${rank} must have a certificate policy`);
+    assert.match(html, new RegExp(`value="${rank}"`));
+    assert.match(script, new RegExp(`${rank}:`));
+  });
+  assert.deepEqual(MARIPARTNER_RANK_CERTIFICATE_CODES.able_engine_rating, ["III/5", "VI/2-1"]);
+  assert.deepEqual(MARIPARTNER_RANK_CERTIFICATE_CODES.bosun, ["II/5", "VI/2-1"]);
+  assert.deepEqual(MARIPARTNER_RANK_CERTIFICATE_CODES.pumpman, ["II/4"]);
+  for (const code of ["FITTER", "WELDER", "FOOD-HYG"]) assert.match(script, new RegExp(`(?:"${code}"|${code}):`));
 });
 
 test("public maritime jobs expose safe operational facts without vessel name or IMO", () => {

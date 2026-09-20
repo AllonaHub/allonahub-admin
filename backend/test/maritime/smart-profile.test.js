@@ -295,6 +295,31 @@ test("blocks a motorman from applying to a second engineer position even when ev
   assert.ok(match.missing_requirements.includes("rank"));
 });
 
+test("keeps motorman, oiler, III/5 able engine rating, bosun and pumpman as distinct match ranks", () => {
+  const cases = [
+    ["Motorman", "motorman"],
+    ["Yağcı", "oiler"],
+    ["Usta Yağcı", "able_engine_rating"],
+    ["Reis", "bosun"],
+    ["Pompaman", "pumpman"]
+  ];
+  for (const [candidateRank, jobRank] of cases) {
+    const profile = {
+      ...cvProfile,
+      profile_payload: { ...cvProfile.profile_payload, rank: candidateRank, suitable_positions: [candidateRank] }
+    };
+    const match = matchMaritimeJob(smart({ cvProfile: profile }), {
+      id: `job-${jobRank}`,
+      partner_id: "30000000-0000-4000-8000-000000000001",
+      job_reference: `MJ-${jobRank}`,
+      job_title: jobRank,
+      rank_code: jobRank,
+      hard_gates: { required_certificate_codes: ["SP", "SH", "SI", "SL", "SO"], minimum_sea_service_days: 0, medical_required: true }
+    });
+    assert.equal(match.components.find((item) => item.code === "rank")?.status, "passed", `${candidateRank} should match ${jobRank}`);
+  }
+});
+
 test("never treats an underspecified job as eligible", () => {
   const match = matchMaritimeJob(smart(), {
     id: "20000000-0000-4000-8000-000000000003",

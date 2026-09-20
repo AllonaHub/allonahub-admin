@@ -197,10 +197,21 @@
     fourth_engineer: ["Dördüncü Mühendis", "Dördüncü mühəndis", "Төртінші механик", "To‘rtinchi mexanik", "Төртүнчү механик", "Fourth Engineer", "Vierter Ingenieur", "Четвертый механик", "المهندس الرابع"],
     engine_cadet: ["Makine Stajyeri", "Maşın kursantı", "Машина курсанты", "Mexanika kursanti", "Механика курсанты", "Engine Cadet", "Maschinenkadett", "Курсант-механик", "متدرب محركات"],
     eto: ["Elektroteknik Zabiti", "Elektrotexniki zabit", "Электротехникалық офицер", "Elektrotexnika ofitseri", "Электротехникалык офицер", "Electro-Technical Officer", "Elektrotechnischer Offizier", "Электромеханик", "ضابط كهربائي تقني"],
+    electrician: ["Gemi Elektrikçisi", "Gəmi elektrikçisi", "Кеме электршісі", "Kema elektrigi", "Кеме электриги", "Ship Electrician", "Schiffselektriker", "Судовой электрик", "كهربائي السفينة"],
+    electro_technical_rating: ["Elektro-Teknik Tayfa", "Elektrotexniki heyət", "Электротехникалық қатардағы маман", "Elektrotexnik reyting", "Электротехникалык катардагы адис", "Electro-Technical Rating", "Elektrotechnische Fachkraft", "Электротехнический рядовой", "فني كهربائي بحري"],
     bosun: ["Lostromo", "Bosman", "Боцман", "Botsman", "Боцман", "Bosun", "Bootsmann", "Боцман", "رئيس البحارة"],
     able_seaman: ["Usta Gemici", "Bacarıqlı matros", "Білікті матрос", "Malakali matros", "Квалификациялуу матрос", "Able Seaman", "Vollmatrose", "Квалифицированный матрос", "بحار مؤهل"],
     ordinary_seaman: ["Gemici", "Matros", "Матрос", "Matros", "Матрос", "Ordinary Seaman", "Leichtmatrose", "Матрос", "بحار عادي"],
+    deck_boy: ["Miço / Güverte Tayfası", "Göyərtə heyəti", "Палуба матросы", "Paluba yordamchisi", "Палуба жардамчысы", "Deck Boy", "Decksjunge", "Юнга", "متدرب سطح"],
+    engine_bosun: ["Makine Lostromosu", "Maşın bosmanı", "Машина боцманы", "Mashina botsmani", "Машина боцманы", "Engine Bosun", "Maschinenbootsmann", "Машинный боцман", "رئيس طاقم المحركات"],
+    able_engine_rating: ["Usta Yağcı / Usta Makine Tayfası", "İxtisaslı maşın heyəti", "Білікті машина маманы", "Malakali mashina xodimi", "Квалификациялуу машина адиси", "Able Seafarer Engine", "Vollmatrose Maschine", "Квалифицированный моторист", "بحار محركات مؤهل"],
+    motorman: ["Motorman / Motorcu", "Motorçu", "Моторшы", "Motorchi", "Моторчу", "Motorman", "Motorenwärter", "Моторист", "عامل محركات"],
     oiler: ["Yağcı", "Motorçu", "Моторист", "Motorchi", "Моторист", "Oiler", "Motorenwärter", "Моторист", "عامل زيوت"],
+    wiper: ["Silici / Makine Tayfası", "Silici", "Машина бөлімінің көмекшісі", "Mashina yordamchisi", "Машина жардамчысы", "Wiper", "Maschinenhelfer", "Машинный дневальный", "مساعد غرفة المحركات"],
+    fitter: ["Fitter", "Fitter", "Слесарь", "Chilangar", "Слесарь", "Fitter", "Schlosser", "Слесарь", "فني تركيب"],
+    welder: ["Kaynakçı", "Qaynaqçı", "Дәнекерлеуші", "Payvandchi", "Ширетүүчү", "Welder", "Schweißer", "Сварщик", "لحام"],
+    pumpman: ["Pompaman", "Nasosçu", "Сорғы маманы", "Nasoschi", "Насосчу", "Pumpman", "Pumpenmann", "Донкерман", "مشغل المضخات"],
+    chief_cook: ["Baş Aşçı", "Baş aşpaz", "Бас аспаз", "Bosh oshpaz", "Башкы ашпозчу", "Chief Cook", "Chefkoch", "Шеф-повар", "رئيس الطهاة"],
     cook: ["Aşçı", "Aşpaz", "Аспаз", "Oshpaz", "Ашпозчу", "Cook", "Koch", "Повар", "طباخ"],
     steward: ["Kamarot", "Stüard", "Стюард", "Styuard", "Стюард", "Steward", "Steward", "Стюард", "مضيف" ]
   };
@@ -261,9 +272,13 @@
       "third officer": "third_officer", "ucuncu zabit": "third_officer",
       "chief engineer": "chief_engineer", "bas muhendis": "chief_engineer",
       "second engineer": "second_engineer", "third engineer": "third_engineer", "fourth engineer": "fourth_engineer",
-      "deck cadet": "deck_cadet", "engine cadet": "engine_cadet", "electro technical officer": "eto",
-      bosun: "bosun", boatswain: "bosun", lostromo: "bosun", "able seaman": "able_seaman",
-      "ordinary seaman": "ordinary_seaman", oiler: "oiler", motorman: "oiler", cook: "cook", steward: "steward"
+      "deck cadet": "deck_cadet", "guverte kadeti": "deck_cadet", "engine cadet": "engine_cadet", "makine kadeti": "engine_cadet", "electro technical officer": "eto",
+      electrician: "electrician", "electro technical rating": "electro_technical_rating", etr: "electro_technical_rating",
+      bosun: "bosun", boatswain: "bosun", lostromo: "bosun", reis: "bosun", "able seaman": "able_seaman",
+      "ordinary seaman": "ordinary_seaman", "deck boy": "deck_boy", mico: "deck_boy", "engine bosun": "engine_bosun", "makine lostromosu": "engine_bosun",
+      "able engine rating": "able_engine_rating", "able seafarer engine": "able_engine_rating", "usta yagci": "able_engine_rating", "usta makine tayfasi": "able_engine_rating",
+      oiler: "oiler", motorman: "motorman", motorcu: "motorman", wiper: "wiper", silici: "wiper", fitter: "fitter", welder: "welder", kaynakci: "welder",
+      pumpman: "pumpman", pompaman: "pumpman", pompaci: "pumpman", postman: "pumpman", "chief cook": "chief_cook", cook: "cook", steward: "steward"
     };
     let key = aliases[target];
     if (!key) {

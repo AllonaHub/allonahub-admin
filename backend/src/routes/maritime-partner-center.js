@@ -198,7 +198,7 @@ const partnerJobSchema = z.object({
   salary_currency: z.enum(["USD", "EUR", "GBP", "TRY", "AZN"]),
   preferred_conditions: z.string().trim().max(500).optional().default(""),
   rank_code: z.enum(Object.keys(MARIPARTNER_JOB_RANKS)),
-  required_certificate_codes: z.array(z.enum(MARIPARTNER_JOB_CERTIFICATE_CODES)).min(1).max(24),
+  required_certificate_codes: z.array(z.enum(MARIPARTNER_JOB_CERTIFICATE_CODES)).min(1).max(MARIPARTNER_JOB_CERTIFICATE_CODES.length),
   minimum_sea_service_months: z.number().int().min(0).max(600).default(0),
   required_languages: z.array(z.object({ language: z.string().trim().min(2).max(60), level: z.enum(["A1", "A2", "B1", "B2", "C1", "C2", "fluent", "native"]) }).strict()).max(12).default([]),
   available_now_required: z.boolean().default(false),
