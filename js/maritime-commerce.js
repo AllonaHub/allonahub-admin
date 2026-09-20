@@ -120,7 +120,8 @@
       pendingKeys.delete(product);
       return result;
     } catch (error) {
-      if (error.status !== 0 && error.code !== "REQUEST_FAILED") pendingKeys.delete(product);
+      // An interrupted response may already have consumed an entitlement.
+      if (error.status >= 400 && error.status < 500 && error.status !== 408) pendingKeys.delete(product);
       throw error;
     }
   }
