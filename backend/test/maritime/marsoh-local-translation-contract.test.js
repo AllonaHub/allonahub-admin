@@ -46,6 +46,15 @@ test("local model revisions and offline runtime are pinned", () => {
   const engine = read("backend/local-translator/translation_engine.py");
   assert.match(engine, /M2M100Tokenizer/);
   assert.match(engine, /MarianTokenizer/);
+  assert.match(engine, /local_ctranslate2_quality_v2/);
+  const quality = read("backend/local-translator/language_quality.py");
+  assert.match(quality, /NEURAL_VOCABULARY_SIZE = 128_112/);
+  assert.match(quality, /normalize_translation_input/);
+  assert.match(quality, /translation_quality/);
+  const glossary = JSON.parse(read("backend/local-translator/maritime_glossary.json"));
+  assert.ok(glossary.terms.length >= 30);
+  assert.ok(glossary.terms.every((term) => ["tr", "az", "en", "de", "ru", "ar", "kk", "uz", "ky"].every((language) => term.labels[language])));
+  assert.match(dockerfile, /language_quality\.py maritime_glossary\.json/);
   const server = read("backend/local-translator/server.py");
   assert.match(server, /except TranslationInputError as error/);
   assert.doesNotMatch(server, /except ValueError as error/);

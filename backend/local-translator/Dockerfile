@@ -55,7 +55,7 @@ RUN apt-get update && \
     useradd --create-home --uid 10001 translator
 
 COPY --from=converter --chown=translator:translator /models /models
-COPY --chown=translator:translator translation_engine.py server.py ./
+COPY --chown=translator:translator translation_engine.py language_quality.py maritime_glossary.json server.py ./
 
 USER translator
 EXPOSE 8080

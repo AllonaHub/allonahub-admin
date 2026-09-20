@@ -6,6 +6,7 @@ import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from translation_engine import MAX_TEXT_CHARS, SUPPORTED_LANGUAGES, TranslationEngine, TranslationInputError
+from language_quality import ENGINE_VERSION, glossary_metadata
 
 
 MAX_REQUEST_BYTES = 16 * 1024
@@ -15,7 +16,7 @@ ENGINE = TranslationEngine()
 
 
 class TranslationHandler(BaseHTTPRequestHandler):
-    server_version = "AllonaMarSohTranslator/1.0"
+    server_version = "AllonaMarSohTranslator/2.0"
 
     def log_message(self, format_string, *args):
         # Never put message bodies in application logs.
@@ -45,8 +46,10 @@ class TranslationHandler(BaseHTTPRequestHandler):
         return self._json(status, {
             "ok": ready,
             "service": "marsoh-local-translator",
-            "provider": "local_ctranslate2",
+            "provider": "local_ctranslate2_quality_v2",
             "model": "m2m100_418m_int8",
+            "engine_version": ENGINE_VERSION,
+            "glossary": glossary_metadata(),
             "languages": sorted(SUPPORTED_LANGUAGES),
         })
 

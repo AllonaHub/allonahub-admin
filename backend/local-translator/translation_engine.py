@@ -7,6 +7,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
+from language_quality import (
+    ENGINE_VERSION,
+    apply_conservative_glossary_repairs,
+    glossary_metadata,
+    normalize_translation_input,
+    postprocess_translation,
+    translation_quality,
+)
+
 
 SUPPORTED_LANGUAGES = frozenset({"tr", "az", "en", "de", "ru", "ar", "kk", "uz", "ky"})
 M2M100_LANGUAGES = SUPPORTED_LANGUAGES - {"ky"}
@@ -49,7 +58,7 @@ def plan_translation(source_language: str, target_language: str) -> tuple[Transl
 
 
 def normalize_input(text: str) -> str:
-    value = str(text or "").replace("\x00", "").strip()
+    value = normalize_translation_input(str(text or "").replace("\x00", ""))
     if not value:
         raise TranslationInputError("empty_text")
     if len(value) > MAX_TEXT_CHARS:
@@ -118,15 +127,16 @@ class CTranslateModel:
             raise TranslationInputError("text_token_limit")
         return chunks
 
-    def translate(self, text: str, source_language: str, target_language: str) -> str:
+    def translate(self, text: str, source_language: str, target_language: str, quality_mode: bool = False) -> str:
         target_prefix = [self._language_token(target_language)] if self.is_m2m100 else None
         translated_parts: list[str] = []
         for chunk in self._chunks(text, source_language, target_language):
             source_tokens = self._source_tokens(chunk, source_language, target_language)
             options = dict(
-                beam_size=4,
+                beam_size=6 if quality_mode else 4,
                 max_decoding_length=1024,
-                repetition_penalty=1.08,
+                repetition_penalty=1.12 if quality_mode else 1.08,
+                no_repeat_ngram_size=3 if quality_mode else 0,
             )
             if target_prefix:
                 options["target_prefix"] = [target_prefix]
@@ -164,25 +174,78 @@ class TranslationEngine:
                 self._models[model_key] = self.model_factory(self.model_paths[model_key], self.cpu_threads)
             return self._models[model_key]
 
+    def _run_steps(self, text: str, steps: tuple[TranslationStep, ...], quality_mode: bool = False) -> str:
+        output = text
+        for step in steps:
+            output = self._model(step.model_key).translate(
+                output,
+                step.source_language,
+                step.target_language,
+                quality_mode=quality_mode,
+            )
+        return output
+
+    @staticmethod
+    def _quality_score(report: dict) -> tuple[int, int, float]:
+        return (
+            int(report["structured_tokens_preserved"]),
+            int(not report["excessive_repetition"]),
+            float(report["script_ratio"]),
+        )
+
     def translate(self, text: str, source_language: str, target_language: str) -> dict:
         normalized = normalize_input(text)
-        steps = plan_translation(source_language, target_language)
+        source = str(source_language or "").strip().lower()
+        target = str(target_language or "").strip().lower()
+        steps = plan_translation(source, target)
         if not steps:
             return {
                 "translated_text": normalized,
                 "provider": "local_identity",
                 "model": "identity",
                 "route": [],
+                "engine_version": ENGINE_VERSION,
+                "quality": translation_quality(normalized, normalized, target),
+                "glossary": glossary_metadata(),
             }
 
-        output = normalized
         with self._translation_lock:
-            for step in steps:
-                output = self._model(step.model_key).translate(output, step.source_language, step.target_language)
+            output = self._run_steps(normalized, steps)
+            output, repaired_terms = apply_conservative_glossary_repairs(
+                normalized,
+                output,
+                source,
+                target,
+            )
+            output = postprocess_translation(output, target)
+            quality = translation_quality(normalized, output, target, repaired_terms)
+
+            if (
+                not quality["structured_tokens_preserved"]
+                or quality["excessive_repetition"]
+                or not quality["script_plausible"]
+            ):
+                retry = self._run_steps(normalized, steps, quality_mode=True)
+                retry, retry_repairs = apply_conservative_glossary_repairs(
+                    normalized,
+                    retry,
+                    source,
+                    target,
+                )
+                retry = postprocess_translation(retry, target)
+                retry_quality = translation_quality(normalized, retry, target, retry_repairs)
+                if self._quality_score(retry_quality) > self._quality_score(quality):
+                    output, quality = retry, retry_quality
+
+            if not quality["structured_tokens_preserved"] or quality["excessive_repetition"]:
+                raise RuntimeError("translation_quality_failed")
 
         return {
             "translated_text": output,
-            "provider": "local_ctranslate2",
+            "provider": "local_ctranslate2_quality_v2",
             "model": "+".join(step.model_key for step in steps),
             "route": [f"{step.source_language}:{step.target_language}" for step in steps],
+            "engine_version": ENGINE_VERSION,
+            "quality": quality,
+            "glossary": glossary_metadata(),
         }
