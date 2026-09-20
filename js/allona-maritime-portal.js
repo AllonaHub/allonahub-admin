@@ -1120,6 +1120,13 @@
     setStaticTranslations();
     const context = await syncSession();
     const customerOnly = ["applications", "offers", "auto", "account", "documents", "smart"].includes(view);
+    if (view === "account" && session && context && context.type === "partner") {
+      const destination = App.auth && App.auth.accountHome
+        ? App.auth.accountHome(context.type, context)
+        : "/pages/partner/maripartner.html";
+      window.location.replace(destination);
+      return;
+    }
     if (customerOnly && session && (!context || context.type !== "customer")) {
       personalAccountGate(context);
       return;

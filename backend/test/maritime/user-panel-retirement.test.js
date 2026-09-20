@@ -10,10 +10,12 @@ const portalUrl = new URL("../../../js/allona-maritime-portal.js", import.meta.u
 const profileHelperUrl = new URL("../../src/lib/maritime-customer-profile.js", import.meta.url);
 
 test("the public user-panel address serves the new simple account", async () => {
-  const page = await readFile(newPanelUrl, "utf8");
+  const [page, portal] = await Promise.all([readFile(newPanelUrl, "utf8"), readFile(portalUrl, "utf8")]);
   assert.match(page, /data-maritime-view="account"/);
   assert.match(page, /\.\.\/ecosystem\/maritime-documents\.html/);
   assert.match(page, /allona-maritime-portal\.js/);
+  assert.match(portal, /view === "account" && session && context && context\.type === "partner"/);
+  assert.match(portal, /window\.location\.replace\(destination\)/);
   assert.doesNotMatch(page, /user-panel-premium\.(?:css|js)/);
   assert.doesNotMatch(page, /class="premium-shell"/);
 });
