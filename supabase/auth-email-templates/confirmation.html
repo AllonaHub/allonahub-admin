@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AllonaHub e-posta doğrulama</title>
+  </head>
+  <body style="margin:0;background:#eef5fa;color:#102033;font-family:Arial,Helvetica,sans-serif;">
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">
+      AllonaHub hesabınızı doğrulayın ve ekosisteme güvenle katılın.
+    </div>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="width:100%;background:#eef5fa;margin:0;padding:30px 12px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="width:100%;max-width:620px;background:#ffffff;border:1px solid #d7e7f2;border-radius:8px;overflow:hidden;box-shadow:0 14px 34px rgba(8,43,69,.12);">
+            <tr>
+              <td align="center" style="background:#061b2d;padding:30px 28px 28px;border-bottom:3px solid #00bfe9;">
+                <img src="https://allonahub.com/images/allona-logo-mark.png" width="86" height="86" alt="AllonaHub" style="display:block;width:86px;height:86px;border:0;border-radius:8px;margin:0 auto 14px;">
+                <p style="margin:0;color:#ffffff;font-size:23px;font-weight:800;line-height:1.2;">AllonaHub</p>
+                <p style="margin:7px 0 0;color:#74e4ff;font-size:13px;font-weight:700;line-height:1.4;">Küresel iş ve yaşam ekosistemi</p>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding:34px 34px 12px;">
+                <h1 style="margin:0;color:#082b45;font-size:28px;line-height:1.25;font-weight:800;">Ekosisteme hoş geldiniz</h1>
+                <p style="margin:16px 0 0;color:#496176;font-size:16px;line-height:1.65;">
+                  AllonaHub hesabınız başarıyla oluşturuldu. Hesabınızı etkinleştirmek ve güvenli biçimde giriş yapmak için e-posta adresinizi doğrulayın.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding:18px 34px 10px;">
+                <a href="{{ .ConfirmationURL }}" style="display:inline-block;background:#0077e6;color:#ffffff;text-decoration:none;border-radius:6px;padding:15px 26px;font-size:16px;line-height:1;font-weight:800;box-shadow:0 8px 20px rgba(0,119,230,.24);">E-postamı doğrula</a>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:16px 34px 8px;">
+                <p style="margin:0;color:#62778a;font-size:13px;line-height:1.65;text-align:center;">
+                  Düğme açılmazsa aşağıdaki güvenli bağlantıyı tarayıcınıza yapıştırın:
+                </p>
+                <p style="margin:8px 0 0;font-size:12px;line-height:1.55;word-break:break-all;text-align:center;">
+                  <a href="{{ .ConfirmationURL }}" style="color:#006bcf;text-decoration:underline;">{{ .ConfirmationURL }}</a>
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding:18px 34px 28px;">
+                <a href="{{ .SiteURL }}/pages/account/user.html?tab=login" style="color:#075f9e;font-size:14px;font-weight:700;text-decoration:none;">AllonaHub giriş sayfasını aç</a>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:20px 28px 24px;background:#f6fafc;border-top:1px solid #dce9f1;text-align:center;">
+                <p style="margin:0;color:#687d8e;font-size:12px;line-height:1.6;">
+                  Bu kaydı siz oluşturmadıysanız e-postayı yok sayabilirsiniz. Doğrulama bağlantısını başka kişilerle paylaşmayın.
+                </p>
+                <p style="margin:10px 0 0;color:#8a9aa7;font-size:11px;line-height:1.5;">AllonaHub hesap güvenliği bildirimi</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

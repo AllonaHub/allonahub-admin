@@ -69,7 +69,7 @@ const projectRef = requireEnv(
   env("SUPABASE_PROJECT_REF", "PROJECT_REF") || projectRefFromUrl(env("SUPABASE_URL")),
   "Set SUPABASE_PROJECT_REF, PROJECT_REF or SUPABASE_URL before running this script."
 );
-const senderName = env("SUPABASE_AUTH_SENDER_NAME") || "Alloana Hub";
+const senderName = env("SUPABASE_AUTH_SENDER_NAME") || "AllonaHub";
 const siteUrl = (env("SUPABASE_AUTH_SITE_URL", "SITE_URL") || "https://allonahub.com").replace(/\/$/, "");
 const resetUrl = `${siteUrl}/pages/account/reset-password.html`;
 const defaultUriAllowList = [
@@ -102,6 +102,8 @@ const payload = compact({
   smtp_user: smtpUser,
   smtp_pass: smtpPass,
   smtp_max_frequency: smtpMaxFrequency,
+  mailer_subjects_confirmation: `${senderName} ekosistemine hoş geldiniz - e-postanızı doğrulayın`,
+  mailer_templates_confirmation_content: readTemplate("confirmation.html"),
   mailer_subjects_recovery: `${senderName} şifre yenileme bağlantın`,
   mailer_templates_recovery_content: readTemplate("recovery.html"),
   mailer_notifications_password_changed_enabled: true,
@@ -138,6 +140,7 @@ console.log(JSON.stringify({
   site_url: result.site_url,
   smtp_admin_email: result.smtp_admin_email,
   smtp_sender_name: result.smtp_sender_name,
+  mailer_subjects_confirmation: result.mailer_subjects_confirmation,
   mailer_subjects_recovery: result.mailer_subjects_recovery,
   mailer_subjects_password_changed_notification: result.mailer_subjects_password_changed_notification,
   reset_redirect: resetUrl
