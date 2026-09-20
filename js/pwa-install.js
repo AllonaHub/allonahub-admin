@@ -5,6 +5,12 @@
   const copy = document.querySelector("[data-pwa-install-copy]");
   const DISMISS_KEY = "allonahub.pwaInstall.dismissedUntil";
   let deferredPrompt = null;
+  let lastReason = "mobile";
+
+  const localized = source => {
+    const platform = window.Allona && window.Allona.platform;
+    return platform && typeof platform.localize === "function" ? platform.localize(source) : source;
+  };
 
   const isStandalone = () => {
     return window.matchMedia("(display-mode: standalone)").matches ||
@@ -28,15 +34,16 @@
   };
 
   const setMessage = message => {
-    if(copy){copy.textContent = message}
+    if(copy){copy.textContent = localized(message)}
   };
 
   const setButtonLabel = label => {
-    if(button){button.textContent = label}
+    if(button){button.textContent = localized(label)}
   };
 
   const showCard = reason => {
     if(!card || isStandalone() || isDismissed()){return}
+    lastReason = reason || "mobile";
     if(reason === "ios"){
       setButtonLabel("Adımları Göster");
       setMessage("iPhone'da Safari Paylaş menüsünden Ana Ekrana Ekle seçeneğini kullan.");
@@ -104,6 +111,10 @@
     if(isMobile()){
       showCard(isIos() ? "ios" : "mobile");
     }
+  });
+
+  document.addEventListener("allona:language-changed", () => {
+    if(card && !card.hidden){showCard(lastReason)}
   });
 
   if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")){

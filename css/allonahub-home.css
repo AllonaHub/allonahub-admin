@@ -14,7 +14,7 @@ a{text-decoration:none}
 header{height:92px!important;padding:0 7%!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:28px!important;background:rgba(2,8,20,.88)!important;border-bottom:1px solid rgba(0,225,255,.18)!important;position:sticky;top:0;z-index:50;backdrop-filter:blur(18px)}
 .logo{display:flex!important;align-items:center!important;gap:12px!important;flex-shrink:0!important}
 .logo img{width:55px!important;height:55px!important;object-fit:contain!important}
-.logo-title{font-size:30px!important;font-weight:900!important;white-space:nowrap!important}
+.logo-title{font-size:30px!important;font-weight:900!important;white-space:nowrap!important;direction:ltr;unicode-bidi:isolate}
 .logo-title .gold{color:#ffd700!important}.logo-title .blue{color:#00e5ff!important}
 
 .nav-search{flex:1!important;max-width:560px!important;height:48px!important;padding:0 8px 0 18px!important;border-radius:999px!important;border:1px solid rgba(0,225,255,.75)!important;background:rgba(0,18,40,.86)!important;box-shadow:0 0 22px rgba(0,180,255,.22)!important;display:flex!important;align-items:center!important;gap:10px!important}

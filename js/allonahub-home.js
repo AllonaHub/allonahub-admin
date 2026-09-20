@@ -1,3 +1,17 @@
+function homeText(source){
+const platform=window.Allona&&window.Allona.platform;
+return platform&&typeof platform.localize==="function"?platform.localize(source):source
+}
+
+function setHomeText(node,source){
+if(!node){return}
+node.dataset.homeSource=source;
+node.textContent=homeText(source);
+}
+
+const homeLocales={tr:"tr-TR",az:"az-AZ",kk:"kk-KZ",uz:"uz-UZ",ky:"ky-KG",en:"en-US",de:"de-DE",ru:"ru-RU",ar:"ar-AE"};
+function homeLanguage(){return document.documentElement.lang||"tr"}
+
 function updateHeroTime(){
 const now=new Date();
 const h=now.getHours();
@@ -11,10 +25,10 @@ const pad=n=>String(n).padStart(2,"0");
 clock.textContent=`${pad(h)}:${pad(m)}:${pad(s)}`;
 const total=h*60+m;
 visual.className="time-visual";
-if(total>=300&&total<=720){greeting.textContent="Günaydın";visual.classList.add("sun-visual")}
-else if(total>=721&&total<=1140){greeting.textContent="Merhaba";visual.classList.add("day-visual")}
-else if(total>=1141&&total<=1380){greeting.textContent="İyi Akşamlar";visual.classList.add("evening-visual")}
-else{greeting.textContent="İyi Geceler";visual.classList.add("night-visual")}
+if(total>=300&&total<=720){setHomeText(greeting,"Günaydın");visual.classList.add("sun-visual")}
+else if(total>=721&&total<=1140){setHomeText(greeting,"Merhaba");visual.classList.add("day-visual")}
+else if(total>=1141&&total<=1380){setHomeText(greeting,"İyi Akşamlar");visual.classList.add("evening-visual")}
+else{setHomeText(greeting,"İyi Geceler");visual.classList.add("night-visual")}
 	}
 if(document.getElementById("heroClock")){
 updateHeroTime();
@@ -153,15 +167,15 @@ function updateLocationStatus(active,city,country){
 const cityEl=document.getElementById("heroCity");
 const countryEl=document.getElementById("heroCountry");
 const pinEl=document.getElementById("heroLocationStatus")||document.querySelector(".pin-dot");
-if(cityEl){cityEl.textContent=city||"Konum belirlenemedi"}
-if(countryEl){countryEl.textContent=country||"İzin verilmedi"}
+if(cityEl){setHomeText(cityEl,city||"Konum belirlenemedi")}
+if(countryEl){setHomeText(countryEl,country||"İzin verilmedi")}
 if(pinEl){
 pinEl.classList.toggle("is-location-active",Boolean(active));
 const label=active?"Konum izni açık":"Konum izni kapalı";
 pinEl["__allonaSource_aria-label"]=label;
 pinEl.__allonaSource_title=label;
-pinEl.setAttribute("aria-label",label);
-pinEl.setAttribute("title",label);
+pinEl.setAttribute("aria-label",homeText(label));
+pinEl.setAttribute("title",homeText(label));
 	}
 }
 
@@ -227,9 +241,10 @@ return ["Konum belirlenemedi","İzin verilmedi"]
 }
 
 async function reverseGeocodeLocation(lat,lon){
+const language=homeLanguage();
 const providers=[
-`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&zoom=10&addressdetails=1&accept-language=tr`,
-`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lon)}&localityLanguage=tr`
+`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&zoom=10&addressdetails=1&accept-language=${encodeURIComponent(language)}`,
+`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lon)}&localityLanguage=${encodeURIComponent(language)}`
 ];
 for(const url of providers){
 try{
@@ -304,7 +319,8 @@ const card=document.querySelector(".ad-hero__location");
 if(!card){return}
 card.setAttribute("role","button");
 card.setAttribute("tabindex","0");
-card.setAttribute("aria-label","Canlı konumu belirle");
+card["__allonaSource_aria-label"]="Canlı konumu belirle";
+card.setAttribute("aria-label",homeText("Canlı konumu belirle"));
 card.addEventListener("click",()=>requestBrowserLocation({prompt:true}));
 card.addEventListener("keydown",(event)=>{
 if(event.key==="Enter"||event.key===" "){
@@ -329,7 +345,7 @@ jobAds:"Yeni Üyeler",
 activeListings:"İlanlar"
 };
 const requiredVerifiedStats=["activeUsers","activeAds","jobAds","activeListings"];
-function formatNumber(num){return Number(num).toLocaleString("tr-TR")}
+function formatNumber(num){return Number(num).toLocaleString(homeLocales[homeLanguage()]||"tr-TR")}
 function metricKeyOf(item){return item?.metricKey||item?.metric_key}
 function globalMetricOnly(item){return !(item?.countryId||item?.country_id)&&!(item?.corridorId||item?.corridor_id)}
 function finiteMetricValue(value){if(value===null||value===undefined||value===""){return null}const numeric=Number(value);return Number.isFinite(numeric)?numeric:null}
@@ -337,15 +353,19 @@ function setLiveStatState(id,text,state){
 const node=document.getElementById(id);
 if(!node){return}
 const card=node.closest(".stat-live-card");
-const label=statLabels[id]||card?.querySelector("p")?.textContent?.trim()||id;
+const labelSource=statLabels[id]||id;
+const label=homeText(labelSource);
 const verified=state==="verified";
 const missing=state==="missing";
-const ariaText=missing?`${label}: ${text}. API metriği yayınlandığında sayı otomatik gösterilir.`:`${label}: ${text==="—"?"veri bekleniyor":text}`;
-node.textContent=text;
+const displayText=typeof text==="number"?formatNumber(text):homeText(text);
+const ariaText=missing?`${label}: ${displayText}. ${homeText("API metriği yayınlandığında sayı otomatik gösterilir.")}`:`${label}: ${displayText==="—"?homeText("veri bekleniyor"):displayText}`;
+node.textContent=displayText;
+node.dataset.statValue=String(text);
+node.dataset.statState=state;
 node.classList.toggle("stat-live-status",missing);
 node["__allonaSource_aria-label"]=ariaText;
 node.setAttribute("aria-label",ariaText);
-if(missing){node["__allonaSource_title"]=text;node.setAttribute("title",text)}else{node.removeAttribute("title");delete node["__allonaSource_title"]}
+if(missing){node["__allonaSource_title"]=text;node.setAttribute("title",displayText)}else{node.removeAttribute("title");delete node["__allonaSource_title"]}
 card?.classList.toggle("has-verified-stat",verified);
 card?.classList.toggle("has-missing-source",missing);
 if(card){card["__allonaSource_aria-label"]=ariaText}
@@ -357,7 +377,7 @@ const globalMetrics=(metrics||[]).filter(globalMetricOnly);
 Object.entries(verifiedStatKeys).forEach(([id,keys])=>{
 const metric=globalMetrics.find(item=>keys.includes(metricKeyOf(item)));
 const numericValue=metric?finiteMetricValue(metric.value):null;
-if(numericValue!==null){setLiveStatState(id,formatNumber(numericValue),"verified")}
+if(numericValue!==null){setLiveStatState(id,numericValue,"verified")}
 });
 }
 async function loadVerifiedStats(){
@@ -369,7 +389,7 @@ const response=await fetch(`${base}/v1/platform/impact`,{headers:{Accept:"applic
 if(!response.ok){throw new Error(`impact ${response.status}`)}
 const payload=await response.json();
 if(!Array.isArray(payload.metrics)||!payload.metrics.length){
-if(source){source.textContent="Doğrulanmış aggregate veri henüz yayınlanmadı."}
+if(source){setHomeText(source,"Doğrulanmış aggregate veri henüz yayınlanmadı.")}
 return
 }
 updateLiveStats(payload.metrics);
@@ -378,19 +398,33 @@ const node=document.getElementById(id);
 return node&&node.textContent.trim()!=="—";
 });
 if(source){
-source.textContent=hasRequiredStats
+setHomeText(source,hasRequiredStats
 ?"Sayaçlar production aggregate veriden gelir; yeni üyeler son 7 günü gösterir."
-:"Zorunlu aggregate kaynakları henüz tamamlanmadı.";
+:"Zorunlu aggregate kaynakları henüz tamamlanmadı.");
 }
 }catch(error){
-if(source){source.textContent="Canlı sayaç kaynağına şu anda ulaşılamıyor."}
+if(source){setHomeText(source,"Canlı sayaç kaynağına şu anda ulaşılamıyor.")}
 }
 }
 loadVerifiedStats();
 
+document.addEventListener("allona:language-changed",()=>{
+document.querySelectorAll("[data-home-source]").forEach(node=>setHomeText(node,node.dataset.homeSource));
+const locationCard=document.querySelector(".ad-hero__location");
+if(locationCard){locationCard.setAttribute("aria-label",homeText("Canlı konumu belirle"))}
+Object.keys(verifiedStatKeys).forEach(id=>{
+const node=document.getElementById(id);
+if(!node||!node.dataset.statState){return}
+const value=node.dataset.statState==="verified"?Number(node.dataset.statValue):node.dataset.statValue;
+setLiveStatState(id,value,node.dataset.statState);
+});
+updateHeroTime();
+setLocationByBrowser();
+});
+
 const searchRoutes=[
-{keys:["shop","alışveriş","pazaryeri","ürün"],url:"/pages/commerce/allonashop.html"},
-{keys:["denizcilik","gemi","crew","maritime"],url:"/pages/ecosystem/allonadenizcilik.html"}
+{keys:["shop","alışveriş","pazaryeri","ürün","shopping","marketplace","product","einkauf","produkt","покупки","товар","alış","mahsulot","дүкен","өнім","متجر","تسوق","منتج"],url:"/pages/commerce/allonashop.html"},
+{keys:["denizcilik","gemi","crew","maritime","shipping","ship","seefahrt","schiff","морской","корабль","dənizçilik","gəmi","кеме","теңіз","dengiz","кемечилик","سفينة","بحري"],url:"/pages/ecosystem/allonadenizcilik.html"}
 ];
 
 function appUrl(path){

@@ -447,6 +447,7 @@
   let languageRefreshTimer = null;
   let isApplyingLanguage = false;
   let sharedCatalogPromise = null;
+  let homepageCatalogPromise = null;
 
   function isNestedPage() {
     return /\/(admin|pages|partner)\//.test(window.location.pathname);
@@ -548,6 +549,21 @@
     return sharedCatalogPromise;
   }
 
+  async function loadHomepageCatalog() {
+    if (!document.body?.classList.contains("allonahub-home-page")) return { packs: {}, dirs: {} };
+    if (homepageCatalogPromise) return homepageCatalogPromise;
+    homepageCatalogPromise = fetch(assetUrl(`/i18n/homepage.json?v=${ASSET_VERSION}`), { cache: "no-cache" })
+      .then((response) => {
+        if (!response.ok) throw new Error(`homepage i18n ${response.status}`);
+        return response.json();
+      })
+      .catch((error) => {
+        console.warn("AllonaHub homepage language catalog could not be loaded:", error.message);
+        return { packs: {}, dirs: {} };
+      });
+    return homepageCatalogPromise;
+  }
+
   function catalogPackFor(catalog, language) {
     const phrases = {};
     Object.entries((catalog && catalog.phrases) || {}).forEach(([source, translations]) => {
@@ -578,19 +594,22 @@
   async function loadLanguage(language) {
     const selected = languages.some((item) => item.code === language) ? language : "tr";
     if (state.packs[selected]) return state.packs[selected];
-    const [remotePack, sharedCatalog] = await Promise.all([
+    const [remotePack, sharedCatalog, homepageCatalog] = await Promise.all([
       loadLanguagePackFile(selected),
-      loadSharedCatalog()
+      loadSharedCatalog(),
+      loadHomepageCatalog()
     ]);
     const embeddedPack = embeddedLanguagePacks[selected] || {};
     const catalogPack = catalogPackFor(sharedCatalog, selected);
+    const homepagePack = (homepageCatalog && homepageCatalog.packs && homepageCatalog.packs[selected]) || {};
+    const homepageLanguagePack = document.body?.classList.contains("allonahub-home-page") ? remotePack : {};
     const pack = {
       ...embeddedPack,
       ...remotePack,
       ...catalogPack,
-      dir: catalogPack.dir || remotePack.dir || embeddedPack.dir || (selected === "ar" ? "rtl" : "ltr"),
-      keys: { ...(embeddedPack.keys || {}), ...(remotePack.keys || {}), ...(catalogPack.keys || {}) },
-      phrases: { ...(embeddedPack.phrases || {}), ...(remotePack.phrases || {}), ...(catalogPack.phrases || {}) }
+      dir: (homepageCatalog && homepageCatalog.dirs && homepageCatalog.dirs[selected]) || catalogPack.dir || remotePack.dir || embeddedPack.dir || (selected === "ar" ? "rtl" : "ltr"),
+      keys: { ...(embeddedPack.keys || {}), ...(remotePack.keys || {}), ...(catalogPack.keys || {}), ...(homepageLanguagePack.keys || {}), ...(homepagePack.keys || {}) },
+      phrases: { ...(embeddedPack.phrases || {}), ...(remotePack.phrases || {}), ...(catalogPack.phrases || {}), ...(homepageLanguagePack.phrases || {}), ...(homepagePack.phrases || {}) }
     };
     state.packs[selected] = pack;
     return pack;
@@ -1423,6 +1442,7 @@
     setCurrency: applyCurrency,
     getCurrency: currentCurrency,
     setTheme: applyTheme,
+    localize: localizedText,
     assetUrl
   };
 })();
