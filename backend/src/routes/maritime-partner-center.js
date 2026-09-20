@@ -886,7 +886,7 @@ export function registerMaritimePartnerCenterRoutes(app) {
         sort_order: 100,
         published_at: now,
         expires_at: body.expires_at,
-        submission_source: "maripartner",
+        submission_source: "partner",
         submitted_at: now
       }).select("id,status,title,summary,location_label,detail_label,matching_requirements,submitted_at,created_at").single(), "İlan kaydı oluşturulamadı.");
     const existingJob = existing ? assertDb(await supabaseAdmin.from("maritime_jobs").select("id,job_reference,job_title,rank_code,status,created_at").eq("public_listing_id", listing.id).eq("partner_id", body.partner_id).maybeSingle(), "İlan eşleştirme kaydı doğrulanamadı.") : null;

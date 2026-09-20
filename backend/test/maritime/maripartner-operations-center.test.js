@@ -133,6 +133,8 @@ test("job creation records operational requirements and invites only against ope
   assert.match(script, /expiry\.max = addDays\(joining\.value, 3\)/);
   assert.match(route, /medical_required: true/);
   assert.match(route, /vessel_identity_visible: false/);
+  assert.match(route, /submission_source: "partner"/);
+  assert.doesNotMatch(route, /submission_source: "maripartner"/);
   assert.match(route, /job\.status !== "open"/);
   assert.match(route, /contract_start: body\.joining_date/);
   assert.match(route, /preferred_conditions: body\.preferred_conditions/);
