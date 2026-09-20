@@ -93,6 +93,7 @@ test("temporary recovery accounts must replace their password before normal navi
   assert.match(loginPage, /data\.user\.must_change_password/);
   assert.match(resetPage, /hasForcedPasswordIntent/);
   assert.match(resetPage, /\/v1\/auth\/complete-temporary-password/);
+  assert.match(resetPage, /config\?\.apiBaseUrl/);
   assert.match(resetPage, /supabaseClient\.auth\.setSession/);
   assert.doesNotMatch(resetPage, /signOut\(\{scope:"global"\}\)/);
   assert.match(routes, /replacementSession/);

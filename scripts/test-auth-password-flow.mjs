@@ -24,6 +24,8 @@ assert.doesNotThrow(() => new Function(visibilityScript), "password visibility s
 assert.match(visibilityScript, /aria-pressed/, "toggle must expose its state to assistive technology");
 
 const resetPage = await read("pages/account/reset-password.html");
+assert.match(resetPage, /config\?\.apiBaseUrl/, "temporary password update must use the configured production API URL");
+assert.match(resetPage, /https:\/\/api\.allonahub\.com/, "temporary password update must fail over to the production API host");
 assert.doesNotMatch(resetPage, /signOut\(\{scope:"global"\}\)/, "password update must not sign out every device");
 assert.doesNotMatch(resetPage, /clearSupabaseAuthTokens/, "password update must not delete the fresh session");
 assert.doesNotMatch(resetPage, /searchParams\.set\("forceLogin","1"\)/, "successful reset must not force another logout");
