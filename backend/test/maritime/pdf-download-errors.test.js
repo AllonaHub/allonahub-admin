@@ -73,5 +73,5 @@ test("checkout checks bank readiness before writing a pending payment", async ()
   const route = await readFile(new URL("../../src/routes/maritime-commerce.js", import.meta.url), "utf8");
   const handler = route.slice(route.indexOf('app.post("/v1/maritime/pdf-checkout"'));
   assert.ok(handler.indexOf("if (!bankPaymentConfigured())") < handler.indexOf('.insert({ user_id: ctx.user.id'));
-  assert.match(handler, /503, "BANK_PAYMENT_NOT_CONFIGURED"/);
+  assert.match(handler, /return reply\.code\(503\)\.send\(\{\s*ok: false,\s*error: "BANK_PAYMENT_NOT_CONFIGURED"/);
 });

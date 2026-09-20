@@ -169,12 +169,16 @@ export function registerMaritimeCommerceRoutes(app) {
 
   app.post("/v1/maritime/pdf-checkout", {
     config: { rateLimit: { max: 5, timeWindow: "10 minutes" } }
-  }, async (request) => {
+  }, async (request, reply) => {
     if (config.paymentsDisabled) throw httpError("Ödeme sistemi geçici olarak koruma modunda.", 503, "PAYMENTS_DISABLED");
     const ctx = await requireCustomer(request, "maritime.pdf_checkout");
     const input = checkoutSchema.parse(request.body || {});
     if (!bankPaymentConfigured()) {
-      throw httpError("PDF ödeme bağlantısı henüz etkin değil. Kayıtlı CV bilgileri korunur.", 503, "BANK_PAYMENT_NOT_CONFIGURED");
+      return reply.code(503).send({
+        ok: false,
+        error: "BANK_PAYMENT_NOT_CONFIGURED",
+        message: "PDF ödeme bağlantısı henüz etkin değil. Kayıtlı CV bilgileri korunur."
+      });
     }
     const settings = assertDb(await supabaseAdmin
       .from("maritime_commerce_settings")
