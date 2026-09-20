@@ -36,7 +36,7 @@ setInterval(updateHeroTime,1000);
 }
 
 const heroAdModules=[
-{title:"Allona Shop",eyebrow:"Alışveriş",sentence:"Yeni ürünleri ve alışveriş seçeneklerini tek ekranda keşfet.",href:"pages/commerce/allonashop.html",image:"images/ads/hero-ad-shop.jpg",accent:"#00e5ff",cta:"Alışverişe Git"},
+{title:"Allona Shop",eyebrow:"Alışveriş",sentence:"Allona Shop alışveriş modülümüz geliştirilmeye devam ediyor.",href:"pages/ecosystem/yakında.html?module=shop",image:"images/ads/hero-ad-shop.jpg",accent:"#00e5ff",cta:"Yakında Hizmetinizde"},
 {title:"Denizcilik",eyebrow:"Maritime",sentence:"Gemi, crew ve denizcilik fırsatlarını profesyonel ağ içinde buluştur.",href:"pages/ecosystem/allonadenizcilik.html",image:"images/ads/hero-ad-denizcilik.jpg",accent:"#00b4d8",cta:"Denize Açıl"}
 ];
 
@@ -423,7 +423,7 @@ setLocationByBrowser();
 });
 
 const searchRoutes=[
-{keys:["shop","alışveriş","pazaryeri","ürün","shopping","marketplace","product","einkauf","produkt","покупки","товар","alış","mahsulot","дүкен","өнім","متجر","تسوق","منتج"],url:"/pages/commerce/allonashop.html"},
+{keys:["shop","alışveriş","pazaryeri","ürün","shopping","marketplace","product","einkauf","produkt","покупки","товар","alış","mahsulot","дүкен","өнім","متجر","تسوق","منتج"],url:"/pages/ecosystem/yakında.html?module=shop"},
 {keys:["denizcilik","gemi","crew","maritime","shipping","ship","seefahrt","schiff","морской","корабль","dənizçilik","gəmi","кеме","теңіз","dengiz","кемечилик","سفينة","بحري"],url:"/pages/ecosystem/allonadenizcilik.html"}
 ];
 

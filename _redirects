@@ -41,7 +41,9 @@
 /pages/career/kariyer.html /pages/career/allonakariyer.html 301
 /maritime-cv.html /pages/career/maritime-cv.html 301
 /allonamarket.html /pages/commerce/allonamarket.html 301
-/allonashop.html /pages/commerce/allonashop.html 301
+/allonashop.html /pages/ecosystem/yak%C4%B1nda.html?module=shop 302
+/pages/commerce/allonashop.html /pages/ecosystem/yak%C4%B1nda.html?module=shop 302!
+/pages/commerce/shop.html /pages/ecosystem/yak%C4%B1nda.html?module=shop 302!
 /allonayemek.html /pages/commerce/allonayemek.html 301
 /allonayemek-tumu.html /pages/commerce/allonayemek-tumu.html 301
 /cart.html /pages/commerce/cart.html 301

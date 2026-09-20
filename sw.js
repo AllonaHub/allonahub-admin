@@ -1,4 +1,4 @@
-const ALLONAHUB_CACHE = "allonahub-pwa-20260920-auth-session1-brand1";
+const ALLONAHUB_CACHE = "allonahub-pwa-20260920-pending-release1";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -8,7 +8,7 @@ const APP_SHELL = [
   "./pages/ecosystem/turkic-world.html",
   "./manifest.json?v=20260920-smart-platform1",
   "./manifest.webmanifest?v=20260920-smart-platform1",
-  "./css/allonahub-home.css?v=20260907-modulefocus1",
+  "./css/allonahub-home.css?v=20260920-pending-release1",
   "./css/admin-module-archive.css?v=20260907-modulefocus1",
   "./css/turkic-world.css?v=20260827-country1",
   "./css/platform.css?v=20260920-auth-session1",
@@ -19,14 +19,15 @@ const APP_SHELL = [
   "./js/auth.js?v=20260629-partnerhost1",
   "./js/layout.v3.js?v=20260712-premium-page1",
   "./js/subdomain-router.js?v=20260629-subdomains1",
-  "./js/platform.js?v=20260920-smart-platform1",
+  "./js/platform.js?v=20260920-home-i18n1",
   "./js/turkic-world.js?v=20260827-country1",
   "./js/sw-refresh.heading2.js?v=20260920-auth-session1",
   "./js/privacy-consent.js?v=20260920-auth-session1",
-  "./js/allonahub-home.js?v=20260828-impactstate2",
+  "./js/allonahub-home.js?v=20260920-pending-release1",
+  "./css/shop-coming-soon.css?v=20260920-shop-soon1",
   "./js/admin-module-archive.js?v=20260907-modulefocus1",
   "./js/assistant-widget.js?v=20260828-warmtone1",
-  "./js/pwa-install.js?v=20260920-auth-session1",
+  "./js/pwa-install.js?v=20260920-home-i18n1",
   "./images/brand/allonahub-icon-180.png?v=20260622-icon1",
   "./images/brand/allonahub-icon-192.png?v=20260622-icon1",
   "./images/brand/allonahub-icon-512.png?v=20260622-icon1",

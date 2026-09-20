@@ -14,7 +14,8 @@ test("smart platform name is consistent across home, ecosystem and installed app
     const html = await source(path);
     assert.ok(html.includes(`<title>${name}</title>`));
     assert.doesNotMatch(html, /yeni nesil süper uygulama/i);
-    assert.match(html, /platform\.js\?v=20260920-smart-platform1/);
+    const platformVersion = path === "index.html" ? "20260920-home-i18n1" : "20260920-smart-platform1";
+    assert.ok(html.includes(`platform.js?v=${platformVersion}`));
   }
   assert.ok((await source("index.html")).includes(`<h1 class="home-page-title">${name}</h1>`));
   const current = JSON.parse(await source("manifest.json"));

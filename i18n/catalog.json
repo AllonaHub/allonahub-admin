@@ -1880,7 +1880,10 @@
       "de": "Demnächst verfügbar",
       "ru": "Скоро доступно",
       "ar": "قريباً في خدمتكم",
-      "tr": "Yakında Hizmetinizde"
+      "tr": "Yakında Hizmetinizde",
+      "kk": "Жақында қызметіңізге дайын болады",
+      "uz": "Tez orada xizmatingizda",
+      "ky": "Жакында кызматыңызда"
     },
     "AllonaHub Entegrasyonları": {
       "az": "AllonaHub inteqrasiyaları",
@@ -33023,6 +33026,28 @@
       "de": "Zorunlu trafik sigortası teklifleri ve yenileme takibi.",
       "ru": "Zorunlu trafik sigortası teklifleri ve yenileme takibi.",
       "ar": "Zorunlu trafik sigortası teklifleri ve yenileme takibi."
+    },
+    "Allona Shop alışveriş modülümüz geliştirilmeye devam ediyor.": {
+      "tr": "Allona Shop alışveriş modülümüz geliştirilmeye devam ediyor.",
+      "az": "Allona Shop alış-veriş modulumuzun hazırlanması davam edir.",
+      "en": "Our Allona Shop shopping module is still in development.",
+      "de": "Unser Allona Shop Einkaufsmodul wird weiterentwickelt.",
+      "ru": "Наш торговый модуль Allona Shop находится в разработке.",
+      "ar": "ما زلنا نعمل على تطوير وحدة التسوق Allona Shop.",
+      "kk": "Allona Shop сауда модулін әзірлеу жалғасуда.",
+      "uz": "Allona Shop xarid modulimizni ishlab chiqish davom etmoqda.",
+      "ky": "Allona Shop соода модулун иштеп чыгуу уланууда."
+    },
+    "Geri Dön": {
+      "tr": "Geri Dön",
+      "az": "Geri qayıt",
+      "en": "Go Back",
+      "de": "Zurück",
+      "ru": "Назад",
+      "ar": "رجوع",
+      "kk": "Артқа қайту",
+      "uz": "Orqaga qaytish",
+      "ky": "Артка кайтуу"
     }
   }
 }

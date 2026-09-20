@@ -6,6 +6,7 @@
 <meta name="theme-color" content="#061b33">
 <title>AllonaHub | Yakında Hizmetinizde</title>
 <link rel="stylesheet" href="../../css/platform.css?v=20260828-corporate4">
+<link rel="stylesheet" href="../../css/shop-coming-soon.css?v=20260920-shop-soon1">
 <style>
 *{box-sizing:border-box}
 html{min-height:100%;-webkit-text-size-adjust:100%;text-size-adjust:100%}
@@ -229,6 +230,7 @@ body[data-theme="corporate"] .active-modules a{
   <section class="soon-panel" aria-labelledby="soonTitle">
     <span class="soon-pill" data-soon-badge>Modül hazırlanıyor</span>
     <h1 id="soonTitle" data-soon-title>Yakında Hizmetinizde</h1>
+    <p class="shop-soon-headline" data-shop-soon-headline hidden>Yakında Hizmetinizde</p>
     <p data-soon-copy>
       Bu modül şu anda AllonaHub hizmet ağına hazırlanıyor. Şimdilik aktif önceliğimiz Allona Shop, Allona Yemek, Allona Market, Allona Taksi ve Denizcilik modüllerini tam çalışır seviyeye getirmek.
     </p>
@@ -236,10 +238,14 @@ body[data-theme="corporate"] .active-modules a{
       <span class="soon-btn" aria-disabled="true">Yakında Hizmetinizde</span>
       <a class="soon-btn soon-btn--ghost" href="../../index.html#modules">Aktif Modüllere Dön</a>
     </div>
+    <nav class="shop-soon-navigation" aria-label="Sayfa gezinme" hidden>
+      <a href="../../index.html#modules" data-soon-back>Geri Dön</a>
+      <a href="../../index.html">Ana Sayfa</a>
+    </nav>
   </section>
 
   <nav class="active-modules" aria-label="Aktif modüller">
-    <a href="../commerce/allonashop.html">Allona Shop</a>
+    <a href="yakında.html?module=shop">Allona Shop</a>
     <a href="../commerce/allonayemek.html">Allona Yemek</a>
     <a href="../commerce/allonamarket.html">Allona Market</a>
     <a href="allonataksi.html">Allona Taksi</a>
@@ -252,6 +258,7 @@ body[data-theme="corporate"] .active-modules a{
 <script>
 (function(){
   const modules = {
+    "shop":"Allona Shop",
     "avm-dunyasi":"AVM Dünyası",
     "seyahat":"Seyahat & Turizm",
     "gayrimenkul":"Gayrimenkul",
@@ -291,11 +298,35 @@ body[data-theme="corporate"] .active-modules a{
     copy.textContent = name + " modülü şu anda AllonaHub hizmet ağına hazırlanıyor. Şimdilik aktif önceliğimiz Allona Shop, Allona Yemek, Allona Market, Allona Taksi ve Denizcilik modüllerini tam çalışır seviyeye getirmek.";
   }
   document.title = "AllonaHub | " + name + " Yakında";
+  if (key === "shop") {
+    document.body.dataset.soonModule = "shop";
+    title.textContent = "Allona Shop";
+    title.setAttribute("data-no-translate", "");
+    copy.textContent = "Allona Shop alışveriş modülümüz geliştirilmeye devam ediyor.";
+    document.title = "Allona Shop | Yakında Hizmetinizde";
+    document.querySelector("[data-shop-soon-headline]").hidden = false;
+    document.querySelector(".shop-soon-navigation").hidden = false;
+    for (const selector of [".soon-pill", ".soon-actions", ".active-modules", ".soon-footnote"]) {
+      document.querySelector(selector).hidden = true;
+    }
+    // A safe local fallback also avoids returning to the temporary Shop redirect.
+    const back = document.querySelector("[data-soon-back]");
+    try {
+      const previous = new URL(document.referrer);
+      const current = new URL(window.location.href);
+      const base = current.pathname.slice(0, current.pathname.indexOf("/pages/"));
+      if (previous.origin === current.origin && !previous.pathname.includes("/pages/commerce/") && previous.pathname !== current.pathname) {
+        back.href = previous.href;
+      } else {
+        back.href = base + "/index.html#modules";
+      }
+    } catch (_) { /* Keep the relative home fallback when there is no referrer. */ }
+  }
 })();
 </script>
 <script src="../../js/core.js?v=20260712-premium-page1" defer></script>
 <script src="../../js/layout.v3.js?v=20260919-footer-trust1" defer></script>
-<script src="../../js/platform.js?v=20260828-corpcontrast4" defer></script>
+<script src="../../js/platform.js?v=20260920-shop-soon1" defer></script>
 <script src="../../js/privacy-consent.js?v=20260826-active-modules1" defer></script>
 </body>
 </html>

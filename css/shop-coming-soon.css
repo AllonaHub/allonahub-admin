@@ -1,0 +1,92 @@
+body[data-soon-module="shop"]::after {
+  animation: none;
+  transform: none;
+}
+
+body[data-soon-module="shop"] .soon-page {
+  align-items: center;
+  justify-content: center;
+  min-height: 84svh;
+  padding-block: 48px;
+  gap: 40px;
+  text-align: center;
+}
+
+body[data-soon-module="shop"] [hidden] { display: none !important; }
+
+body[data-soon-module="shop"] .soon-panel {
+  max-width: 900px;
+  padding: 24px 0;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+body[data-soon-module="shop"] h1 {
+  margin: 0 auto 16px;
+  color: var(--ah-ink, #f8fbff);
+  font-size: 56px;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+body[data-soon-module="shop"] .shop-soon-headline {
+  margin: 0 auto 24px;
+  color: #80e7ff !important;
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.3;
+  text-shadow: 0 0 12px #00aaff80, 0 0 32px #008cff50;
+}
+
+body[data-soon-module="shop"] [data-soon-copy] {
+  max-width: 600px;
+  margin-inline: auto;
+  font-size: 18px;
+  color: #e0edf7;
+}
+
+body[data-soon-module="shop"] .shop-soon-navigation {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px 28px;
+  margin-top: 32px;
+}
+
+.shop-soon-navigation a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 8px;
+  color: inherit;
+  text-underline-offset: 6px;
+}
+
+.shop-soon-navigation a:hover { color: #80e7ff; }
+.shop-soon-navigation a:focus-visible,
+body[data-soon-module="shop"] .soon-brand:focus-visible {
+  outline: 3px solid #00cfff;
+  outline-offset: 6px;
+}
+
+body[data-soon-module="shop"][data-theme="white"] .shop-soon-headline,
+body[data-soon-module="shop"][data-theme="corporate"] .shop-soon-headline {
+  color: #0066ad !important;
+  text-shadow: 0 0 18px #009dff38;
+}
+
+body[data-soon-module="shop"][data-theme="white"] [data-soon-copy] {
+  color: #163953;
+}
+
+body[data-soon-module="shop"][data-theme="white"] .soon-brand span:first-child { color: #8a650f; }
+body[data-soon-module="shop"][data-theme="white"] .soon-brand span:last-child { color: #0066ad; }
+
+@media (max-width: 760px) {
+  body[data-soon-module="shop"] .soon-page { gap: 32px; padding: 40px 20px; }
+  body[data-soon-module="shop"] h1 { font-size: 36px; }
+  body[data-soon-module="shop"] .shop-soon-headline { font-size: 26px; }
+  body[data-soon-module="shop"] [data-soon-copy] { font-size: 16px; }
+}
