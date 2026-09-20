@@ -17,6 +17,7 @@ import {
   safeMaritimeDocumentName
 } from "../lib/maritime-document-doctor.js";
 import { ensureMaritimeCustomerProfile } from "../lib/maritime-customer-profile.js";
+import { normalizeMaritimeProfilePhoto } from "../lib/maritime-profile-photo.js";
 import { auditEvent, authContext, hasRole, supabaseAdmin } from "../lib/supabase.js";
 
 const uploadIntentSchema = z.object({
@@ -449,10 +450,7 @@ export function registerMaritimeDocumentRoutes(app) {
     config: { rateLimit: { max: 10, timeWindow: "10 minutes" } }
   }, async (request) => {
     const ctx = await requireCustomer(request, "maritime.profile_photo.upload");
-    const bytes = Buffer.isBuffer(request.body) ? request.body : Buffer.alloc(0);
-    if (!bytes.length || bytes.length > MARITIME_PROFILE_PHOTO_MAX_BYTES || !maritimeDocumentSignatureMatches(bytes, "image/webp")) {
-      throw httpError("Profil fotoğrafı güvenli biçimde doğrulanamadı.", 400, "MARITIME_PHOTO_INVALID");
-    }
+    const bytes = await normalizeMaritimeProfilePhoto(request.body, request.headers["content-type"]);
     const path = profilePhotoPath(ctx.user.id);
     const saved = await supabaseAdmin.storage.from(MARITIME_PROFILE_PHOTO_BUCKET).upload(path, bytes, {
       contentType: "image/webp",
@@ -501,10 +499,12 @@ export function registerMaritimeDocumentRoutes(app) {
     const path = profilePhotoPath(ctx.user.id);
     const download = await supabaseAdmin.storage.from(MARITIME_PROFILE_PHOTO_BUCKET).download(pendingPath);
     if (download.error || !download.data) throw httpError("Yüklenen profil fotoğrafı bulunamadı.", 409, "MARITIME_PHOTO_UPLOAD_INCOMPLETE");
-    const bytes = Buffer.from(await download.data.arrayBuffer());
-    if (!bytes.length || bytes.length > MARITIME_PROFILE_PHOTO_MAX_BYTES || !maritimeDocumentSignatureMatches(bytes, "image/webp")) {
+    let bytes;
+    try {
+      bytes = await normalizeMaritimeProfilePhoto(Buffer.from(await download.data.arrayBuffer()), "image/webp");
+    } catch (error) {
       await supabaseAdmin.storage.from(MARITIME_PROFILE_PHOTO_BUCKET).remove([pendingPath]);
-      throw httpError("Profil fotoğrafı güvenli biçimde doğrulanamadı.", 400, "MARITIME_PHOTO_INVALID");
+      throw error;
     }
     const saved = await supabaseAdmin.storage.from(MARITIME_PROFILE_PHOTO_BUCKET).upload(path, bytes, {
       contentType: "image/webp",

@@ -168,7 +168,8 @@ test("the customer workspace separates manual Maritime CV, PDF archive, and Glob
   assert.match(route, /\/v1\/maritime\/profile-photo\/confirm/);
   assert.match(route, /app\.post\("\/v1\/maritime\/profile-photo"/);
   assert.match(route, /Buffer\.isBuffer\(request\.body\)/);
-  assert.match(app, /addContentTypeParser\("image\/webp"/);
+  assert.match(app, /registerMaritimePhotoParsers\(app\)/);
+  assert.match(route, /normalizeMaritimeProfilePhoto\(request\.body, request\.headers\["content-type"\]\)/);
   assert.match(route, /pendingProfilePhotoPath/);
   assert.match(route, /upload_id/);
   assert.match(route, /\.upload\(path, bytes/);
@@ -182,8 +183,8 @@ test("the customer workspace separates manual Maritime CV, PDF archive, and Glob
   assert.match(customerProfile, /MARITIME_CUSTOMER_PROFILE_RECOVERY_FAILED/);
   assert.match(route, /Bu alan kişisel kullanıcı hesaplarına açıktır/);
   assert.match(customerProfile, /account_status: "active"/);
-  assert.match(documentUi, /error\.code = payload\.code/);
-  assert.match(route, /maritimeDocumentSignatureMatches\(bytes, "image\/webp"\)/);
+  assert.match(documentUi, /error\.code = response\.status === 401 \? "AUTH_REQUIRED" : payload\.code \|\| payload\.error/);
+  assert.match(route, /normalizeMaritimeProfilePhoto\(Buffer\.from\(await download\.data\.arrayBuffer\(\)\), "image\/webp"\)/);
   assert.doesNotMatch(documentUi, /name="certificate_codes"/);
 });
 

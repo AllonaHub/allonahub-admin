@@ -338,8 +338,9 @@
   }
 
   async function api(path, options) {
-    const session = state.session || (App.auth && App.auth.getSession ? await App.auth.getSession() : null);
+    const session = App.auth && App.auth.getSession ? await App.auth.getSession() : null;
     if (!session?.access_token) throw new Error("AUTH_REQUIRED");
+    if (state.session?.user?.id && session.user?.id !== state.session.user.id) throw new Error("AUTH_REQUIRED");
     const response = await fetch(`${apiBase()}${path}`, {
       ...options,
       headers: {

@@ -4,6 +4,7 @@ import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
 import { config } from "./config.js";
 import { registerAutoDefense } from "./lib/auto-defense.js";
+import { registerMaritimePhotoParsers } from "./lib/maritime-profile-photo.js";
 import { runtimeSecurityProtection } from "./lib/security-alerts.js";
 import { EInvoicingError } from "./modules/e-invoicing/errors.js";
 import { PlatformContextError } from "./modules/platform/errors.js";
@@ -159,9 +160,7 @@ export async function buildApp() {
       done(error);
     }
   });
-  app.addContentTypeParser("image/webp", { parseAs: "buffer" }, (_request, body, done) => {
-    done(null, body);
-  });
+  registerMaritimePhotoParsers(app);
   app.addContentTypeParser("application/pdf", { parseAs: "buffer" }, (_request, body, done) => {
     done(null, body);
   });

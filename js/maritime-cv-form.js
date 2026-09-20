@@ -425,6 +425,12 @@ function trustedVesselPhotoSourceUrl(value){
     accountFieldsRequired:"Complete the relevant fields to add your Maritime CV to your account.",
     signIn:"Sign in",
     accountSaveFailed:"Your Maritime CV could not be saved to your account. Please try again.",
+    accountChanged:"Your signed-in account changed. Return to the original account before saving this CV.",
+    accountNetworkError:"The connection was interrupted. Your form is preserved. Check your connection and save again.",
+    accountPhotoTooSmall:"Your CV details are saved. Choose a photo at least 300 by 300 pixels, then save again to create Global CV.",
+    accountPhotoTooLarge:"Your CV details are saved. Choose a photo smaller than 12 MB, then save again to create Global CV.",
+    accountPhotoSaveFailed:"Your CV details are saved, but the photo could not be uploaded. Retry with the photo before creating Global CV.",
+    accountLoadFailed:"Your saved CV could not be loaded. Your form has not been cleared. Check your connection and try again.",
     accountLoginRequired:"Sign in to save your Maritime CV to your account.",
     draftSaveFailed:"CV draft could not be saved. Check your browser storage settings.",
     identityLockedTitle:"Personal details are securely locked",
@@ -723,6 +729,12 @@ function trustedVesselPhotoSourceUrl(value){
     accountFieldsRequired:"Maritime CV'nizin hesabınıza eklenebilmesi için ilgili alanları doldurun.",
     signIn:"Giriş yapın",
     accountSaveFailed:"Maritime CV hesabınıza kaydedilemedi. Lütfen tekrar deneyin.",
+    accountChanged:"Giriş yapılan hesap değişti. Bu CV'yi kaydetmeden önce önceki hesabınıza dönün.",
+    accountNetworkError:"Bağlantı kesildi. Formunuz korunuyor. Bağlantınızı kontrol edip yeniden kaydedin.",
+    accountPhotoTooSmall:"CV bilgileriniz kaydedildi. En az 300 × 300 piksel bir fotoğraf seçip Global CV oluşturmak için yeniden kaydedin.",
+    accountPhotoTooLarge:"CV bilgileriniz kaydedildi. 12 MB'den küçük bir fotoğraf seçip Global CV oluşturmak için yeniden kaydedin.",
+    accountPhotoSaveFailed:"CV bilgileriniz kaydedildi ancak fotoğraf yüklenemedi. Global CV oluşturmadan önce fotoğrafla yeniden kaydedin.",
+    accountLoadFailed:"Kayıtlı CV'niz yüklenemedi. Formunuz temizlenmedi. Bağlantınızı kontrol edip tekrar deneyin.",
     accountLoginRequired:"Maritime CV'nizi hesabınıza kaydetmek için giriş yapın.",
     draftSaveFailed:"CV taslağı kaydedilemedi. Tarayıcı depolama ayarlarını kontrol edin.",
     identityLockedTitle:"Kişisel bilgiler güvenle kilitlendi",
@@ -1022,6 +1034,12 @@ function trustedVesselPhotoSourceUrl(value){
     accountFieldsRequired:"Maritime CV-nin hesabınıza əlavə edilməsi üçün müvafiq sahələri doldurun.",
     signIn:"Daxil olun",
     accountSaveFailed:"Maritime CV hesabınıza yazıla bilmədi. Yenidən cəhd edin.",
+    accountChanged:"Daxil olunan hesab dəyişdi. Bu CV-ni saxlamazdan əvvəl əvvəlki hesabınıza qayıdın.",
+    accountNetworkError:"Bağlantı kəsildi. Formunuz saxlanılır. Bağlantını yoxlayıb yenidən yadda saxlayın.",
+    accountPhotoTooSmall:"CV məlumatlarınız saxlanıldı. Ən azı 300 × 300 piksel foto seçib Global CV yaratmaq üçün yenidən yadda saxlayın.",
+    accountPhotoTooLarge:"CV məlumatlarınız saxlanıldı. 12 MB-dan kiçik foto seçib Global CV yaratmaq üçün yenidən yadda saxlayın.",
+    accountPhotoSaveFailed:"CV məlumatlarınız saxlanıldı, lakin foto yüklənmədi. Global CV yaratmazdan əvvəl foto ilə yenidən yadda saxlayın.",
+    accountLoadFailed:"Saxlanılmış CV yüklənmədi. Formunuz silinməyib. Bağlantını yoxlayıb yenidən cəhd edin.",
     accountLoginRequired:"Maritime CV-ni hesabınıza yazmaq üçün daxil olun.",
     draftSaveFailed:"CV qaralaması saxlanmadı. Brauzer yaddaşı ayarlarını yoxlayın.",
     identityLockedTitle:"Şəxsi məlumatlar təhlükəsiz şəkildə kilidləndi",
@@ -1320,6 +1338,12 @@ function trustedVesselPhotoSourceUrl(value){
     accountFieldsRequired:"Заполните соответствующие поля, чтобы добавить Maritime CV в свою учётную запись.",
     signIn:"Войти",
     accountSaveFailed:"Не удалось сохранить Maritime CV. Повторите попытку.",
+    accountChanged:"Аккаунт изменился. Вернитесь в исходный аккаунт перед сохранением этого CV.",
+    accountNetworkError:"Соединение прервано. Форма сохранена. Проверьте подключение и повторите сохранение.",
+    accountPhotoTooSmall:"Данные CV сохранены. Выберите фото не менее 300 × 300 пикселей и сохраните снова для создания Global CV.",
+    accountPhotoTooLarge:"Данные CV сохранены. Выберите фото размером менее 12 МБ и сохраните снова для создания Global CV.",
+    accountPhotoSaveFailed:"Данные CV сохранены, но фото не загружено. Повторите сохранение с фото перед созданием Global CV.",
+    accountLoadFailed:"Не удалось загрузить сохранённое CV. Форма не очищена. Проверьте подключение и повторите попытку.",
     accountLoginRequired:"Войдите, чтобы сохранить Maritime CV в учетной записи.",
     draftSaveFailed:"Не удалось сохранить черновик CV. Проверьте настройки хранилища браузера.",
     identityLockedTitle:"Личные данные надежно заблокированы",
@@ -2462,7 +2486,9 @@ async function saveCV(){
         MARITIME_PASSKEY_VERIFICATION_FAILED:"passkeyFailed",
         MARITIME_PASSKEY_SECURITY_UNAVAILABLE:"passkeyUnavailable"
       };
-      alert(t(error?.draftSaved ? "accountDraftSavedFinalFailed" : (errorKeys[error && error.code] || "accountSaveFailed")));
+      alert(window.AllonaMaritimeCvAccount.errorMessage
+        ? window.AllonaMaritimeCvAccount.errorMessage(error)
+        : t(error?.draftSaved ? "accountDraftSavedFinalFailed" : (errorKeys[error && error.code] || "accountSaveFailed")));
     }
     return;
   }

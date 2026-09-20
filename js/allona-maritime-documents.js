@@ -88,19 +88,27 @@
     if (!response.ok || payload.ok !== true) {
       const error = new Error(payload.message || "REQUEST_FAILED");
       error.status = response.status;
-      error.code = payload.code || "REQUEST_FAILED";
+      error.code = response.status === 401 ? "AUTH_REQUIRED" : payload.code || payload.error || "REQUEST_FAILED";
       throw error;
     }
     return payload;
   }
 
+  async function requestSession() {
+    const current = App.auth && App.auth.getSession ? await App.auth.getSession() : null;
+    if (!current?.access_token || (state.session?.user?.id && state.session.user.id !== current.user?.id)) {
+      throw Object.assign(new Error("AUTH_REQUIRED"), { code: "AUTH_REQUIRED" });
+    }
+    return current;
+  }
+
   async function api(path, options) {
-    if (!state.session?.access_token) throw new Error("AUTH_REQUIRED");
+    const session = await requestSession();
     const response = await fetch(`${apiBase()}${path}`, {
       ...options,
       headers: {
         Accept: "application/json",
-        Authorization: `Bearer ${state.session.access_token}`,
+        Authorization: `Bearer ${session.access_token}`,
         ...(options && options.body ? { "Content-Type": "application/json" } : {}),
         ...(options && options.headers || {})
       }
@@ -231,11 +239,12 @@
   }
 
   async function archiveFile(file) {
+    const session = await requestSession();
     const response = await fetch(`${apiBase()}/v1/maritime/documents/archive`, {
       method: "POST",
       headers: {
         Accept: "application/json",
-        Authorization: `Bearer ${state.session.access_token}`,
+        Authorization: `Bearer ${session.access_token}`,
         "Content-Type": "application/pdf",
         "X-Allona-File-Name": encodeURIComponent(file.name)
       },
