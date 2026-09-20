@@ -7,7 +7,7 @@ const browser = await chromium.launch({ headless: true, executablePath: "/Applic
 const userId = "11111111-1111-4111-8111-111111111111";
 
 try {
-  for (const width of [390, 1440]) {
+  for (const width of [320, 390, 1440]) {
     const context = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: "reduce" });
     const page = await context.newPage();
     let storedCv = null;
@@ -57,6 +57,32 @@ try {
 
     await page.goto(target, { waitUntil: "networkidle" });
     await page.waitForFunction(() => document.body.dataset.maritimeCvReady === "true");
+    const include = page.locator('.cv-include-check input[type="checkbox"]');
+    for (const lang of ["tr", "az", "en", "ru"]) {
+      await page.locator("#langSelect").selectOption(lang);
+      await include.scrollIntoViewIfNeeded();
+      const toggle = await include.evaluate((input) => {
+        const box = input.getBoundingClientRect();
+        const label = input.closest("label").getBoundingClientRect();
+        const text = input.nextElementSibling.getBoundingClientRect();
+        const badge = input.closest(".cv-stcw-card").querySelector(".cv-certificate-code").getBoundingClientRect();
+        return { width: box.width, height: box.height, labelWidth: label.width,
+          textGap: text.left - box.right, leftOffset: box.left - badge.left,
+          belowBadge: box.top >= badge.bottom };
+      });
+      assert.equal(toggle.width, 18);
+      assert.equal(toggle.height, 18);
+      assert.ok(toggle.labelWidth < 200, JSON.stringify(toggle));
+      assert.ok(toggle.textGap >= 0 && toggle.textGap <= 8, JSON.stringify(toggle));
+      assert.ok(Math.abs(toggle.leftOffset) < 2 && toggle.belowBadge, JSON.stringify(toggle));
+    }
+    await page.locator("#langSelect").selectOption("tr");
+    const initialRows = await page.locator("#cv_stcwRows tr").count();
+    await include.uncheck();
+    assert.equal(await page.locator("#cv_stcwRows tr").count(), initialRows - 1);
+    await include.check();
+    assert.equal(await page.locator("#cv_stcwRows tr").count(), initialRows);
+    if (screenshotDir) await page.locator(".cv-stcw-card").filter({ has: include }).screenshot({ path: `${screenshotDir}/maritime-sa-toggle-${width}.png` });
     await page.locator("#firstName").fill("Deniz");
     await page.locator(".cv-final-actions [data-cv-save]").click();
     await page.waitForFunction(() => window.__cvAlerts.length > 0);
