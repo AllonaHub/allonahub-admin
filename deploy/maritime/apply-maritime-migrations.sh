@@ -38,6 +38,7 @@ MIGRATIONS=(
   "$ROOT_DIR/supabase/migrations/20260919221500_fix_marsoh_topic_utf8.sql"
   "$ROOT_DIR/supabase/migrations/20260920013000_expand_marsoh_admin_management.sql"
   "$ROOT_DIR/supabase/migrations/20260920153000_create_maripartner_personnel_center.sql"
+  "$ROOT_DIR/supabase/migrations/20260920190000_expand_maripartner_trust_reference_layer.sql"
 )
 
 if [ -z "$DB_URL" ]; then

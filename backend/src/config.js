@@ -211,6 +211,14 @@ export const config = {
     }),
     timeoutMs: readNumber("MARITIME_REFERENCE_EMAIL_TIMEOUT_MS", 12000)
   },
+  mariPartner: {
+    employerReferencesEnabled: readBool("MARIPARTNER_EMPLOYER_REFERENCES_ENABLED", true),
+    autoPrepareEnabled: readBool("MARIPARTNER_AUTO_PREPARE_ENABLED", false),
+    autoApplyEnabled: readBool("MARIPARTNER_AUTO_APPLY_ENABLED", false),
+    readonlyDataQueryEnabled: readBool("MARIPARTNER_READONLY_DATA_QUERY_ENABLED", false),
+    webhooksEnabled: readBool("MARIPARTNER_WEBHOOKS_ENABLED", false),
+    maxImportRows: Math.max(1, Math.min(readNumber("MARIPARTNER_MAX_IMPORT_ROWS", 1000), 10000))
+  },
   marsoh: {
     companyMessagingEnabled: readBool("MARSOH_COMPANY_MESSAGING_ENABLED", false),
     maxMessageChars: Math.max(200, Math.min(readNumber("MARSOH_MAX_MESSAGE_CHARS", 2000), 2000)),

@@ -9,6 +9,7 @@ import {
 import { ensureMaritimeCustomerProfile } from "../lib/maritime-customer-profile.js";
 import { requireMaritimePasskeyProof } from "../lib/maritime-passkey.js";
 import { queueMaritimeReferenceNotification } from "../lib/maritime-reference-notifications.js";
+import { dateRangesOverlap } from "../lib/maritime-partner-center.js";
 import { isValidImoNumber, lookupVesselByImo, normalizeImoNumber } from "../lib/maritime-vessel-provider.js";
 import { auditEvent, authContext, hasMfa, hasRole, supabaseAdmin } from "../lib/supabase.js";
 
@@ -737,11 +738,16 @@ async function maritimePartnerReferenceCenter(userId) {
     .select("id,partner_id,imo_number,vessel_name,vessel_type,flag_state,status,verification_status,verified_at,updated_at")
     .in("partner_id", verifiedPartnerIds)
     .order("created_at", { ascending: false }), "Partner gemi profilleri okunamadı.") || [];
-  const verifiedVessels = vessels.filter((item) => item.status === "verified" && item.verification_status === "verified" && isValidImoNumber(item.imo_number));
-  const imoNumbers = [...new Set(verifiedVessels.map((item) => normalizeImoNumber(item.imo_number)))];
+  const relationships = assertDb(await supabaseAdmin
+    .from("maritime_vessel_company_relationships")
+    .select("id,partner_id,vessel_profile_id,imo_number,company_name,relationship_role,valid_from,valid_until,verification_status")
+    .in("partner_id", verifiedPartnerIds)
+    .in("verification_status", ["registry_verified", "admin_verified"])
+    .order("valid_from", { ascending: false }), "Tarihsel gemi-şirket yetkileri okunamadı.") || [];
+  const imoNumbers = [...new Set(relationships.map((item) => normalizeImoNumber(item.imo_number)).filter(Boolean))];
   if (!imoNumbers.length) {
     return {
-      access: { approved: true, reason: "verified_vessel_required" },
+      access: { approved: true, reason: "verified_historical_relationship_required" },
       businesses: verifiedBusinesses,
       vessels,
       claims: []
@@ -771,15 +777,18 @@ async function maritimePartnerReferenceCenter(userId) {
   });
   const claims = [];
   const seen = new Set();
-  verifiedVessels.forEach((vessel) => {
-    (claimsByImo.get(normalizeImoNumber(vessel.imo_number)) || []).forEach((claim) => {
-      const key = `${claim.id}:${vessel.partner_id}`;
+  relationships.forEach((relationship) => {
+    (claimsByImo.get(normalizeImoNumber(relationship.imo_number)) || []).forEach((claim) => {
+      if (!dateRangesOverlap(claim.service_start, claim.service_end, relationship.valid_from, relationship.valid_until)) return;
+      const key = `${claim.id}:${relationship.partner_id}`;
       if (seen.has(key)) return;
       seen.add(key);
       claims.push({
         id: claim.id,
-        partner_id: vessel.partner_id,
-        vessel_profile_id: vessel.id,
+        partner_id: relationship.partner_id,
+        vessel_profile_id: relationship.vessel_profile_id,
+        relationship_id: relationship.id,
+        relationship_role: relationship.relationship_role,
         imo_number: normalizeImoNumber(claim.imo_number),
         candidate_public_id: claim.candidate_public_id,
         candidate_name: claim.candidate_name,
@@ -1191,21 +1200,19 @@ export function registerMaritimeSmartAccountRoutes(app) {
     const business = partnerBusinessById(businesses, input.partner_id);
     const claim = assertDb(await supabaseAdmin
       .from("maritime_employment_reference_claims")
-      .select("id,imo_number,status")
+      .select("id,imo_number,service_start,service_end,status")
       .eq("id", claimId)
       .neq("status", "withdrawn")
       .maybeSingle(), "Referans kaydı okunamadı.");
     if (!claim) throw httpError("İncelenebilir referans kaydı bulunamadı.", 404, "MARITIME_REFERENCE_CLAIM_NOT_FOUND");
-    const vessel = assertDb(await supabaseAdmin
-      .from("maritime_vessel_profiles")
-      .select("id")
+    const relationshipRows = assertDb(await supabaseAdmin
+      .from("maritime_vessel_company_relationships")
+      .select("id,valid_from,valid_until,verification_status")
       .eq("partner_id", business.id)
       .eq("imo_number", normalizeImoNumber(claim.imo_number))
-      .eq("status", "verified")
-      .eq("verification_status", "verified")
-      .limit(1)
-      .maybeSingle(), "IMO sahipliği doğrulanamadı.");
-    if (!vessel) throw httpError("Bu referans için onaylı IMO yetkiniz bulunmuyor.", 403, "MARITIME_REFERENCE_IMO_ACCESS_DENIED");
+      .in("verification_status", ["registry_verified", "admin_verified"]), "Tarihsel IMO yetkisi doğrulanamadı.") || [];
+    const relationship = relationshipRows.find((item) => dateRangesOverlap(claim.service_start, claim.service_end, item.valid_from, item.valid_until));
+    if (!relationship) throw httpError("Bu referans için hizmet tarihleriyle örtüşen doğrulanmış şirket-gemi yetkiniz bulunmuyor.", 403, "MARITIME_REFERENCE_HISTORICAL_AUTHORITY_DENIED");
     const now = new Date().toISOString();
     const review = assertDb(await supabaseAdmin.from("maritime_partner_reference_reviews").upsert({
       claim_id: claim.id,
@@ -1228,7 +1235,7 @@ export function registerMaritimeSmartAccountRoutes(app) {
       resourceType: "maritime_employment_reference_claim",
       resourceId: claim.id,
       severity: input.decision === "denied" ? "warning" : "info",
-      metadata: { partner_id: business.id, imo_number: claim.imo_number, decision: input.decision }
+      metadata: { partner_id: business.id, imo_number: claim.imo_number, relationship_id: relationship.id, decision: input.decision }
     });
     return { ok: true, review: partnerReviewPublic(review) };
   });

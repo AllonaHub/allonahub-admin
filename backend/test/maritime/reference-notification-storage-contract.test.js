@@ -39,7 +39,7 @@ test("reference saves queue one private verification notice with a limited CV su
   assert.match(account, /\/v1\/maritime\/reference-verifications/);
 });
 
-test("approved maritime partners see and review former workers only through verified IMO ownership", async () => {
+test("approved maritime partners see and review former workers only through verified historical vessel authority", async () => {
   const [route, migration, partnerUi, partnerPage] = await Promise.all([
     readFile(routeUrl, "utf8"),
     readFile(referenceCenterMigrationUrl, "utf8"),
@@ -49,8 +49,10 @@ test("approved maritime partners see and review former workers only through veri
   assert.match(route, /app\.get\("\/v1\/maritime\/partner\/reference-center"/);
   assert.match(route, /app\.post\("\/v1\/maritime\/partner\/reference-claims\/:claimId\/review"/);
   assert.match(route, /app\.post\("\/v1\/admin\/maritime\/partner-vessels\/:vesselId\/decision"/);
-  assert.match(route, /\.eq\("status", "verified"\)/);
-  assert.match(route, /\.eq\("verification_status", "verified"\)/);
+  assert.match(route, /maritime_vessel_company_relationships/);
+  assert.match(route, /dateRangesOverlap/);
+  assert.match(route, /\["registry_verified", "admin_verified"\]/);
+  assert.match(route, /MARITIME_REFERENCE_HISTORICAL_AUTHORITY_DENIED/);
   assert.match(migration, /maritime_employment_reference_claims/);
   assert.match(migration, /maritime_partner_reference_reviews/);
   assert.match(migration, /unique \(seafarer_user_id, experience_id, fingerprint\)/);

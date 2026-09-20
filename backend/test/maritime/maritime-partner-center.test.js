@@ -2,17 +2,23 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import {
+  MARIPARTNER_REFERENCE_CATEGORIES,
+  MARIPARTNER_REFERENCE_QUESTIONS,
   MARIPARTNER_SAFE_REVIEW_FIELDS,
+  approvedReferenceSummary,
   constantTimeHashEqual,
   createReviewerCredentials,
+  historicalEmploymentMatch,
   projectReviewerCandidate,
   reviewerCandidateFromProfilePayload,
   refreshResponsePayload,
+  referenceModerationScreen,
   reviewerPassState,
   sanitizeRefreshQuestions,
   sanitizeReviewFields,
   sha256,
-  slaStatus
+  slaStatus,
+  validateEmployerReferencePayload
 } from "../../src/lib/maritime-partner-center.js";
 
 const root = new URL("../../../", import.meta.url);
@@ -117,16 +123,18 @@ test("API resolves tenant membership server-side and audits privileged operation
   assert.doesNotMatch(route, /serviceRoleKey/);
 });
 
-test("MariPartner frontend exposes one Personel Merkezi with five working actions", () => {
+test("MariPartner frontend exposes one Personel Merkezi with three tabs and preserves five operations", () => {
   const html = read("pages/partner/maripartner.html");
   const js = read("js/maripartner.js");
   const css = read("css/maripartner.css");
-  assert.equal((html.match(/data-mp-panel=/g) || []).length, 5);
-  assert.equal((html.match(/data-mp-center/g) || []).length, 1);
+  assert.equal((html.match(/data-mp-center-tab=/g) || []).length, 3);
+  assert.equal((html.match(/data-mp-center-pane=/g) || []).length, 3);
+  assert.equal((html.match(/data-mp-center(?:\s|>)/g) || []).length, 1);
   assert.match(html, /id="mpCenterTemplate"/);
   assert.match(html, /data-mp-main-counter/);
   assert.match(html, />Personel Merkezi</);
   for (const label of ["Havuzu Güncelle", "Kanıt Kontrolü", "Süreç Süreleri", "Dosya Devri", "Güvenli İnceleme"]) assert.match(html, new RegExp(label));
+  for (const label of ["İşlemler", "Güven", "Yönetim", "Firmalara Özel Doğrulanmış Referans"]) assert.match(html, new RegExp(label));
   assert.match(js, /\/v1\/maritime\/partner-center\/refresh-campaigns/);
   assert.match(js, /\/v1\/maritime\/partner-center\/evidence-requests/);
   assert.match(js, /\/v1\/maritime\/partner-center\/sla-policies/);
@@ -135,6 +143,65 @@ test("MariPartner frontend exposes one Personel Merkezi with five working action
   assert.match(css, /@media \(max-width: 720px\)/);
   assert.match(css, /height: 100dvh/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
+  assert.match(css, /mp-rating-row/);
+  assert.match(js, /referenceCategories/);
+  assert.match(js, /data-mp-reference-match/);
+});
+
+test("historical employer matching requires IMO and overlapping verified authority", () => {
+  const claim = { imo_number: "9389370", source_company_name: "Nurka Shipping", service_start: "2023-01-01", service_end: "2023-08-01" };
+  const exact = historicalEmploymentMatch(claim, [{ id: "rel-1", imo_number: "9389370", company_name: "Nurka Shipping", valid_from: "2022-01-01", valid_until: "2024-01-01", verification_status: "admin_verified" }]);
+  assert.equal(exact.level, "exact_verified");
+  assert.equal(exact.relationship_id, "rel-1");
+  assert.equal(historicalEmploymentMatch(claim, [{ id: "rel-2", imo_number: "9389370", company_name: "Nurka Shipping", valid_from: "2025-01-01", valid_until: null, verification_status: "admin_verified" }]).level, "conflict");
+  assert.equal(historicalEmploymentMatch({ ...claim, imo_number: "bad" }, []).level, "rejected");
+});
+
+test("employer reference validation enforces all categories, 1-10 ratings and structured answers", () => {
+  const payload = {
+    ratings: MARIPARTNER_REFERENCE_CATEGORIES.map((category_key, index) => ({ category_key, score: index === 0 ? 3 : 8, not_applicable: false })),
+    answers: MARIPARTNER_REFERENCE_QUESTIONS.map((question_key) => ({ question_key, answer: question_key === "eligible_for_rehire" ? "no" : "yes" })),
+    comment: "Güvenlik prosedürlerinde ek gözetim gerektirir."
+  };
+  const result = validateEmployerReferencePayload(payload);
+  assert.equal(result.ratings.length, 15);
+  assert.equal(result.answers.length, 5);
+  assert.equal(result.high_impact_negative, true);
+  assert.throws(() => validateEmployerReferencePayload({ ...payload, ratings: payload.ratings.slice(1) }), /Tüm referans kategorilerini/);
+});
+
+test("reference moderation screens contact data and summaries use approved records only", () => {
+  assert.deepEqual(referenceModerationScreen({ comment: "WhatsApp +90 555 111 22 33" }).rule_codes, ["CONTACT_DATA"]);
+  const summary = approvedReferenceSummary([
+    { status: "approved", average_score: 8, approved_at: "2026-09-01T00:00:00Z" },
+    { status: "needs_review", average_score: 1, approved_at: null },
+    { status: "approved", average_score: 6, approved_at: "2026-09-02T00:00:00Z" }
+  ]);
+  assert.deepEqual(summary, { approved_count: 2, average_score: 7, last_approved_at: "2026-09-02T00:00:00Z" });
+});
+
+test("trust reference migration is deny-by-default and enforces independent second review", () => {
+  const sql = read("supabase/migrations/20260920190000_expand_maripartner_trust_reference_layer.sql");
+  for (const table of ["maritime_company_verification_cycles", "maritime_recruiter_authorities", "maritime_vessel_company_relationships", "maritime_employer_reference_matches", "maritime_employer_references", "maritime_employer_reference_access_logs", "maritime_trust_appeals", "maritime_consent_receipts", "maritime_interview_template_versions", "maritime_integration_connections"]) {
+    assert.match(sql, new RegExp(`create table if not exists public\\.${table}`, "i"));
+  }
+  assert.match(sql, /revoke all on public\.%I from anon, authenticated/i);
+  assert.match(sql, /second_reviewed_by <> first_reviewed_by/i);
+  assert.match(sql, /MARITIME_REFERENCE_SECOND_REVIEW_REQUIRED/);
+  assert.match(sql, /MARITIME_REFERENCE_VERIFIED_RELATIONSHIP_REQUIRED/);
+  assert.match(sql, /Never project to candidate, CV or public endpoints/i);
+  const applyScript = read("deploy/maritime/apply-maritime-migrations.sh");
+  assert.match(applyScript, /20260920190000_expand_maripartner_trust_reference_layer\.sql/);
+});
+
+test("employer reference routes are partner/admin only and never exposed on candidate routes", () => {
+  const route = read("backend/src/routes/maritime-partner-center.js");
+  assert.match(route, /ensureReferenceAuthority\(access\)/);
+  assert.match(route, /REFERENCE_RELATIONSHIP_NOT_VERIFIED/);
+  assert.match(route, /reference_second_approve/);
+  assert.match(route, /REFERENCE_SECOND_REVIEWER_MUST_DIFFER/);
+  assert.match(route, /maritime_employer_reference_access_logs/);
+  assert.doesNotMatch(route, /candidate\/.*employer-reference/i);
 });
 
 test("candidate refresh response and admin management are wired", () => {
@@ -146,6 +213,10 @@ test("candidate refresh response and admin management are wired", () => {
   assert.match(admin, /data-maripartner-admin-action/);
   assert.match(admin, /\/v1\/admin\/maripartner/);
   assert.match(admin, /cancel_evidence/);
+  assert.match(admin, /data-maripartner-company-verify/);
+  assert.match(admin, /data-maripartner-recruiter-grant/);
+  assert.match(admin, /data-maripartner-relationship-form/);
+  assert.match(admin, /reference_second_approve/);
 });
 
 test("maritime partner routing remains isolated from general Partner OS", () => {

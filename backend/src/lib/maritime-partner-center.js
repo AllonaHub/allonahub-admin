@@ -28,6 +28,112 @@ export const MARIPARTNER_SLA_STAGES = Object.freeze([
   "joining_preparation"
 ]);
 
+export const MARIPARTNER_REFERENCE_CATEGORIES = Object.freeze([
+  "professional_competence",
+  "safety_awareness",
+  "rule_compliance",
+  "teamwork",
+  "communication",
+  "reliability",
+  "punctuality",
+  "problem_solving",
+  "leadership",
+  "technical_knowledge",
+  "equipment_care",
+  "watchkeeping",
+  "stress_management",
+  "adaptability",
+  "rehire_willingness"
+]);
+
+export const MARIPARTNER_REFERENCE_QUESTIONS = Object.freeze([
+  "employment_confirmed",
+  "rank_confirmed",
+  "service_dates_confirmed",
+  "completed_contract",
+  "eligible_for_rehire"
+]);
+
+export function normalizeImo(value) {
+  const digits = String(value || "").replace(/\D/g, "");
+  return /^\d{7}$/.test(digits) ? digits : null;
+}
+
+export function dateRangesOverlap(leftStart, leftEnd, rightStart, rightEnd) {
+  const min = new Date("1900-01-01T00:00:00.000Z").getTime();
+  const max = new Date("2999-12-31T23:59:59.999Z").getTime();
+  const startA = leftStart ? new Date(leftStart).getTime() : min;
+  const endA = leftEnd ? new Date(leftEnd).getTime() : max;
+  const startB = rightStart ? new Date(rightStart).getTime() : min;
+  const endB = rightEnd ? new Date(rightEnd).getTime() : max;
+  return [startA, endA, startB, endB].every(Number.isFinite) && startA <= endB && startB <= endA;
+}
+
+export function historicalEmploymentMatch(claim, relationships = []) {
+  const imo = normalizeImo(claim?.imo_number);
+  if (!imo) return { level: "rejected", confidence: 0, reason_codes: ["IMO_INVALID"] };
+  const candidates = relationships.filter((item) => normalizeImo(item.imo_number) === imo);
+  if (!candidates.length) return { level: "possible_match", confidence: 35, reason_codes: ["IMO_ONLY_UNVERIFIED"] };
+  const overlap = candidates.find((item) => dateRangesOverlap(claim?.service_start, claim?.service_end, item.valid_from, item.valid_until));
+  if (!overlap) return { level: "conflict", confidence: 78, reason_codes: ["IMO_MATCH_DATE_CONFLICT"] };
+  const sourceVerified = ["registry_verified", "admin_verified"].includes(overlap.verification_status);
+  const companyAligned = !claim?.source_company_name || !overlap.company_name
+    || String(claim.source_company_name).localeCompare(String(overlap.company_name), undefined, { sensitivity: "base" }) === 0;
+  if (sourceVerified && companyAligned) return { level: "exact_verified", confidence: 98, reason_codes: ["IMO_DATE_COMPANY_VERIFIED"], relationship_id: overlap.id };
+  if (sourceVerified) return { level: "strong_match", confidence: 88, reason_codes: ["IMO_DATE_VERIFIED", "COMPANY_NAME_VARIANT"], relationship_id: overlap.id };
+  return { level: "strong_match", confidence: 72, reason_codes: ["IMO_DATE_PARTNER_ASSERTED"], relationship_id: overlap.id };
+}
+
+export function validateEmployerReferencePayload(input) {
+  const ratings = Array.isArray(input?.ratings) ? input.ratings : [];
+  const answers = Array.isArray(input?.answers) ? input.answers : [];
+  const ratingMap = new Map();
+  ratings.forEach((item) => {
+    if (!MARIPARTNER_REFERENCE_CATEGORIES.includes(item?.category_key)) throw httpError("Geçersiz referans değerlendirme kategorisi.", 400, "REFERENCE_CATEGORY_INVALID");
+    if (item.not_applicable === true) ratingMap.set(item.category_key, { category_key: item.category_key, score: null, not_applicable: true });
+    else {
+      const score = Number(item.score);
+      if (!Number.isInteger(score) || score < 1 || score > 10) throw httpError("Referans puanları 1 ile 10 arasında olmalıdır.", 400, "REFERENCE_SCORE_INVALID");
+      ratingMap.set(item.category_key, { category_key: item.category_key, score, not_applicable: false });
+    }
+  });
+  if (ratingMap.size !== MARIPARTNER_REFERENCE_CATEGORIES.length) throw httpError("Tüm referans kategorilerini puanlayın veya uygulanamaz olarak işaretleyin.", 400, "REFERENCE_CATEGORIES_INCOMPLETE");
+  const answerMap = new Map();
+  answers.forEach((item) => {
+    if (!MARIPARTNER_REFERENCE_QUESTIONS.includes(item?.question_key)) throw httpError("Geçersiz referans sorusu.", 400, "REFERENCE_QUESTION_INVALID");
+    if (!["yes", "no", "unknown"].includes(item?.answer)) throw httpError("Referans sorularını evet, hayır veya bilinmiyor olarak yanıtlayın.", 400, "REFERENCE_ANSWER_INVALID");
+    answerMap.set(item.question_key, { question_key: item.question_key, answer: item.answer, note: String(item.note || "").trim().slice(0, 500) || null });
+  });
+  if (answerMap.size !== MARIPARTNER_REFERENCE_QUESTIONS.length) throw httpError("Tüm zorunlu referans sorularını yanıtlayın.", 400, "REFERENCE_ANSWERS_INCOMPLETE");
+  const comment = String(input?.comment || "").trim();
+  if (comment.length > 2000) throw httpError("Referans yorumu 2.000 karakteri geçemez.", 400, "REFERENCE_COMMENT_TOO_LONG");
+  const scored = [...ratingMap.values()].filter((item) => Number.isInteger(item.score));
+  const average = scored.length ? scored.reduce((sum, item) => sum + item.score, 0) / scored.length : null;
+  const highImpactNegative = (average !== null && average <= 3) || answerMap.get("eligible_for_rehire")?.answer === "no";
+  return { ratings: [...ratingMap.values()], answers: [...answerMap.values()], comment: comment || null, average_score: average === null ? null : Number(average.toFixed(2)), high_impact_negative: highImpactNegative };
+}
+
+export function referenceModerationScreen(input) {
+  const text = String(input?.comment || "").normalize("NFKC").replace(/[\u200B-\u200D\uFEFF]/g, " ").replace(/\s+/g, " ").trim();
+  const contact = /(?:https?:\/\/|www\.|\b[\w.+-]+@[\w.-]+\.[a-z]{2,}\b|(?:\+?\d[\s().-]*){7,})/iu.test(text);
+  const abusive = /\b(?:aptal|salak|şerefsiz|orospu|fuck|idiot)\b/iu.test(text);
+  return {
+    normalized_comment: text.slice(0, 2000) || null,
+    decision: contact || abusive ? "needs_review" : "automated_screening",
+    rule_codes: [...(contact ? ["CONTACT_DATA"] : []), ...(abusive ? ["ABUSIVE_LANGUAGE"] : [])]
+  };
+}
+
+export function approvedReferenceSummary(references) {
+  const approved = (Array.isArray(references) ? references : []).filter((item) => item.status === "approved");
+  const scores = approved.map((item) => Number(item.average_score)).filter(Number.isFinite);
+  return {
+    approved_count: approved.length,
+    average_score: scores.length ? Number((scores.reduce((sum, value) => sum + value, 0) / scores.length).toFixed(2)) : null,
+    last_approved_at: approved.map((item) => item.approved_at).filter(Boolean).sort().at(-1) || null
+  };
+}
+
 export function httpError(message, statusCode = 400, code = "MARIPARTNER_ERROR") {
   const error = new Error(message);
   error.statusCode = statusCode;

@@ -88,12 +88,33 @@
   <template id="mpCenterTemplate">
     <div class="mp-center-menu">
       <p class="mp-note">Sayaçlar yalnız şirketinizin gerçek ve işlem bekleyen kayıtlarından hesaplanır.</p>
-      <div class="mp-action-grid">
-        <button type="button" data-mp-panel="refresh"><span class="mp-action-icon" aria-hidden="true">↻</span><strong>Havuzu Güncelle</strong><small>Aday uygunluk bilgisini yenile</small><span class="mp-counter" data-mp-action-count="pending_refresh" hidden></span></button>
-        <button type="button" data-mp-panel="evidence"><span class="mp-action-icon" aria-hidden="true">✓</span><strong>Kanıt Kontrolü</strong><small>Minimum gerekli belge akışı</small><span class="mp-counter" data-mp-action-count="pending_evidence" hidden></span></button>
-        <button type="button" data-mp-panel="sla"><span class="mp-action-icon" aria-hidden="true">◷</span><strong>Süreç Süreleri</strong><small>SLA ve gecikme takibi</small><span class="mp-counter" data-mp-action-count="overdue_steps" hidden></span></button>
-        <button type="button" data-mp-panel="handover"><span class="mp-action-icon" aria-hidden="true">⇄</span><strong>Dosya Devri</strong><small>Sorumlu ve yedek aktarımı</small></button>
-        <button type="button" data-mp-panel="review"><span class="mp-action-icon" aria-hidden="true">⌁</span><strong>Güvenli İnceleme</strong><small>Süreli ve alan sınırlı erişim</small><span class="mp-counter" data-mp-action-count="active_reviewer_passes" hidden></span></button>
+      <div class="mp-center-tabs" role="tablist" aria-label="Personel Merkezi bölümleri">
+        <button type="button" role="tab" aria-selected="true" aria-controls="mpTabOperations" id="mpTabOperationsButton" data-mp-center-tab="operations">İşlemler</button>
+        <button type="button" role="tab" aria-selected="false" aria-controls="mpTabTrust" id="mpTabTrustButton" data-mp-center-tab="trust">Güven <span class="mp-counter" data-mp-action-count="pending_reference_reviews" hidden></span></button>
+        <button type="button" role="tab" aria-selected="false" aria-controls="mpTabManagement" id="mpTabManagementButton" data-mp-center-tab="management">Yönetim</button>
+      </div>
+      <div role="tabpanel" id="mpTabOperations" aria-labelledby="mpTabOperationsButton" data-mp-center-pane="operations">
+        <div class="mp-action-grid">
+          <button type="button" data-mp-panel="refresh"><span class="mp-action-icon" aria-hidden="true">↻</span><strong>Havuzu Güncelle</strong><small>Aday uygunluk bilgisini yenile</small><span class="mp-counter" data-mp-action-count="pending_refresh" hidden></span></button>
+          <button type="button" data-mp-panel="evidence"><span class="mp-action-icon" aria-hidden="true">✓</span><strong>Kanıt Kontrolü</strong><small>Minimum gerekli belge akışı</small><span class="mp-counter" data-mp-action-count="pending_evidence" hidden></span></button>
+          <button type="button" data-mp-panel="sla"><span class="mp-action-icon" aria-hidden="true">◷</span><strong>Süreç Süreleri</strong><small>SLA ve gecikme takibi</small><span class="mp-counter" data-mp-action-count="overdue_steps" hidden></span></button>
+          <button type="button" data-mp-panel="handover"><span class="mp-action-icon" aria-hidden="true">⇄</span><strong>Dosya Devri</strong><small>Sorumlu ve yedek aktarımı</small></button>
+          <button type="button" data-mp-panel="review"><span class="mp-action-icon" aria-hidden="true">⌁</span><strong>Güvenli İnceleme</strong><small>Süreli ve alan sınırlı erişim</small><span class="mp-counter" data-mp-action-count="active_reviewer_passes" hidden></span></button>
+        </div>
+      </div>
+      <div role="tabpanel" id="mpTabTrust" aria-labelledby="mpTabTrustButton" data-mp-center-pane="trust" hidden>
+        <div class="mp-task-list">
+          <button type="button" data-mp-panel="references"><span><strong>Firmalara Özel Doğrulanmış Referans</strong><small>Daha önce sizinle çalışmış olabilecek adayları tarihsel IMO ve hizmet tarihleriyle doğrulayın.</small></span><span class="mp-counter" data-mp-action-count="pending_reference_matches" hidden></span></button>
+          <div><span><strong>Kanıt ve doğrulama ağı</strong><small>OCR veya kullanıcı beyanı tek başına doğrulanmış kanıt sayılmaz.</small></span><b data-mp-trust-count="assertions">Sunucu kontrollü</b></div>
+          <div><span><strong>İtiraz ve ikinci inceleme</strong><small>Yüksek etkili olumsuz kararlar bağımsız ikinci yönetici onayı olmadan yayımlanmaz.</small></span><b data-mp-trust-count="appeals">Korumalı</b></div>
+        </div>
+      </div>
+      <div role="tabpanel" id="mpTabManagement" aria-labelledby="mpTabManagementButton" data-mp-center-pane="management" hidden>
+        <div class="mp-task-list">
+          <button type="button" data-mp-panel="governance"><span><strong>Karar ve değer merkezi</strong><small>Açıklanabilir eşleştirme, görüşme kalitesi, entegrasyonlar ve ölçümler.</small></span><span aria-hidden="true">→</span></button>
+          <div><span><strong>Otomatik hazırlık</strong><small>Başvuru yalnız denizcinin açık izni, uygunluk kuralları ve günlük sınırla çalışır.</small></span><b>Kullanıcı kontrollü</b></div>
+          <div><span><strong>Veri hakları</strong><small>Rıza makbuzu, erişim talebi, yasal saklama ve denetim kaydı.</small></span><b>İzlenebilir</b></div>
+        </div>
       </div>
     </div>
   </template>
@@ -206,11 +227,39 @@
     <div class="mp-history" data-mp-review-history></div>
   </template>
 
+  <template id="mpReferencesTemplate">
+    <section class="mp-reference-intro" aria-labelledby="mpReferenceHeading">
+      <p class="mp-note">Bu alan yalnız doğrulanmış şirket ve yetkili temsilci içindir. Referanslar aday profilinde, CV'de veya herkese açık alanlarda gösterilmez; yayımlanmadan önce moderasyondan geçer.</p>
+      <h3 id="mpReferenceHeading">Daha Önce Sizinle Çalışmış Olabilecek Adaylar</h3>
+      <div class="mp-reference-list" data-mp-reference-matches></div>
+    </section>
+    <form class="mp-form mp-reference-form" data-mp-reference-form hidden>
+      <input type="hidden" name="match_id">
+      <div class="mp-form-heading"><div><p>Özel şirket kaydı</p><h3>Doğrulanmış işveren referansı</h3></div><button type="button" class="mp-secondary" data-mp-reference-cancel>Vazgeç</button></div>
+      <p class="mp-note">Önce çalışma ilişkisini doğrulayın. 1 en düşük, 10 en yüksek puandır. Bilmediğiniz bir alanı Uygulanamaz olarak işaretleyin.</p>
+      <fieldset><legend>1-10 değerlendirme</legend><div class="mp-rating-grid" data-mp-reference-ratings></div></fieldset>
+      <fieldset><legend>Yapılandırılmış doğrulama soruları</legend><div class="mp-question-list" data-mp-reference-answers></div></fieldset>
+      <label class="mp-full"><span>Şirket değerlendirmesi</span><textarea name="comment" maxlength="2000" data-mp-reference-comment></textarea><small><span data-mp-reference-count>0</span>/2000</small></label>
+      <button class="mp-primary" type="submit">Taslağı Kaydet</button>
+    </form>
+    <div class="mp-history" data-mp-reference-history></div>
+  </template>
+
+  <template id="mpGovernanceTemplate">
+    <div class="mp-governance">
+      <section><h3>Açıklanabilir eşleştirme</h3><p>Her karar kural sürümü, gerekçe kodu ve manuel değişiklik nedeni ile kaydedilir. Korunan özellikler puanlama girdisi değildir.</p></section>
+      <section><h3>Otomatik Hazırla ve Otomatik Başvuru</h3><p>Hazırlama ile gönderme ayrıdır. Gönderim yalnız denizcinin açık rızası, kapsamı, günlük limiti ve güncel CV uygunluğu ile çalışır.</p></section>
+      <section><h3>Görüşme kalitesi</h3><p>Sorular sürümlenir; her görüşme kullandığı şablon sürümünü ve karar gerekçesini korur.</p></section>
+      <section><h3>Entegrasyonlar</h3><p>İçe aktarma önce önizleme ve doğrulamadan geçer. Webhook teslimleri tekrar güvenli kimlik anahtarıyla izlenir; salt okunur sorgu özelliği kapalı bayrakla başlar.</p></section>
+      <section><h3>Değer ölçümleri</h3><div class="mp-metric-list" data-mp-metrics></div></section>
+    </div>
+  </template>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="../../js/config.js?v=20260920-maripartner1" defer></script>
   <script src="../../js/core.js?v=20260920-maripartner1" defer></script>
   <script src="../../js/supabase-client.js?v=20260920-maripartner1" defer></script>
   <script src="../../js/auth.js?v=20260920-maripartner1" defer></script>
-  <script src="../../js/maripartner.js?v=20260920-maripartner1" defer></script>
+  <script src="../../js/maripartner.js?v=20260920-maripartner2" defer></script>
 </body>
 </html>

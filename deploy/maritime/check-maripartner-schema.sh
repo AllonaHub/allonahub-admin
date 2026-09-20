@@ -23,7 +23,21 @@ begin
     'maritime_evidence_templates', 'maritime_evidence_requirements', 'maritime_evidence_requests',
     'maritime_hiring_sla_policies', 'maritime_hiring_sla_instances',
     'maritime_hiring_case_ownership', 'maritime_hiring_handovers',
-    'maritime_reviewer_passes', 'maritime_reviewer_decisions'
+    'maritime_reviewer_passes', 'maritime_reviewer_decisions',
+    'maritime_company_verification_cycles', 'maritime_recruiter_authorities',
+    'maritime_vessel_company_relationships', 'maritime_evidence_assertions',
+    'maritime_verification_checks', 'maritime_employer_reference_matches',
+    'maritime_employer_references', 'maritime_employer_reference_ratings',
+    'maritime_employer_reference_answers', 'maritime_employer_reference_versions',
+    'maritime_employer_reference_moderation', 'maritime_employer_reference_access_logs',
+    'maritime_employer_reference_disputes', 'maritime_partner_notifications',
+    'maritime_match_evaluations', 'maritime_sea_service_conflicts', 'maritime_decision_records', 'maritime_automation_policies',
+    'maritime_automation_executions', 'maritime_consent_receipts',
+    'maritime_trust_case_events', 'maritime_trust_appeals',
+    'maritime_data_rights_requests', 'maritime_legal_holds',
+    'maritime_interview_template_versions', 'maritime_interview_reviews',
+    'maritime_integration_connections', 'maritime_import_jobs',
+    'maritime_webhook_deliveries', 'maritime_metric_snapshots'
   ] loop
     if to_regclass(format('public.%I', table_name)) is null then
       raise exception 'Missing MariPartner table: %', table_name;
@@ -91,6 +105,16 @@ begin
       and column_name = 'candidate_consent_status'
   ) then
     raise exception 'MariPartner candidate consent state is missing';
+  end if;
+
+  if has_function_privilege('anon', 'public.maritime_guard_reference_approval()', 'EXECUTE')
+    or has_function_privilege('authenticated', 'public.maritime_guard_reference_approval()', 'EXECUTE') then
+    raise exception 'Direct client execution detected on employer reference approval guard';
+  end if;
+
+  if pg_get_functiondef('public.maritime_guard_reference_approval()'::regprocedure)
+      not ilike '%security definer%set search_path = public, pg_temp%' then
+    raise exception 'Employer reference guard is missing hardened SECURITY DEFINER settings';
   end if;
 end
 $maripartner_check$;

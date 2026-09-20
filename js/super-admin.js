@@ -2037,7 +2037,7 @@
     const businessRows = (payload.businesses || []).map((item) => ownerLine(
       item.display_name || item.partner_code || "Denizcilik şirketi",
       `${escape(item.partner_code || "-")} / ${escape(item.status || "-")} / ${escape(item.verification_status || "-")}`,
-      "şirket tenantı",
+      `<button type="button" data-maripartner-company-verify="${escape(item.id)}">Doğrulamayı Yenile</button> <button type="button" data-maripartner-recruiter-grant="${escape(item.id)}" data-owner-id="${escape(item.owner_id || "")}">Sahibe Referans Yetkisi Ver</button>`,
       item.verification_status === "verified" ? "low" : "medium"
     ));
     const refreshRows = (payload.refresh_campaigns || []).map((item) => ownerLine(
@@ -2076,9 +2076,37 @@
       item.status === "active" ? `<button type="button" data-maripartner-admin-action="revoke_pass" data-resource-id="${escape(item.id)}">Erişimi İptal Et</button>` : "",
       item.status === "active" ? "medium" : "low"
     ));
+    const referenceRows = (payload.employer_references || []).map((item) => {
+      const firstReviewDone = Boolean(item.first_reviewed_by);
+      const actions = item.high_impact_negative && firstReviewDone
+        ? `<button type="button" data-maripartner-admin-action="reference_second_approve" data-resource-id="${escape(item.id)}">Bağımsız İkinci Onay</button> <button type="button" data-maripartner-admin-action="reference_reject" data-resource-id="${escape(item.id)}">Reddet</button>`
+        : `<button type="button" data-maripartner-admin-action="reference_approve" data-resource-id="${escape(item.id)}">Onayla</button> <button type="button" data-maripartner-admin-action="reference_changes" data-resource-id="${escape(item.id)}">Değişiklik İste</button> <button type="button" data-maripartner-admin-action="reference_reject" data-resource-id="${escape(item.id)}">Reddet</button>`;
+      return ownerLine(
+        `İşveren referansı · ${item.average_score ?? "-"}/10`,
+        `${escape(item.status || "-")} / sürüm ${formatNumber(item.version_number)} / ${item.high_impact_negative ? "yüksek etkili olumsuz" : "standart"}<br>${escape(item.comment || "Yorum yok")}`,
+        actions,
+        item.high_impact_negative ? "critical" : "medium"
+      );
+    });
+    const disputeRows = (payload.reference_disputes || []).map((item) => ownerLine(
+      "Referans itirazı",
+      `${escape(item.status || "-")} / ${escape(item.reason || "-")}`,
+      formatDate(item.created_at),
+      "critical"
+    ));
+    const authorityRows = (payload.recruiter_authorities || []).map((item) => ownerLine(
+      "Yetkili şirket temsilcisi",
+      `${escape(item.status || "-")} / kapsam ${escape((item.authority_scope || []).join(", "))} / bitiş ${formatDate(item.expires_at)}`,
+      `partner ${escape(item.partner_id || "-")}`,
+      item.status === "active" ? "low" : "medium"
+    ));
     ownerSetOutput([
-      `<div class="sa-marsoh-stats"><div><strong>${formatNumber((payload.businesses || []).length)}</strong><span>Denizcilik şirketi</span></div><div><strong>${formatNumber((payload.refresh_campaigns || []).filter((item) => ["scheduled", "sent"].includes(item.status)).length)}</strong><span>Aktif yenileme</span></div><div><strong>${formatNumber((payload.evidence_requests || []).filter((item) => ["requested", "candidate_action"].includes(item.status)).length)}</strong><span>Bekleyen kanıt</span></div><div><strong>${formatNumber((payload.sla_instances || []).filter((item) => item.status === "overdue").length)}</strong><span>Geciken adım</span></div></div>`,
+      `<div class="sa-marsoh-stats"><div><strong>${formatNumber((payload.businesses || []).length)}</strong><span>Denizcilik şirketi</span></div><div><strong>${formatNumber((payload.employer_references || []).length)}</strong><span>Referans incelemesi</span></div><div><strong>${formatNumber((payload.reference_disputes || []).length)}</strong><span>Açık itiraz</span></div><div><strong>${formatNumber((payload.sla_instances || []).filter((item) => item.status === "overdue").length)}</strong><span>Geciken adım</span></div></div>`,
+      marsohPanel("Tarihsel gemi-şirket yetkisi", "Güncel sahiplik tek başına geçmiş çalışma dönemini doğrulamaz. IMO, şirket rolü ve geçerli tarih aralığını resmî kanıta göre kaydedin.", `<form class="sa-inline-form" data-maripartner-relationship-form><select name="partner_id" required><option value="">Şirket seçin</option>${(payload.businesses || []).map((item) => `<option value="${escape(item.id)}">${escape(item.display_name || item.partner_code)}</option>`).join("")}</select><input name="imo_number" inputmode="numeric" pattern="[0-9]{7}" maxlength="7" placeholder="IMO (7 hane)" required><input name="company_name" maxlength="240" placeholder="Tarihsel şirket adı" required><select name="relationship_role"><option value="employer">İşveren</option><option value="owner">Donatan</option><option value="manager">Yönetici</option><option value="operator">Operatör</option><option value="crewing_agent">Crewing agent</option><option value="authorized_representative">Yetkili temsilci</option></select><input type="date" name="valid_from"><input type="date" name="valid_until"><select name="verification_status"><option value="admin_verified">Admin doğruladı</option><option value="registry_verified">Sicil doğruladı</option></select><input name="reason" minlength="6" maxlength="1000" placeholder="Kanıt ve karar gerekçesi" required><button type="submit">Tarihsel Yetkiyi Kaydet</button></form>`),
       marsohPanel("Denizcilik şirketleri", "MariPartner erişimi yalnız aktif ve doğrulanmış şirket üyelikleriyle açılır.", businessRows.join("") || ownerEmpty("Denizcilik şirketi bulunamadı.")),
+      marsohPanel("Doğrulanmış işveren referansları", "Adaya ve kamuya kapalı; tarihsel çalışma ilişkisi, moderasyon ve ikinci inceleme korumalıdır.", referenceRows.join("") || ownerEmpty("İnceleme bekleyen referans yok.")),
+      marsohPanel("Referans itirazları", "İtirazlar ayrı güven vakası ve denetim iziyle ele alınır.", disputeRows.join("") || ownerEmpty("Açık referans itirazı yok.")),
+      marsohPanel("Temsilci yetkileri", "Referans oluşturma yetkisi doğrulanmış şirket temsilcisiyle sınırlıdır.", authorityRows.join("") || ownerEmpty("Aktif temsilci yetkisi yok.")),
       marsohPanel("Havuz güncellemeleri", "Şirketin yetkili özel aday ilişkileriyle sınırlı görevler.", refreshRows.join("") || ownerEmpty("Havuz güncellemesi bulunamadı.")),
       marsohPanel("Kanıt kontrolü", "Minimum gerekli veri ve süreli hassas erişim talepleri.", evidenceRows.join("") || ownerEmpty("Kanıt talebi bulunamadı.")),
       marsohPanel("SLA kuralları", "Şirketlerin etkin süreç hedefleri ve sorumluluk kuralları.", policyRows.join("") || ownerEmpty("Etkin SLA kuralı bulunamadı.")),
@@ -2091,13 +2119,42 @@
   async function runMariPartnerAdminAction(button) {
     const action = button.dataset.maripartnerAdminAction;
     const resourceId = button.dataset.resourceId;
-    const labels = { cancel_refresh: "havuz güncellemesini iptal et", cancel_evidence: "kanıt talebini iptal et", revoke_pass: "inceleme erişimini iptal et", deactivate_sla: "SLA kuralını pasifleştir" };
+    const labels = { cancel_refresh: "havuz güncellemesini iptal et", cancel_evidence: "kanıt talebini iptal et", revoke_pass: "inceleme erişimini iptal et", deactivate_sla: "SLA kuralını pasifleştir", reference_approve: "işveren referansını onayla", reference_second_approve: "işveren referansına bağımsız ikinci onay ver", reference_reject: "işveren referansını reddet", reference_changes: "işveren referansı için değişiklik iste" };
     const message = `MariPartner işlemi: ${labels[action] || action}`;
     await runConfirmed(message, async (reason) => {
       await api("/v1/admin/maripartner/action", { method: "POST", body: { action, resource_id: resourceId, reason } });
       await loadOwnerMariPartner();
       setAlert("MariPartner yönetim işlemi tamamlandı.", "ok");
     }, { trigger: button, defaultReason: message, requireReason: true });
+  }
+
+  async function renewMariPartnerVerification(button) {
+    const partnerId = button.dataset.maripartnerCompanyVerify;
+    const message = "Denizcilik şirketi doğrulaması bir yıl süreyle yenilenecek.";
+    await runConfirmed(message, async (reason) => {
+      await api("/v1/admin/maripartner/company-verification", { method: "POST", body: { partner_id: partnerId, decision: "verify", verification_level: "identity", reason, expires_at: new Date(Date.now() + 365 * 86400000).toISOString() } });
+      await loadOwnerMariPartner(); setAlert("Şirket doğrulaması yenilendi.", "ok");
+    }, { trigger: button, defaultReason: message, requireReason: true });
+  }
+
+  async function grantMariPartnerRecruiter(button) {
+    const partnerId = button.dataset.maripartnerRecruiterGrant;
+    const userId = button.dataset.ownerId;
+    if (!userId) throw new Error("Şirket sahibi hesabı bulunamadı.");
+    const message = "Şirket sahibine işe alım ve doğrulanmış referans yetkisi verilecek.";
+    await runConfirmed(message, async (reason) => {
+      await api("/v1/admin/maripartner/recruiter-authority", { method: "POST", body: { partner_id: partnerId, user_id: userId, status: "active", authority_scope: ["hiring", "employment_reference", "interview", "evidence_request"], expires_at: new Date(Date.now() + 365 * 86400000).toISOString(), reason } });
+      await loadOwnerMariPartner(); setAlert("Şirket temsilcisi yetkisi kaydedildi.", "ok");
+    }, { trigger: button, defaultReason: message, requireReason: true });
+  }
+
+  async function saveMariPartnerRelationship(form) {
+    const data = new FormData(form);
+    const message = "Tarihsel gemi-şirket yetkisi kaydedilecek.";
+    await runConfirmed(message, async (confirmationReason) => {
+      await api("/v1/admin/maripartner/vessel-company-relationships", { method: "POST", body: { partner_id: data.get("partner_id"), imo_number: data.get("imo_number"), company_name: data.get("company_name"), relationship_role: data.get("relationship_role"), valid_from: data.get("valid_from") || null, valid_until: data.get("valid_until") || null, verification_status: data.get("verification_status"), reason: `${data.get("reason")} · ${confirmationReason}`.slice(0, 1000) } });
+      await loadOwnerMariPartner(); setAlert("Tarihsel gemi-şirket yetkisi kaydedildi.", "ok");
+    }, { trigger: form.querySelector('button[type="submit"]'), defaultReason: String(data.get("reason") || message), requireReason: true });
   }
 
   async function loadOwnerView(view, params) {
@@ -2335,6 +2392,13 @@
           return;
         }
 
+        const mariPartnerRelationshipForm = eventClosest(event, "[data-maripartner-relationship-form]");
+        if (mariPartnerRelationshipForm) {
+          event.preventDefault();
+          await saveMariPartnerRelationship(mariPartnerRelationshipForm);
+          return;
+        }
+
         const releaseForm = eventClosest(event, "[data-release-form]");
         if (releaseForm) {
           event.preventDefault();
@@ -2379,6 +2443,12 @@
 
         const mariPartnerAdminAction = eventClosest(event, "[data-maripartner-admin-action]");
         if (mariPartnerAdminAction) await runMariPartnerAdminAction(mariPartnerAdminAction);
+
+        const mariPartnerCompanyVerify = eventClosest(event, "[data-maripartner-company-verify]");
+        if (mariPartnerCompanyVerify) await renewMariPartnerVerification(mariPartnerCompanyVerify);
+
+        const mariPartnerRecruiterGrant = eventClosest(event, "[data-maripartner-recruiter-grant]");
+        if (mariPartnerRecruiterGrant) await grantMariPartnerRecruiter(mariPartnerRecruiterGrant);
 
         const marsohAdminAction = eventClosest(event, "[data-marsoh-admin-action]");
         if (marsohAdminAction) await runMarsohAdminAction(marsohAdminAction);

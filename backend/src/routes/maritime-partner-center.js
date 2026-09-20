@@ -1,11 +1,17 @@
 import { z } from "zod";
+import { config } from "../config.js";
 import { auditEvent, authContext, hasMfa, hasRole, supabaseAdmin } from "../lib/supabase.js";
 import {
+  MARIPARTNER_REFERENCE_CATEGORIES,
+  MARIPARTNER_REFERENCE_QUESTIONS,
   MARIPARTNER_REFRESH_QUESTIONS,
   MARIPARTNER_SLA_STAGES,
+  approvedReferenceSummary,
   constantTimeHashEqual,
   createReviewerCredentials,
   httpError,
+  historicalEmploymentMatch,
+  normalizeImo,
   projectReviewerCandidate,
   reviewerCandidateFromProfilePayload,
   refreshResponsePayload,
@@ -13,7 +19,9 @@ import {
   sanitizeRefreshQuestions,
   sanitizeReviewFields,
   sha256,
-  slaStatus
+  slaStatus,
+  referenceModerationScreen,
+  validateEmployerReferencePayload
 } from "../lib/maritime-partner-center.js";
 
 const uuid = z.string().uuid();
@@ -119,10 +127,36 @@ const reviewerDecisionSchema = reviewerAccessSchema.extend({
   comment: z.string().trim().max(1200).optional()
 }).strict();
 const adminActionSchema = z.object({
-  action: z.enum(["cancel_refresh", "cancel_evidence", "revoke_pass", "deactivate_sla"]),
+  action: z.enum(["cancel_refresh", "cancel_evidence", "revoke_pass", "deactivate_sla", "reference_approve", "reference_reject", "reference_changes", "reference_second_approve"]),
   resource_id: uuid,
   reason: z.string().trim().min(6).max(500)
 }).strict();
+const referenceRatingSchema = z.object({ category_key: z.enum(MARIPARTNER_REFERENCE_CATEGORIES), score: z.number().int().min(1).max(10).nullable().optional(), not_applicable: z.boolean().default(false) }).strict();
+const referenceAnswerSchema = z.object({ question_key: z.enum(MARIPARTNER_REFERENCE_QUESTIONS), answer: z.enum(["yes", "no", "unknown"]), note: z.string().trim().max(500).nullable().optional() }).strict();
+const employerReferenceSchema = z.object({
+  partner_id: uuid,
+  match_id: uuid,
+  ratings: z.array(referenceRatingSchema).length(MARIPARTNER_REFERENCE_CATEGORIES.length),
+  answers: z.array(referenceAnswerSchema).length(MARIPARTNER_REFERENCE_QUESTIONS.length),
+  comment: z.string().trim().max(2000).nullable().optional()
+}).strict();
+const referenceDecisionSchema = z.object({ partner_id: uuid, decision: z.enum(["accept", "reject"]), reason: z.string().trim().min(6).max(500) }).strict();
+const referenceSubmitSchema = z.object({ partner_id: uuid }).strict();
+const automationPolicySchema = z.object({
+  partner_id: uuid,
+  seafarer_user_id: uuid,
+  mode: z.enum(["off", "prepare_only", "apply_with_consent"]),
+  allowed_rank_codes: z.array(z.string().trim().min(1).max(80)).max(30).default([]),
+  allowed_vessel_types: z.array(z.string().trim().min(1).max(120)).max(30).default([]),
+  daily_limit: z.number().int().min(0).max(100),
+  consent_receipt_id: optionalUuid
+}).strict();
+const companyVerificationSchema = z.object({ partner_id: uuid, decision: z.enum(["verify", "request_changes", "reject", "revoke"]), verification_level: z.enum(["identity", "registry", "enhanced"]).default("identity"), reason: z.string().trim().min(6).max(1000), expires_at: z.string().datetime().nullable().optional() }).strict();
+const recruiterAuthoritySchema = z.object({ partner_id: uuid, user_id: uuid, status: z.enum(["active", "suspended", "revoked"]), authority_scope: z.array(z.enum(["hiring", "employment_reference", "interview", "evidence_request"])).min(1).max(8), expires_at: z.string().datetime().nullable().optional(), reason: z.string().trim().min(6).max(1000) }).strict();
+const vesselRelationshipSchema = z.object({ partner_id: uuid, imo_number: z.string().regex(/^\d{7}$/), company_name: z.string().trim().min(2).max(240), relationship_role: z.enum(["owner", "manager", "operator", "crewing_agent", "employer", "authorized_representative"]), valid_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(), valid_until: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(), verification_status: z.enum(["registry_verified", "admin_verified", "rejected", "revoked"]), reason: z.string().trim().min(6).max(1000) }).strict();
+const trustAppealSchema = z.object({ partner_id: uuid, case_id: uuid, reason: z.string().trim().min(12).max(2000) }).strict();
+const interviewTemplateSchema = z.object({ partner_id: uuid, template_key: z.string().trim().regex(/^[a-z0-9_]{2,60}$/), title: z.string().trim().min(3).max(160), questions: z.array(z.object({ key: z.string().trim().regex(/^[a-z0-9_]{2,60}$/), label: z.string().trim().min(3).max(300), weight: z.number().min(0).max(100).default(1) }).strict()).min(1).max(50), activate: z.boolean().default(false) }).strict();
+const importPreviewSchema = z.object({ partner_id: uuid, rows: z.array(z.record(z.union([z.string(), z.number(), z.boolean(), z.null()]))).min(1).max(10000), idempotency_key: z.string().trim().min(12).max(160) }).strict();
 
 function assertDb(result, message) {
   if (result?.error) throw httpError(message, 500, "MARIPARTNER_DATABASE_ERROR");
@@ -166,6 +200,50 @@ async function requireAdmin(request, action) {
   const ctx = await authContext(request);
   if (!ctx?.user || !hasRole(ctx.profile, ["admin", "super_admin"]) || !hasMfa(ctx)) throw httpError("MariPartner yönetimi için MFA doğrulamalı yönetici yetkisi gerekir.", 403, "MARIPARTNER_ADMIN_REQUIRED");
   return { ctx, action };
+}
+
+async function ensureReferenceAuthority(access) {
+  if (!config.mariPartner.employerReferencesEnabled) throw httpError("Doğrulanmış işveren referansı özelliği şu anda kapalıdır.", 503, "EMPLOYER_REFERENCES_DISABLED");
+  const now = new Date().toISOString();
+  const cycle = assertDb(await supabaseAdmin.from("maritime_company_verification_cycles")
+    .select("id,status,verification_level,verified_at,expires_at")
+    .eq("partner_id", access.membership.business.id).eq("status", "verified")
+    .or(`expires_at.is.null,expires_at.gt.${now}`).order("verified_at", { ascending: false }).limit(1).maybeSingle(), "Şirket doğrulama döngüsü okunamadı.");
+  if (!cycle) throw httpError("Doğrulanmış işveren referansı için şirket doğrulaması güncel olmalıdır.", 403, "REFERENCE_COMPANY_VERIFICATION_REQUIRED");
+  const authority = assertDb(await supabaseAdmin.from("maritime_recruiter_authorities")
+    .select("id,status,authority_scope,approved_at,expires_at")
+    .eq("partner_id", access.membership.business.id).eq("user_id", access.ctx.user.id).eq("status", "active")
+    .or(`expires_at.is.null,expires_at.gt.${now}`).maybeSingle(), "İşe alım yetkisi okunamadı.");
+  if (!authority?.authority_scope?.includes("employment_reference")) throw httpError("Doğrulanmış referans işlemi için yetkili şirket temsilcisi olmalısınız.", 403, "REFERENCE_RECRUITER_AUTHORITY_REQUIRED");
+  return { cycle, authority };
+}
+
+async function referenceMatchesForPartner(partnerId) {
+  const [claimsResult, relationshipsResult, persistedResult] = await Promise.all([
+    supabaseAdmin.from("maritime_employment_reference_claims").select("id,seafarer_user_id,imo_number,candidate_public_id,candidate_name,vessel_name,source_company_name,rank_name,service_start,service_end,status,created_at").neq("status", "withdrawn").order("created_at", { ascending: false }).limit(500),
+    supabaseAdmin.from("maritime_vessel_company_relationships").select("id,partner_id,imo_number,company_name,relationship_role,valid_from,valid_until,verification_status").eq("partner_id", partnerId),
+    supabaseAdmin.from("maritime_employer_reference_matches").select("id,claim_id,partner_id,relationship_id,match_level,confidence,reason_codes,status,decided_at,created_at").eq("partner_id", partnerId)
+  ]);
+  const claims = assertDb(claimsResult, "Deniz hizmeti iddiaları okunamadı.") || [];
+  const relationships = (assertDb(relationshipsResult, "Tarihsel gemi yetkileri okunamadı.") || []).filter((item) => !["rejected", "revoked"].includes(item.verification_status));
+  const persisted = assertDb(persistedResult, "Referans eşleşmeleri okunamadı.") || [];
+  const allowedImos = new Set(relationships.map((item) => normalizeImo(item.imo_number)).filter(Boolean));
+  const computed = claims.filter((claim) => allowedImos.has(normalizeImo(claim.imo_number))).map((claim) => {
+    const evaluation = historicalEmploymentMatch(claim, relationships);
+    const saved = persisted.find((item) => item.claim_id === claim.id);
+    return { ...claim, evaluation, match: saved || null };
+  });
+  return computed;
+}
+
+async function writeReferenceAccess({ partnerId, referenceId, userId, action, purpose, metadata = {} }) {
+  assertDb(await supabaseAdmin.from("maritime_employer_reference_access_logs").insert({ partner_id: partnerId, reference_id: referenceId, actor_user_id: userId, action, purpose, metadata }), "Referans erişim kaydı oluşturulamadı.");
+}
+
+async function notifyPartner(partnerId, notification) {
+  const members = await staffRows(partnerId);
+  const rows = members.map((member) => ({ partner_id: partnerId, recipient_user_id: member.user_id, ...notification }));
+  if (rows.length) assertDb(await supabaseAdmin.from("maritime_partner_notifications").insert(rows), "Şirket bildirimi oluşturulamadı.");
 }
 
 async function candidateRoom(partnerId, roomId) {
@@ -265,6 +343,14 @@ async function partnerDashboard(partnerId) {
   const pendingRefresh = refreshRequestRows.filter((item) => ["scheduled", "sent"].includes(item.status)).length;
   const pendingEvidence = (evidence.data || []).filter((item) => ["requested", "candidate_action"].includes(item.status)).length;
   const overdueSteps = slaRows.filter((item) => item.status === "overdue").length;
+  const [historicalMatches, referencesResult, authorityResult, notificationsResult, metricsResult] = await Promise.all([
+    referenceMatchesForPartner(partnerId),
+    supabaseAdmin.from("maritime_employer_references").select("id,match_id,claim_id,status,version_number,average_score,high_impact_negative,requires_second_review,approved_at,created_at,updated_at").eq("partner_id", partnerId).order("created_at", { ascending: false }).limit(100),
+    supabaseAdmin.from("maritime_recruiter_authorities").select("id,user_id,status,authority_scope,expires_at").eq("partner_id", partnerId).eq("status", "active"),
+    supabaseAdmin.from("maritime_partner_notifications").select("id,notification_type,title,message,resource_type,resource_id,is_read,created_at").eq("partner_id", partnerId).eq("is_read", false).order("created_at", { ascending: false }).limit(50),
+    supabaseAdmin.from("maritime_metric_snapshots").select("metric_key,metric_value,period_start,period_end,dimensions").eq("partner_id", partnerId).order("period_end", { ascending: false }).limit(100)
+  ]);
+  const referenceRows = assertDb(referencesResult, "İşveren referansları okunamadı.") || [];
   return {
     jobs: jobRows,
     candidate_rooms: safeRooms,
@@ -277,6 +363,25 @@ async function partnerDashboard(partnerId) {
     sla_instances: slaRows,
     handovers: assertDb(handovers, "Devir kayıtları okunamadı.") || [],
     reviewer_passes: passRows,
+    historical_reference_matches: historicalMatches,
+    employer_references: referenceRows,
+    reference_summary: approvedReferenceSummary(referenceRows),
+    recruiter_authorities: assertDb(authorityResult, "İşe alım yetkileri okunamadı.") || [],
+    partner_notifications: assertDb(notificationsResult, "Şirket bildirimleri okunamadı.") || [],
+    metric_snapshots: assertDb(metricsResult, "Değer ölçümleri okunamadı.") || [],
+    live_metrics: [
+      { metric_key: "authorized_candidate_count", metric_value: safeRooms.length, explanation: "Aktif ve süresi dolmamış özel aday odaları" },
+      { metric_key: "eligible_match_count", metric_value: matchRows.length, explanation: "Güncel hard-gate kurallarını geçen eşleşmeler" },
+      { metric_key: "approved_employer_reference_count", metric_value: referenceRows.filter((item) => item.status === "approved").length, explanation: "Moderasyon ve gerekiyorsa ikinci inceleme tamamlanmış referanslar" },
+      { metric_key: "overdue_sla_count", metric_value: overdueSteps, explanation: "Sunucu saatine göre hedefi geçmiş açık süreç adımları" }
+    ],
+    features: {
+      employer_references: config.mariPartner.employerReferencesEnabled,
+      auto_prepare: config.mariPartner.autoPrepareEnabled,
+      auto_apply: config.mariPartner.autoApplyEnabled,
+      readonly_data_query: config.mariPartner.readonlyDataQueryEnabled,
+      webhooks: config.mariPartner.webhooksEnabled
+    },
     team,
     counters: {
       open_jobs: jobRows.filter((item) => item.status === "open").length,
@@ -286,7 +391,9 @@ async function partnerDashboard(partnerId) {
       pending_evidence: pendingEvidence,
       pending_refresh: pendingRefresh,
       active_reviewer_passes: passRows.filter((item) => item.status === "active").length,
-      action_required: pendingRefresh + pendingEvidence + overdueSteps
+      pending_reference_matches: historicalMatches.filter((item) => !item.match || item.match.status === "pending").length,
+      pending_reference_reviews: referenceRows.filter((item) => ["submitted", "automated_screening", "needs_review"].includes(item.status)).length,
+      action_required: pendingRefresh + pendingEvidence + overdueSteps + historicalMatches.filter((item) => !item.match || item.match.status === "pending").length
     }
   };
 }
@@ -487,6 +594,142 @@ export function registerMaritimePartnerCenterRoutes(app) {
     return { ok: true, transfer };
   });
 
+  app.post("/v1/maritime/partner-center/reference-matches/:claimId/decision", { config: { rateLimit: { max: 30, timeWindow: "10 minutes" } } }, async (request) => {
+    const claimId = uuid.parse(request.params.claimId);
+    const body = referenceDecisionSchema.parse(request.body || {});
+    const access = await requirePartner(request, "employer_reference.match_decide", body.partner_id, { manager: true });
+    await ensureReferenceAuthority(access);
+    const candidate = (await referenceMatchesForPartner(body.partner_id)).find((item) => item.id === claimId);
+    if (!candidate) throw httpError("Bu şirkete ait tarihsel çalışma eşleşmesi bulunamadı.", 404, "REFERENCE_MATCH_NOT_FOUND");
+    if (body.decision === "accept" && !["exact_verified", "strong_match"].includes(candidate.evaluation.level)) throw httpError("Referans vermeden önce tarihsel çalışma ilişkisi güvenilir kanıtla doğrulanmalıdır.", 409, "REFERENCE_RELATIONSHIP_NOT_VERIFIED");
+    const now = new Date().toISOString();
+    const match = assertDb(await supabaseAdmin.from("maritime_employer_reference_matches").upsert({
+      claim_id: claimId,
+      partner_id: body.partner_id,
+      relationship_id: candidate.evaluation.relationship_id || null,
+      match_level: candidate.evaluation.level,
+      confidence: candidate.evaluation.confidence,
+      reason_codes: candidate.evaluation.reason_codes,
+      status: body.decision === "accept" ? "accepted" : "rejected",
+      decided_by: access.ctx.user.id,
+      decided_at: now,
+      updated_at: now
+    }, { onConflict: "claim_id,partner_id" }).select("*").single(), "Tarihsel çalışma eşleşmesi kaydedilemedi.");
+    await logAction(request, access.ctx, "maripartner.reference_match_decided", "maritime_employer_reference_match", match.id, { partner_id: body.partner_id, decision: body.decision, match_level: match.match_level, reason: body.reason }, body.decision === "reject" ? "warning" : "info");
+    return { ok: true, match };
+  });
+
+  app.post("/v1/maritime/partner-center/employer-references", { config: { rateLimit: { max: 20, timeWindow: "10 minutes" } } }, async (request, reply) => {
+    const body = employerReferenceSchema.parse(request.body || {});
+    const access = await requirePartner(request, "employer_reference.create", body.partner_id, { manager: true });
+    await ensureReferenceAuthority(access);
+    const normalized = validateEmployerReferencePayload(body);
+    const match = assertDb(await supabaseAdmin.from("maritime_employer_reference_matches")
+      .select("id,claim_id,partner_id,status,match_level,claim:maritime_employment_reference_claims!inner(seafarer_user_id)")
+      .eq("id", body.match_id).eq("partner_id", body.partner_id).eq("status", "accepted").in("match_level", ["exact_verified", "strong_match"]).maybeSingle(), "Referans eşleşmesi okunamadı.");
+    if (!match) throw httpError("Doğrulanmış tarihsel çalışma ilişkisi olmadan referans oluşturulamaz.", 409, "REFERENCE_VERIFIED_MATCH_REQUIRED");
+    const existing = assertDb(await supabaseAdmin.from("maritime_employer_references").select("id,version_number,status").eq("match_id", match.id).order("version_number", { ascending: false }).limit(1).maybeSingle(), "Mevcut referans okunamadı.");
+    if (existing && !["withdrawn", "rejected", "superseded", "expired"].includes(existing.status)) throw httpError("Bu çalışma ilişkisi için açık bir referans kaydı zaten var.", 409, "REFERENCE_ALREADY_OPEN");
+    const versionNumber = Number(existing?.version_number || 0) + 1;
+    const reference = assertDb(await supabaseAdmin.from("maritime_employer_references").insert({
+      match_id: match.id,
+      claim_id: match.claim_id,
+      partner_id: body.partner_id,
+      seafarer_user_id: match.claim.seafarer_user_id,
+      author_user_id: access.ctx.user.id,
+      status: "draft",
+      version_number: versionNumber,
+      comment: normalized.comment,
+      average_score: normalized.average_score,
+      high_impact_negative: normalized.high_impact_negative,
+      requires_second_review: normalized.high_impact_negative
+    }).select("*").single(), "İşveren referansı oluşturulamadı.");
+    assertDb(await supabaseAdmin.from("maritime_employer_reference_ratings").insert(normalized.ratings.map((item) => ({ ...item, reference_id: reference.id }))), "Referans puanları kaydedilemedi.");
+    assertDb(await supabaseAdmin.from("maritime_employer_reference_answers").insert(normalized.answers.map((item) => ({ ...item, reference_id: reference.id }))), "Referans cevapları kaydedilemedi.");
+    const snapshot = { match_id: match.id, ratings: normalized.ratings, answers: normalized.answers, comment: normalized.comment, average_score: normalized.average_score, high_impact_negative: normalized.high_impact_negative };
+    assertDb(await supabaseAdmin.from("maritime_employer_reference_versions").insert({ reference_id: reference.id, version_number: versionNumber, snapshot_hash: sha256(JSON.stringify(snapshot)), snapshot, change_reason: existing ? "previous_reference_closed" : "initial_draft", created_by: access.ctx.user.id }), "Referans sürümü kaydedilemedi.");
+    await writeReferenceAccess({ partnerId: body.partner_id, referenceId: reference.id, userId: access.ctx.user.id, action: "create", purpose: "verified_employer_reference" });
+    await logAction(request, access.ctx, "maripartner.employer_reference_created", "maritime_employer_reference", reference.id, { partner_id: body.partner_id, high_impact_negative: normalized.high_impact_negative });
+    return reply.code(201).send({ ok: true, reference });
+  });
+
+  app.post("/v1/maritime/partner-center/employer-references/:referenceId/submit", { config: { rateLimit: { max: 20, timeWindow: "10 minutes" } } }, async (request) => {
+    const referenceId = uuid.parse(request.params.referenceId);
+    const body = referenceSubmitSchema.parse(request.body || {});
+    const access = await requirePartner(request, "employer_reference.submit", body.partner_id, { manager: true });
+    await ensureReferenceAuthority(access);
+    const current = assertDb(await supabaseAdmin.from("maritime_employer_references").select("id,partner_id,status,comment,high_impact_negative").eq("id", referenceId).eq("partner_id", body.partner_id).maybeSingle(), "Referans okunamadı.");
+    if (!current || current.status !== "draft") throw httpError("Yalnız taslak referans incelemeye gönderilebilir.", 409, "REFERENCE_NOT_DRAFT");
+    const screen = referenceModerationScreen(current);
+    const nextStatus = current.high_impact_negative || screen.decision === "needs_review" ? "needs_review" : "automated_screening";
+    const reference = assertDb(await supabaseAdmin.from("maritime_employer_references").update({ status: nextStatus, updated_at: new Date().toISOString() }).eq("id", referenceId).eq("status", "draft").select("id,status,high_impact_negative,requires_second_review").single(), "Referans incelemeye gönderilemedi.");
+    assertDb(await supabaseAdmin.from("maritime_employer_reference_moderation").insert({ reference_id: referenceId, stage: "automated_screening", decision: nextStatus === "needs_review" ? "escalated" : "pending", rule_codes: screen.rule_codes, explanation: nextStatus === "needs_review" ? "İnsan incelemesi veya ikinci karar gerekli." : "Otomatik ön kontrol tamamlandı; yönetici kararı bekleniyor." }), "Referans moderasyon kaydı oluşturulamadı.");
+    assertDb(await supabaseAdmin.from("admin_notifications").insert({ kind: "maritime_employer_reference", severity: current.high_impact_negative ? "warning" : "info", title: "İşveren referansı inceleme bekliyor", message: "MariPartner üzerinden doğrulanmış işveren referansı gönderildi.", metadata: { reference_id: referenceId, partner_id: body.partner_id, high_impact_negative: current.high_impact_negative } }), "Yönetici bildirimi oluşturulamadı.");
+    await writeReferenceAccess({ partnerId: body.partner_id, referenceId, userId: access.ctx.user.id, action: "submit", purpose: "moderation_submission", metadata: { rule_codes: screen.rule_codes } });
+    await logAction(request, access.ctx, "maripartner.employer_reference_submitted", "maritime_employer_reference", referenceId, { partner_id: body.partner_id, high_impact_negative: current.high_impact_negative });
+    return { ok: true, reference };
+  });
+
+  app.post("/v1/maritime/partner-center/employer-references/:referenceId/withdraw", async (request) => {
+    const referenceId = uuid.parse(request.params.referenceId);
+    const body = referenceSubmitSchema.parse(request.body || {});
+    const access = await requirePartner(request, "employer_reference.withdraw", body.partner_id, { manager: true });
+    const reference = assertDb(await supabaseAdmin.from("maritime_employer_references").update({ status: "withdrawn", withdrawn_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", referenceId).eq("partner_id", body.partner_id).in("status", ["draft", "submitted", "automated_screening", "needs_review"]).select("id,status").maybeSingle(), "Referans geri çekilemedi.");
+    if (!reference) throw httpError("Referans geri çekilemez durumda.", 409, "REFERENCE_WITHDRAW_CONFLICT");
+    await writeReferenceAccess({ partnerId: body.partner_id, referenceId, userId: access.ctx.user.id, action: "withdraw", purpose: "author_withdrawal" });
+    await logAction(request, access.ctx, "maripartner.employer_reference_withdrawn", "maritime_employer_reference", referenceId, { partner_id: body.partner_id }, "warning");
+    return { ok: true, reference };
+  });
+
+  app.get("/v1/maritime/partner-center/candidate-rooms/:roomId/employer-reference-summary", async (request) => {
+    const roomId = uuid.parse(request.params.roomId);
+    const partnerId = uuid.parse(request.query?.partner_id);
+    const access = await requirePartner(request, "employer_reference.summary", partnerId);
+    await ensureReferenceAuthority(access);
+    const room = await candidateRoom(partnerId, roomId);
+    const references = assertDb(await supabaseAdmin.from("maritime_employer_references").select("id,average_score,approved_at,status").eq("seafarer_user_id", room.seafarer_user_id).eq("status", "approved").order("approved_at", { ascending: false }), "Onaylı referans özeti okunamadı.") || [];
+    for (const reference of references) await writeReferenceAccess({ partnerId, referenceId: reference.id, userId: access.ctx.user.id, action: "view_summary", purpose: "active_hiring_relationship", metadata: { candidate_room_id: room.id } });
+    return { ok: true, summary: approvedReferenceSummary(references) };
+  });
+
+  app.post("/v1/maritime/partner-center/trust-appeals", { config: { rateLimit: { max: 5, timeWindow: "1 hour" } } }, async (request, reply) => {
+    const body = trustAppealSchema.parse(request.body || {});
+    const access = await requirePartner(request, "trust_appeal.create", body.partner_id, { manager: true });
+    const trustCase = assertDb(await supabaseAdmin.from("maritime_trust_cases").select("id,partner_id,status").eq("id", body.case_id).eq("partner_id", body.partner_id).maybeSingle(), "Güven vakası okunamadı.");
+    if (!trustCase) throw httpError("Bu şirkete ait itiraz edilebilir güven vakası bulunamadı.", 404, "TRUST_CASE_NOT_FOUND");
+    const appeal = assertDb(await supabaseAdmin.from("maritime_trust_appeals").insert({ case_id: trustCase.id, appellant_user_id: access.ctx.user.id, appellant_partner_id: body.partner_id, reason: body.reason }).select("id,case_id,status,created_at").single(), "İtiraz kaydedilemedi.");
+    assertDb(await supabaseAdmin.from("maritime_trust_case_events").insert({ case_id: trustCase.id, event_type: "appeal_submitted", from_status: trustCase.status, to_status: trustCase.status, actor_user_id: access.ctx.user.id, reason: body.reason }), "İtiraz geçmişi kaydedilemedi.");
+    await logAction(request, access.ctx, "maripartner.trust_appeal_submitted", "maritime_trust_appeal", appeal.id, { partner_id: body.partner_id, case_id: trustCase.id }, "warning");
+    return reply.code(201).send({ ok: true, appeal });
+  });
+
+  app.post("/v1/maritime/partner-center/interview-templates", async (request, reply) => {
+    const body = interviewTemplateSchema.parse(request.body || {});
+    const access = await requirePartner(request, "interview_template.create", body.partner_id, { manager: true });
+    const previous = assertDb(await supabaseAdmin.from("maritime_interview_template_versions").select("version_number").eq("partner_id", body.partner_id).eq("template_key", body.template_key).order("version_number", { ascending: false }).limit(1).maybeSingle(), "Görüşme şablonu sürümü okunamadı.");
+    const versionNumber = Number(previous?.version_number || 0) + 1;
+    if (body.activate) assertDb(await supabaseAdmin.from("maritime_interview_template_versions").update({ status: "retired" }).eq("partner_id", body.partner_id).eq("template_key", body.template_key).eq("status", "active"), "Önceki görüşme şablonu kapatılamadı.");
+    const template = assertDb(await supabaseAdmin.from("maritime_interview_template_versions").insert({ partner_id: body.partner_id, template_key: body.template_key, version_number: versionNumber, title: body.title, questions: body.questions, status: body.activate ? "active" : "draft", created_by: access.ctx.user.id }).select("*").single(), "Görüşme şablonu oluşturulamadı.");
+    await logAction(request, access.ctx, "maripartner.interview_template_version_created", "maritime_interview_template_version", template.id, { partner_id: body.partner_id, template_key: body.template_key, version_number: versionNumber });
+    return reply.code(201).send({ ok: true, template });
+  });
+
+  app.post("/v1/maritime/partner-center/imports/preview", { config: { rateLimit: { max: 5, timeWindow: "10 minutes" } } }, async (request, reply) => {
+    const body = importPreviewSchema.parse(request.body || {});
+    const access = await requirePartner(request, "import.preview", body.partner_id, { manager: true });
+    if (body.rows.length > config.mariPartner.maxImportRows) throw httpError(`Bir içe aktarma önizlemesinde en fazla ${config.mariPartner.maxImportRows} satır kullanılabilir.`, 400, "IMPORT_ROW_LIMIT");
+    const allowedKeys = new Set(["candidate_public_id", "job_reference", "rank_code", "vessel_type", "available_from", "note"]);
+    const rejected = [];
+    body.rows.forEach((row, index) => {
+      const extra = Object.keys(row).filter((key) => !allowedKeys.has(key));
+      if (extra.length || (!row.candidate_public_id && !row.job_reference)) rejected.push({ row: index + 1, reason_codes: [...(extra.length ? ["UNSUPPORTED_COLUMNS"] : []), ...(!row.candidate_public_id && !row.job_reference ? ["IDENTIFIER_REQUIRED"] : [])] });
+    });
+    const report = { accepted_count: body.rows.length - rejected.length, rejected_count: rejected.length, rejected_rows: rejected.slice(0, 100), source_hash: sha256(JSON.stringify(body.rows)) };
+    const job = assertDb(await supabaseAdmin.from("maritime_import_jobs").upsert({ partner_id: body.partner_id, status: rejected.length ? "preview" : "validated", row_count: body.rows.length, accepted_count: report.accepted_count, rejected_count: report.rejected_count, validation_report: report, idempotency_key: body.idempotency_key, created_by: access.ctx.user.id }, { onConflict: "idempotency_key" }).select("id,status,row_count,accepted_count,rejected_count,validation_report,created_at").single(), "İçe aktarma önizlemesi kaydedilemedi.");
+    await logAction(request, access.ctx, "maripartner.import_preview_created", "maritime_import_job", job.id, { partner_id: body.partner_id, row_count: body.rows.length, rejected_count: rejected.length });
+    return reply.code(201).send({ ok: true, import_job: job });
+  });
+
   app.post("/v1/maritime/partner-center/reviewer-passes", { config: { rateLimit: { max: 8, timeWindow: "1 minute" } } }, async (request, reply) => {
     const body = reviewerPassSchema.parse(request.body || {});
     const access = await requirePartner(request, "reviewer_pass.create", body.partner_id, { manager: true });
@@ -571,18 +814,24 @@ export function registerMaritimePartnerCenterRoutes(app) {
   app.get("/v1/admin/maripartner", async (request) => {
     const { ctx } = await requireAdmin(request, "admin.read");
     const limit = Math.min(200, Math.max(10, Number(request.query?.limit) || 100));
-    const [businesses, refreshes, evidence, policies, slas, handovers, passes] = await Promise.all([
-      supabaseAdmin.from("partner_businesses").select("id,partner_code,display_name,status,verification_status,created_at").eq("partner_type", "maritime").order("created_at", { ascending: false }).limit(limit),
+    const [businesses, refreshes, evidence, policies, slas, handovers, passes, references, referenceMatches, disputes, companyCycles, recruiterAuthorities, trustAppeals] = await Promise.all([
+      supabaseAdmin.from("partner_businesses").select("id,owner_id,partner_code,display_name,status,verification_status,created_at").eq("partner_type", "maritime").order("created_at", { ascending: false }).limit(limit),
       supabaseAdmin.from("maritime_talent_refresh_campaigns").select("id,partner_id,title,status,scheduled_at,expires_at,created_at").order("created_at", { ascending: false }).limit(limit),
       supabaseAdmin.from("maritime_evidence_requests").select("id,partner_id,status,purpose,expires_at,created_at").order("created_at", { ascending: false }).limit(limit),
       supabaseAdmin.from("maritime_hiring_sla_policies").select("id,partner_id,stage,target_minutes,active,created_at").eq("active", true).order("created_at", { ascending: false }).limit(limit),
       supabaseAdmin.from("maritime_hiring_sla_instances").select("id,partner_id,hiring_room_id,stage,status,due_at,completed_at,extended_until").order("due_at", { ascending: true }).limit(limit),
       supabaseAdmin.from("maritime_hiring_handovers").select("id,partner_id,hiring_room_id,previous_owner_user_id,new_owner_user_id,reason,created_at").order("created_at", { ascending: false }).limit(limit),
-      supabaseAdmin.from("maritime_reviewer_passes").select("id,partner_id,reviewer_name,purpose,status,use_count,max_uses,expires_at,created_at").order("created_at", { ascending: false }).limit(limit)
+      supabaseAdmin.from("maritime_reviewer_passes").select("id,partner_id,reviewer_name,purpose,status,use_count,max_uses,expires_at,created_at").order("created_at", { ascending: false }).limit(limit),
+      supabaseAdmin.from("maritime_employer_references").select("id,partner_id,claim_id,status,version_number,average_score,high_impact_negative,requires_second_review,first_reviewed_by,second_reviewed_by,comment,created_at,updated_at").in("status", ["submitted", "automated_screening", "needs_review"]).order("created_at", { ascending: true }).limit(limit),
+      supabaseAdmin.from("maritime_employer_reference_matches").select("id,claim_id,partner_id,match_level,confidence,reason_codes,status,decided_at,created_at").order("created_at", { ascending: false }).limit(limit),
+      supabaseAdmin.from("maritime_employer_reference_disputes").select("id,reference_id,opened_by_partner_id,reason,status,resolution,created_at,updated_at").in("status", ["open", "triage", "awaiting_evidence"]).order("created_at", { ascending: true }).limit(limit),
+      supabaseAdmin.from("maritime_company_verification_cycles").select("id,partner_id,status,verification_level,verified_at,expires_at,created_at").order("created_at", { ascending: false }).limit(limit),
+      supabaseAdmin.from("maritime_recruiter_authorities").select("id,partner_id,user_id,status,authority_scope,approved_at,expires_at,created_at").order("created_at", { ascending: false }).limit(limit),
+      supabaseAdmin.from("maritime_trust_appeals").select("id,case_id,appellant_partner_id,status,reason,reviewer_user_id,second_reviewer_user_id,created_at").in("status", ["submitted", "triage", "in_review"]).order("created_at", { ascending: true }).limit(limit)
     ]);
     const slaRows = (assertDb(slas, "SLA kayıtları okunamadı.") || []).map((item) => ({ ...item, status: slaStatus({ dueAt: item.extended_until || item.due_at, completedAt: item.completed_at }) }));
     await logAction(request, ctx, "maripartner.admin_viewed", "maripartner_admin", null, { limit });
-    return { ok: true, businesses: assertDb(businesses, "Şirketler okunamadı.") || [], refresh_campaigns: assertDb(refreshes, "Yenilemeler okunamadı.") || [], evidence_requests: assertDb(evidence, "Kanıt talepleri okunamadı.") || [], sla_policies: assertDb(policies, "SLA kuralları okunamadı.") || [], sla_instances: slaRows, handovers: assertDb(handovers, "Devirler okunamadı.") || [], reviewer_passes: (assertDb(passes, "Geçişler okunamadı.") || []).map((item) => ({ ...item, status: reviewerPassState(item) })) };
+    return { ok: true, businesses: assertDb(businesses, "Şirketler okunamadı.") || [], refresh_campaigns: assertDb(refreshes, "Yenilemeler okunamadı.") || [], evidence_requests: assertDb(evidence, "Kanıt talepleri okunamadı.") || [], sla_policies: assertDb(policies, "SLA kuralları okunamadı.") || [], sla_instances: slaRows, handovers: assertDb(handovers, "Devirler okunamadı.") || [], reviewer_passes: (assertDb(passes, "Geçişler okunamadı.") || []).map((item) => ({ ...item, status: reviewerPassState(item) })), employer_references: assertDb(references, "İşveren referansları okunamadı.") || [], reference_matches: assertDb(referenceMatches, "Referans eşleşmeleri okunamadı.") || [], reference_disputes: assertDb(disputes, "Referans itirazları okunamadı.") || [], company_verification_cycles: assertDb(companyCycles, "Şirket doğrulamaları okunamadı.") || [], recruiter_authorities: assertDb(recruiterAuthorities, "Temsilci yetkileri okunamadı.") || [], trust_appeals: assertDb(trustAppeals, "Güven itirazları okunamadı.") || [] };
   });
 
   app.post("/v1/admin/maripartner/action", async (request) => {
@@ -593,10 +842,65 @@ export function registerMaritimePartnerCenterRoutes(app) {
     if (body.action === "cancel_evidence") result = await supabaseAdmin.from("maritime_evidence_requests").update({ status: "cancelled", updated_at: new Date().toISOString() }).eq("id", body.resource_id).in("status", ["requested", "candidate_action"]).select("id,status,sensitive_access_request_id").maybeSingle();
     if (body.action === "revoke_pass") result = await supabaseAdmin.from("maritime_reviewer_passes").update({ status: "revoked", revoked_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", body.resource_id).eq("status", "active").select("id,status").maybeSingle();
     if (body.action === "deactivate_sla") result = await supabaseAdmin.from("maritime_hiring_sla_policies").update({ active: false, updated_at: new Date().toISOString() }).eq("id", body.resource_id).select("id,active").maybeSingle();
+    if (["reference_approve", "reference_reject", "reference_changes", "reference_second_approve"].includes(body.action)) {
+      const current = assertDb(await supabaseAdmin.from("maritime_employer_references").select("id,partner_id,status,high_impact_negative,requires_second_review,first_reviewed_by,second_reviewed_by").eq("id", body.resource_id).maybeSingle(), "Referans inceleme kaydı okunamadı.");
+      if (!current || !["submitted", "automated_screening", "needs_review"].includes(current.status)) throw httpError("Referans artık moderasyon kuyruğunda değil.", 409, "REFERENCE_MODERATION_CONFLICT");
+      const now = new Date().toISOString();
+      let update;
+      let stage = "first_review";
+      let decision = "pending";
+      if (body.action === "reference_reject") { update = { status: "rejected", rejected_at: now, first_reviewed_by: current.first_reviewed_by || ctx.user.id, first_reviewed_at: now }; decision = "rejected"; }
+      if (body.action === "reference_changes") { update = { status: "needs_review", first_reviewed_by: current.first_reviewed_by || ctx.user.id, first_reviewed_at: now }; decision = "needs_changes"; }
+      if (body.action === "reference_approve" && current.high_impact_negative) { update = { status: "needs_review", requires_second_review: true, first_reviewed_by: ctx.user.id, first_reviewed_at: now }; decision = "escalated"; }
+      if (body.action === "reference_approve" && !current.high_impact_negative) { update = { status: "approved", first_reviewed_by: ctx.user.id, first_reviewed_at: now, approved_at: now }; decision = "approved"; }
+      if (body.action === "reference_second_approve") {
+        if (!current.high_impact_negative || !current.first_reviewed_by) throw httpError("Bu referans için ikinci inceleme gerekmiyor.", 409, "REFERENCE_SECOND_REVIEW_NOT_REQUIRED");
+        if (current.first_reviewed_by === ctx.user.id) throw httpError("İkinci incelemeyi farklı bir yönetici yapmalıdır.", 403, "REFERENCE_SECOND_REVIEWER_MUST_DIFFER");
+        update = { status: "approved", second_reviewed_by: ctx.user.id, second_reviewed_at: now, approved_at: now };
+        stage = "second_review";
+        decision = "approved";
+      }
+      result = await supabaseAdmin.from("maritime_employer_references").update({ ...update, updated_at: now }).eq("id", body.resource_id).select("id,partner_id,status,high_impact_negative,requires_second_review,first_reviewed_by,second_reviewed_by,approved_at").maybeSingle();
+      const updated = assertDb(result, "Referans moderasyon kararı kaydedilemedi.");
+      if (!updated) throw httpError("Referans moderasyon kararı çakıştı.", 409, "REFERENCE_MODERATION_CONFLICT");
+      assertDb(await supabaseAdmin.from("maritime_employer_reference_moderation").insert({ reference_id: current.id, stage, decision, explanation: body.reason, reviewer_user_id: ctx.user.id }), "Referans moderasyon geçmişi kaydedilemedi.");
+      await notifyPartner(current.partner_id, { notification_type: "employer_reference_decision", title: "İşveren referansı güncellendi", message: decision === "approved" ? "Referans onaylandı." : decision === "rejected" ? "Referans reddedildi." : "Referans için ek inceleme gerekiyor.", resource_type: "maritime_employer_reference", resource_id: current.id, metadata: { decision } });
+      result = { data: updated, error: null };
+    }
     const row = assertDb(result, "Yönetim işlemi tamamlanamadı.");
     if (!row) throw httpError("Kayıt bulunamadı veya artık değiştirilemez.", 409, "MARIPARTNER_ADMIN_ACTION_CONFLICT");
     if (body.action === "cancel_evidence" && row.sensitive_access_request_id) await supabaseAdmin.from("maritime_sensitive_access_requests").update({ status: "revoked", decided_at: new Date().toISOString() }).eq("id", row.sensitive_access_request_id).in("status", ["requested", "approved", "second_approval_required"]);
     await logAction(request, ctx, `maripartner.admin_${body.action}`, "maripartner_resource", body.resource_id, { reason: body.reason }, "warning");
     return { ok: true, resource: row };
+  });
+
+  app.post("/v1/admin/maripartner/company-verification", async (request) => {
+    const body = companyVerificationSchema.parse(request.body || {});
+    const { ctx } = await requireAdmin(request, "company_verification.decide");
+    const now = new Date().toISOString();
+    const status = body.decision === "verify" ? "verified" : body.decision === "request_changes" ? "changes_requested" : body.decision === "revoke" ? "revoked" : "rejected";
+    if (body.decision === "verify" && body.expires_at) assertFutureWindow(body.expires_at, { maxDays: 730, code: "COMPANY_VERIFICATION_EXPIRY_INVALID" });
+    const cycle = assertDb(await supabaseAdmin.from("maritime_company_verification_cycles").insert({ partner_id: body.partner_id, status, verification_level: body.verification_level, evidence_snapshot: { decision_reason: body.reason }, verified_by: ctx.user.id, verified_at: body.decision === "verify" ? now : null, expires_at: body.decision === "verify" ? body.expires_at || new Date(Date.now() + 365 * 86400000).toISOString() : null }).select("*").single(), "Şirket doğrulama kararı kaydedilemedi.");
+    await logAction(request, ctx, "maripartner.company_verification_decided", "maritime_company_verification_cycle", cycle.id, { partner_id: body.partner_id, status, reason: body.reason }, status === "verified" ? "info" : "warning");
+    return { ok: true, verification: cycle };
+  });
+
+  app.post("/v1/admin/maripartner/recruiter-authority", async (request) => {
+    const body = recruiterAuthoritySchema.parse(request.body || {});
+    const { ctx } = await requireAdmin(request, "recruiter_authority.decide");
+    const now = new Date().toISOString();
+    const authority = assertDb(await supabaseAdmin.from("maritime_recruiter_authorities").upsert({ partner_id: body.partner_id, user_id: body.user_id, status: body.status, authority_scope: body.authority_scope, approved_by: ctx.user.id, approved_at: body.status === "active" ? now : null, expires_at: body.expires_at || null, updated_at: now }, { onConflict: "partner_id,user_id" }).select("*").single(), "Şirket temsilcisi yetkisi kaydedilemedi.");
+    await logAction(request, ctx, "maripartner.recruiter_authority_decided", "maritime_recruiter_authority", authority.id, { partner_id: body.partner_id, user_id: body.user_id, status: body.status, reason: body.reason }, body.status === "active" ? "info" : "warning");
+    return { ok: true, authority };
+  });
+
+  app.post("/v1/admin/maripartner/vessel-company-relationships", async (request, reply) => {
+    const body = vesselRelationshipSchema.parse(request.body || {});
+    const { ctx } = await requireAdmin(request, "vessel_company_relationship.create");
+    if (body.valid_from && body.valid_until && body.valid_until < body.valid_from) throw httpError("İlişki bitiş tarihi başlangıçtan önce olamaz.", 400, "VESSEL_RELATIONSHIP_DATE_INVALID");
+    const { reason, ...relationshipInput } = body;
+    const relationship = assertDb(await supabaseAdmin.from("maritime_vessel_company_relationships").insert({ ...relationshipInput, verified_by: ctx.user.id, verified_at: ["registry_verified", "admin_verified"].includes(body.verification_status) ? new Date().toISOString() : null }).select("*").single(), "Tarihsel gemi-şirket ilişkisi kaydedilemedi.");
+    await logAction(request, ctx, "maripartner.vessel_company_relationship_created", "maritime_vessel_company_relationship", relationship.id, { partner_id: body.partner_id, imo_number: body.imo_number, verification_status: body.verification_status, reason });
+    return reply.code(201).send({ ok: true, relationship });
   });
 }

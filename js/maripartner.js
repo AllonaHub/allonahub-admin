@@ -2,8 +2,18 @@
   "use strict";
   const App = window.Allona = window.Allona || {};
   const state = { session: null, data: null, partnerId: "", activePanel: "", lastFocus: null };
-  const titles = { refresh: "Havuzu Güncelle", evidence: "Kanıt Kontrolü", sla: "Süreç Süreleri", handover: "Dosya Devri", review: "Güvenli İnceleme" };
-  const templates = { refresh: "mpRefreshTemplate", evidence: "mpEvidenceTemplate", sla: "mpSlaTemplate", handover: "mpHandoverTemplate", review: "mpReviewTemplate" };
+  const titles = { refresh: "Havuzu Güncelle", evidence: "Kanıt Kontrolü", sla: "Süreç Süreleri", handover: "Dosya Devri", review: "Güvenli İnceleme", references: "Doğrulanmış Referans", governance: "Karar ve Değer Merkezi" };
+  const templates = { refresh: "mpRefreshTemplate", evidence: "mpEvidenceTemplate", sla: "mpSlaTemplate", handover: "mpHandoverTemplate", review: "mpReviewTemplate", references: "mpReferencesTemplate", governance: "mpGovernanceTemplate" };
+  const referenceCategories = [
+    ["professional_competence", "Mesleki yeterlilik"], ["safety_awareness", "Emniyet farkındalığı"], ["rule_compliance", "Kural uyumu"],
+    ["teamwork", "Ekip çalışması"], ["communication", "İletişim"], ["reliability", "Güvenilirlik"], ["punctuality", "Dakiklik"],
+    ["problem_solving", "Problem çözme"], ["leadership", "Liderlik"], ["technical_knowledge", "Teknik bilgi"], ["equipment_care", "Ekipman özeni"],
+    ["watchkeeping", "Vardiya disiplini"], ["stress_management", "Stres yönetimi"], ["adaptability", "Uyum"], ["rehire_willingness", "Yeniden çalışma isteği"]
+  ];
+  const referenceQuestions = [
+    ["employment_confirmed", "Adayın şirkette çalıştığını doğruluyor musunuz?"], ["rank_confirmed", "Beyan edilen görev/rütbe doğru mu?"],
+    ["service_dates_confirmed", "Hizmet tarihleri doğru mu?"], ["completed_contract", "Kontratını tamamladı mı?"], ["eligible_for_rehire", "Yeniden işe almayı değerlendirir misiniz?"]
+  ];
   const $ = (selector, root) => (root || document).querySelector(selector);
   const $$ = (selector, root) => Array.from((root || document).querySelectorAll(selector));
 
@@ -152,6 +162,50 @@
       const target = $("[data-mp-review-history]", root);
       target.innerHTML = `<h3>İnceleme geçişleri</h3>${(state.data.reviewer_passes || []).map((item) => historyCard(item.reviewer_name, `${item.status} · ${item.purpose}`, `Bitiş: ${dateTime(item.expires_at)}`, "", item.status === "active" ? `<button type="button" data-mp-revoke-pass="${escape(item.id)}">İptal et</button>` : "")).join("") || '<div class="mp-empty">Henüz güvenli inceleme geçişi yok.</div>'}`;
     }
+    if (panel === "references") renderReferences(root);
+    if (panel === "governance") {
+      const target = $("[data-mp-metrics]", root);
+      const live = state.data.live_metrics || [];
+      const snapshots = state.data.metric_snapshots || [];
+      target.innerHTML = [...live.map((item) => historyCard(item.metric_key, Number(item.metric_value).toLocaleString("tr-TR"), item.explanation)), ...snapshots.map((item) => historyCard(item.metric_key, Number(item.metric_value).toLocaleString("tr-TR"), `${dateTime(item.period_start)} - ${dateTime(item.period_end)}`))].join("") || '<div class="mp-empty">Henüz hesaplanmış değer ölçümü yok.</div>';
+    }
+  }
+
+  function referenceStatusLabel(status) {
+    return ({ draft: "Taslak", submitted: "Gönderildi", automated_screening: "Ön kontrolde", needs_review: "Yönetici incelemesinde", approved: "Onaylandı", rejected: "Reddedildi", withdrawn: "Geri çekildi", superseded: "Yeni sürümle değiştirildi", expired: "Süresi doldu" })[status] || status || "Bekliyor";
+  }
+
+  function renderReferences(root) {
+    const matchesTarget = $("[data-mp-reference-matches]", root);
+    const historyTarget = $("[data-mp-reference-history]", root);
+    const matches = state.data.historical_reference_matches || [];
+    matchesTarget.innerHTML = matches.length ? matches.map((item) => {
+      const evaluation = item.evaluation || {};
+      const match = item.match;
+      const safeToAccept = ["exact_verified", "strong_match"].includes(evaluation.level);
+      const detail = `${item.vessel_name || "Gemi"} · IMO ${item.imo_number} · ${item.rank_name || "Görev belirtilmedi"} · ${item.service_start || "?"} - ${item.service_end || "?"}`;
+      let actions = "";
+      if (!match || match.status === "pending") actions = safeToAccept
+        ? `<button type="button" class="mp-primary" data-mp-reference-match="accept" data-claim-id="${escape(item.id)}">Çalışma ilişkisini doğrula</button><button type="button" class="mp-secondary" data-mp-reference-match="reject" data-claim-id="${escape(item.id)}">Eşleşmeyi reddet</button>`
+        : `<span class="mp-match-warning">${evaluation.level === "conflict" ? "Tarih aralığı şirket yetkisiyle çakışıyor." : "Tarihsel şirket-gemi yetkisi doğrulanmadan referans verilemez."}</span>`;
+      if (match?.status === "accepted") actions = `<button type="button" class="mp-primary" data-mp-reference-compose="${escape(match.id)}">Referans oluştur</button>`;
+      if (match?.status === "rejected") actions = '<span class="mp-match-warning">Şirket tarafından eşleşme reddedildi.</span>';
+      return `<article class="mp-reference-item"><div><strong>${escape(item.candidate_name || item.candidate_public_id || "Aday")}</strong><p>${escape(detail)}</p><small>${escape(evaluation.level || "possible_match")} · güven ${escape(evaluation.confidence || 0)}%</small></div><div class="mp-history-actions">${actions}</div></article>`;
+    }).join("") : '<div class="mp-empty">Doğrulanmış tarihsel IMO yetkinizle eşleşen eski çalışan kaydı bulunmuyor.</div>';
+    const references = state.data.employer_references || [];
+    historyTarget.innerHTML = `<h3>Şirket referansları</h3>${references.length ? references.map((item) => historyCard(`Sürüm ${item.version_number}`, `${referenceStatusLabel(item.status)} · ortalama ${item.average_score ?? "-"}/10`, dateTime(item.updated_at), item.high_impact_negative ? "is-overdue" : "", item.status === "draft" ? `<div class="mp-history-actions"><button type="button" data-mp-reference-submit="${escape(item.id)}">İncelemeye gönder</button><button type="button" data-mp-reference-withdraw="${escape(item.id)}">Geri çek</button></div>` : ["submitted", "automated_screening", "needs_review"].includes(item.status) ? `<div class="mp-history-actions"><button type="button" data-mp-reference-withdraw="${escape(item.id)}">Geri çek</button></div>` : "")).join("") : '<div class="mp-empty">Henüz işveren referansı oluşturulmadı.</div>'}`;
+  }
+
+  function showReferenceComposer(matchId) {
+    const root = $("[data-mp-drawer-body]");
+    const form = $("[data-mp-reference-form]", root);
+    form.hidden = false;
+    form.elements.match_id.value = matchId;
+    const ratings = $("[data-mp-reference-ratings]", form);
+    ratings.innerHTML = referenceCategories.map(([key, label]) => `<div class="mp-rating-row"><span id="rating-${escape(key)}">${escape(label)}</span><div class="mp-stars" role="radiogroup" aria-labelledby="rating-${escape(key)}">${Array.from({ length: 10 }, (_, index) => `<label title="${index + 1} puan"><input type="radio" name="rating_${escape(key)}" value="${index + 1}" required><span aria-hidden="true">★</span><span class="mp-sr-only">${index + 1}</span></label>`).join("")}</div><label class="mp-na"><input type="checkbox" name="na_${escape(key)}"> Uygulanamaz</label></div>`).join("");
+    const answers = $("[data-mp-reference-answers]", form);
+    answers.innerHTML = referenceQuestions.map(([key, label]) => `<label><span>${escape(label)}</span><select name="answer_${escape(key)}" required><option value="">Seçin</option><option value="yes">Evet</option><option value="no">Hayır</option><option value="unknown">Bilinmiyor</option></select></label>`).join("");
+    form.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   function renderCounters(root) {
@@ -183,6 +237,14 @@
     wrap.hidden = false;
     document.body.style.overflow = "hidden";
     $("[data-mp-close]", wrap).focus();
+  }
+
+  function selectCenterTab(button) {
+    const root = $("[data-mp-drawer-body]");
+    const tab = button.dataset.mpCenterTab;
+    $$('[data-mp-center-tab]', root).forEach((item) => { item.setAttribute("aria-selected", String(item === button)); item.tabIndex = item === button ? 0 : -1; });
+    $$('[data-mp-center-pane]', root).forEach((pane) => { pane.hidden = pane.dataset.mpCenterPane !== tab; });
+    $("[data-mp-drawer-title]").textContent = ({ operations: "İşlemler", trust: "Güven", management: "Yönetim" })[tab] || "Personel Merkezi";
   }
 
   function addRequirement(root) {
@@ -324,6 +386,21 @@
     await load(state.partnerId); renderHistory($("[data-mp-drawer-body]"), "review"); alert("Güvenli inceleme geçişi oluşturuldu.", "success");
   }
 
+  async function submitEmployerReference(form) {
+    const data = new FormData(form);
+    const ratings = referenceCategories.map(([key]) => {
+      const notApplicable = data.get(`na_${key}`) === "on";
+      const score = data.get(`rating_${key}`);
+      if (!notApplicable && !score) throw new Error("Tüm değerlendirme kategorilerini puanlayın veya Uygulanamaz seçin.");
+      return { category_key: key, score: notApplicable ? null : Number(score), not_applicable: notApplicable };
+    });
+    const answers = referenceQuestions.map(([key]) => ({ question_key: key, answer: data.get(`answer_${key}`), note: null }));
+    await api("/v1/maritime/partner-center/employer-references", { method: "POST", body: { partner_id: state.partnerId, match_id: data.get("match_id"), ratings, answers, comment: data.get("comment") || null } });
+    await load(state.partnerId);
+    openPanel("references", state.lastFocus);
+    alert("Referans taslağı güvenli biçimde kaydedildi. Yayımlanması için incelemeye gönderin.", "success");
+  }
+
   async function initialize() {
     state.session = App.auth?.getSession ? await App.auth.getSession() : null;
     if (!state.session?.access_token) {
@@ -343,12 +420,35 @@
     if (centerButton) openCenter(centerButton);
     const panelButton = event.target.closest("[data-mp-panel]");
     if (panelButton) openPanel(panelButton.dataset.mpPanel, panelButton);
+    const centerTab = event.target.closest("[data-mp-center-tab]");
+    if (centerTab) selectCenterTab(centerTab);
     if (event.target.closest("[data-mp-back]")) openCenter();
     if (event.target.closest("[data-mp-close]")) closePanel();
     const add = event.target.closest("[data-mp-add-requirement]");
     if (add) addRequirement($("[data-mp-drawer-body]"));
     const remove = event.target.closest("[data-mp-remove-requirement]");
     if (remove) remove.closest(".mp-requirement")?.remove();
+    const compose = event.target.closest("[data-mp-reference-compose]");
+    if (compose) showReferenceComposer(compose.dataset.mpReferenceCompose);
+    if (event.target.closest("[data-mp-reference-cancel]")) $("[data-mp-reference-form]", $("[data-mp-drawer-body]")).hidden = true;
+    const matchDecision = event.target.closest("[data-mp-reference-match]");
+    if (matchDecision) {
+      try {
+        const decision = matchDecision.dataset.mpReferenceMatch;
+        await api(`/v1/maritime/partner-center/reference-matches/${encodeURIComponent(matchDecision.dataset.claimId)}/decision`, { method: "POST", body: { partner_id: state.partnerId, decision, reason: decision === "accept" ? "Şirketin tarihsel çalışma kayıtlarıyla doğrulandı." : "Şirket kayıtlarıyla doğrulanamadı." } });
+        await load(state.partnerId); openPanel("references", state.lastFocus); alert(decision === "accept" ? "Çalışma ilişkisi doğrulandı. Referans oluşturabilirsiniz." : "Eşleşme reddedildi.", "success");
+      } catch (error) { alert(error.message); }
+    }
+    const submitReference = event.target.closest("[data-mp-reference-submit]");
+    if (submitReference) {
+      try { await api(`/v1/maritime/partner-center/employer-references/${encodeURIComponent(submitReference.dataset.mpReferenceSubmit)}/submit`, { method: "POST", body: { partner_id: state.partnerId } }); await load(state.partnerId); openPanel("references", state.lastFocus); alert("Referans güven ve moderasyon incelemesine gönderildi.", "success"); }
+      catch (error) { alert(error.message); }
+    }
+    const withdrawReference = event.target.closest("[data-mp-reference-withdraw]");
+    if (withdrawReference) {
+      try { await api(`/v1/maritime/partner-center/employer-references/${encodeURIComponent(withdrawReference.dataset.mpReferenceWithdraw)}/withdraw`, { method: "POST", body: { partner_id: state.partnerId } }); await load(state.partnerId); openPanel("references", state.lastFocus); alert("Referans geri çekildi.", "success"); }
+      catch (error) { alert(error.message); }
+    }
     const revoke = event.target.closest("[data-mp-revoke-pass]");
     if (revoke) {
       try { await api(`/v1/maritime/partner-center/reviewer-passes/${encodeURIComponent(revoke.dataset.mpRevokePass)}/revoke`, { method: "POST", body: {} }); await load(state.partnerId); openPanel("review", state.lastFocus); alert("İnceleme geçişi iptal edildi.", "success"); }
@@ -363,16 +463,36 @@
 
   document.addEventListener("submit", async (event) => {
     const form = event.target;
-    const handler = form.matches("[data-mp-refresh-form]") ? submitRefresh : form.matches("[data-mp-evidence-template-form]") ? submitEvidenceTemplate : form.matches("[data-mp-evidence-request-form]") ? submitEvidenceRequest : form.matches("[data-mp-sla-form]") ? submitSla : form.matches("[data-mp-sla-start-form]") ? submitSlaStart : form.matches("[data-mp-sla-extend-form]") ? submitSlaExtend : form.matches("[data-mp-handover-form]") ? submitHandover : form.matches("[data-mp-review-form]") ? submitReview : null;
+    const handler = form.matches("[data-mp-refresh-form]") ? submitRefresh : form.matches("[data-mp-evidence-template-form]") ? submitEvidenceTemplate : form.matches("[data-mp-evidence-request-form]") ? submitEvidenceRequest : form.matches("[data-mp-sla-form]") ? submitSla : form.matches("[data-mp-sla-start-form]") ? submitSlaStart : form.matches("[data-mp-sla-extend-form]") ? submitSlaExtend : form.matches("[data-mp-handover-form]") ? submitHandover : form.matches("[data-mp-review-form]") ? submitReview : form.matches("[data-mp-reference-form]") ? submitEmployerReference : null;
     if (!handler) return;
     event.preventDefault();
     try { await submitWithButton(form, () => handler(form)); }
     catch (error) { alert(error.message || "İşlem tamamlanamadı."); }
   });
 
+  document.addEventListener("change", (event) => {
+    if (!event.target.matches('[name^="na_"]')) return;
+    const row = event.target.closest(".mp-rating-row");
+    $$('.mp-stars input[type="radio"]', row).forEach((input) => { input.disabled = event.target.checked; input.required = !event.target.checked; if (event.target.checked) input.checked = false; });
+  });
+  document.addEventListener("input", (event) => {
+    if (!event.target.matches("[data-mp-reference-comment]")) return;
+    const counter = $("[data-mp-reference-count]", event.target.closest("form"));
+    if (counter) counter.textContent = String(event.target.value.length);
+  });
+
   $("[data-mp-company]").addEventListener("change", (event) => load(event.target.value).catch((error) => alert(error.message)));
   $("[data-mp-job-filter]").addEventListener("change", renderMatches);
   $("[data-mp-refresh]").addEventListener("click", () => load(state.partnerId).then(() => alert("Panel verileri yenilendi.", "success")).catch((error) => alert(error.message)));
-  document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !$("[data-mp-drawer-wrap]").hidden) closePanel(); });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !$("[data-mp-drawer-wrap]").hidden) closePanel();
+    const tab = event.target.closest?.("[data-mp-center-tab]");
+    if (!tab || !["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+    event.preventDefault();
+    const tabs = $$('[data-mp-center-tab]', tab.closest('[role="tablist"]').parentElement);
+    const index = tabs.indexOf(tab);
+    const next = event.key === "Home" ? tabs[0] : event.key === "End" ? tabs.at(-1) : tabs[(index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length];
+    selectCenterTab(next); next.focus();
+  });
   window.addEventListener("load", initialize, { once: true });
 })();
