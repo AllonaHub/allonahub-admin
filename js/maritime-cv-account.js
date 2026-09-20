@@ -52,7 +52,13 @@
       error.code = "MARITIME_DEVICE_KEY_REQUIRED";
       throw error;
     }
-    return App.cvAccess.getDeviceKey();
+    try {
+      return await App.cvAccess.getDeviceKey();
+    } catch (cause) {
+      const error = new Error("DEVICE_SECURITY_UNAVAILABLE", { cause });
+      error.code = "MARITIME_DEVICE_KEY_REQUIRED";
+      throw error;
+    }
   }
 
   async function api(path, options) {
@@ -92,6 +98,7 @@
       const error = new Error(payload.message || "REQUEST_FAILED");
       error.code = response.status === 401 ? "AUTH_REQUIRED" : payload.code || payload.error || "REQUEST_FAILED";
       error.status = response.status;
+      error.requestId = /^[a-z0-9-]{1,100}$/i.test(payload.request_id || "") ? payload.request_id : "";
       throw error;
     }
     return payload;
@@ -130,7 +137,10 @@
     if (entry) return copy(entry[0], entry[1]);
     if (error?.stage === "photo") return copy("accountPhotoSaveFailed", "Your CV details are saved, but the photo could not be uploaded. Retry with the photo before creating Global CV.");
     if (error?.draftSaved) return copy("accountDraftSavedFinalFailed", "Your CV draft is saved. Final verification was not completed; try saving again.");
-    return copy("accountSaveFailed", "Your Maritime CV could not be saved to your account. Please try again.");
+    const code = String(error?.code || "CV_CLIENT_ERROR");
+    const safeCode = /^[A-Z][A-Z0-9_]{0,79}$/.test(code) ? code : "CV_SAVE_FAILED";
+    const reference = error?.requestId ? ` / ${error.requestId}` : "";
+    return `${copy("accountSaveFailed", "Your Maritime CV could not be saved to your account. Please try again.")} (${safeCode}${reference})`;
   }
 
   function isIdentitySecurityError(error) {
@@ -270,7 +280,7 @@
       applyIdentityLock(draftResult.identity_lock);
       try {
         let pendingPhoto = photo;
-        if (!pendingPhoto && window.AllonaMaritimeCvDraft?.isSafePhotoDataUrl(data?.photo)) {
+        if (!pendingPhoto && data?.photo && window.AllonaMaritimeCvDraft?.isSafePhotoDataUrl(data.photo)) {
           pendingPhoto = await (await fetch(data.photo)).blob();
         }
         if (pendingPhoto) {
@@ -323,7 +333,7 @@
     try {
       const result = await api("/v1/maritime/cv-profile", { method: "GET" });
       const pendingPhoto = window.AllonaMaritimeCvDraft?.read?.()?.photo;
-      const hasPendingPhoto = window.AllonaMaritimeCvDraft?.isSafePhotoDataUrl(pendingPhoto);
+      const hasPendingPhoto = Boolean(pendingPhoto && window.AllonaMaritimeCvDraft?.isSafePhotoDataUrl(pendingPhoto));
       const cv = result.cv && hasPendingPhoto
         ? { ...result.cv, photo: pendingPhoto }
         : result.cv;

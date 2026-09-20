@@ -294,7 +294,8 @@ export async function buildApp() {
     reply.code(status).send({
       ok: false,
       error: status >= 500 ? "INTERNAL_ERROR" : safeDomainCode || "REQUEST_ERROR",
-      message: publicMessage
+      message: publicMessage,
+      ...(request.url.split("?")[0].startsWith("/v1/maritime/cv-profile") ? { request_id: request.id } : {})
     });
   });
 

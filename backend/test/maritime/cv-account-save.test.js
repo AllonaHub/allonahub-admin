@@ -4,6 +4,10 @@ import vm from "node:vm";
 import { readFile } from "node:fs/promises";
 
 const source = await readFile(new URL("../../../js/maritime-cv-account.js", import.meta.url), "utf8");
+const draftSource = await readFile(new URL("../../../js/maritime-cv-draft.js", import.meta.url), "utf8");
+const draftWindow = {};
+vm.runInNewContext(draftSource, { window: draftWindow });
+const { isSafePhotoDataUrl } = draftWindow.AllonaMaritimeCvDraft;
 const cv = { lang: "en", fields: { firstName: "Example" }, stcwData: [], seaData: [], additionalData: [] };
 
 function harness(options = {}) {
@@ -17,17 +21,21 @@ function harness(options = {}) {
   let stored = null;
   let applied = null;
   let proofCalls = 0;
+  let shownPhoto = null;
   const response = (body, status = 200) => ({ ok: status >= 200 && status < 300, status, json: async () => body });
   const window = {
     location: { pathname: "/cv", search: "", origin: "https://example.test" },
     Allona: {
       auth: { getSession: async () => session, requireAccountType: async () => true },
-      cvAccess: { getDeviceKey: async () => "a".repeat(64) }
+      cvAccess: { getDeviceKey: async () => {
+        if (options.deviceError) throw Object.assign(new Error("device"), { code: options.deviceError });
+        return "a".repeat(64);
+      } }
     },
     AllonaMaritimeCvDraft: {
       write: (data) => { draft = structuredClone(data); return true; },
       read: () => draft,
-      isSafePhotoDataUrl: (value) => /^data:image\/(?:png|jpeg|webp);base64,/.test(value || "")
+      isSafePhotoDataUrl
     },
     AllonaMaritimePhoto: { prepare: async () => {
       if (options.photoError) throw new Error(options.photoError);
@@ -40,7 +48,7 @@ function harness(options = {}) {
     } },
     applyMaritimeCVData: (data) => { applied = data; },
     applyMaritimeIdentityLock() {},
-    setMaritimeCvPhoto() {}
+    setMaritimeCvPhoto(url) { shownPhoto = url; }
   };
   const document = {
     readyState: "loading",
@@ -57,7 +65,7 @@ function harness(options = {}) {
       const failure = await options.failure(path, init);
       if (failure) return failure;
     }
-    if (init.method === "GET") return response({ ok: true, cv: stored, identity_lock: { locked: false } });
+    if (init.method === "GET") return response({ ok: true, cv: stored, profile_photo_url: options.storedPhotoUrl, identity_lock: { locked: false } });
     if (path.endsWith("/draft") || path.endsWith("/cv-profile")) {
       stored = JSON.parse(init.body).cv;
       return response({ ok: true, cv: stored, identity_lock: { locked: true } });
@@ -74,9 +82,43 @@ function harness(options = {}) {
     get stored() { return stored; },
     get draft() { return draft; },
     get applied() { return applied; },
+    get shownPhoto() { return shownPhoto; },
     get proofCalls() { return proofCalls; }
   };
 }
+
+test("empty photo is not an image and must not fetch the HTML page as a photo", async () => {
+  for (const photo of [undefined, null, "", "https://example.test/photo.jpg"]) {
+    assert.equal(isSafePhotoDataUrl(photo), false);
+    const h = harness();
+    const result = await h.account.save({ ...cv, photo }, { finalize: false });
+    assert.equal(result.finalized, false);
+    assert.equal(h.calls.length, 1);
+    assert.match(h.calls[0].url, /cv-profile\/draft$/);
+  }
+});
+
+test("loading a CV without a pending local photo restores the stored account photo", async () => {
+  const h = harness({ storedPhotoUrl: "https://example.test/signed-photo.jpg" });
+  h.setStored(cv);
+  h.setDraft({ ...cv, photo: "" });
+  await h.load();
+  assert.equal(h.shownPhoto, "https://example.test/signed-photo.jpg");
+});
+
+test("blocked device storage has an actionable error without attempting a save", async () => {
+  const h = harness({ deviceError: "DEVICE_STORAGE_UNAVAILABLE" });
+  await assert.rejects(h.account.save(cv), { code: "MARITIME_DEVICE_KEY_REQUIRED", draftSaved: false });
+  assert.match(h.status.textContent, /device identification/);
+  assert.equal(h.calls.length, 0);
+});
+
+test("unclassified server failure includes a safe support reference, never raw error text", async () => {
+  const h = harness({ failure: async () => ({ ok: false, status: 503, json: async () => ({ error: "INTERNAL_ERROR", request_id: "aln-123-example", message: "private database detail" }) }) });
+  await assert.rejects(h.account.save(cv), { code: "INTERNAL_ERROR" });
+  assert.match(h.status.textContent, /INTERNAL_ERROR \/ aln-123-example/);
+  assert.doesNotMatch(h.status.textContent, /private database detail/);
+});
 
 test("long-open CV uses refreshed session for both draft and final save", async () => {
   const h = harness();

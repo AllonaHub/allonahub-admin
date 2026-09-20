@@ -121,7 +121,7 @@
 
   function isSafePhotoDataUrl(value) {
     const photo = String(value || "");
-    if (!photo) return true;
+    if (!photo) return false;
     return photo.length <= maxPhotoDataUrlLength
       && /^data:image\/(?:jpeg|png|webp);base64,[a-z0-9+/=\s]+$/i.test(photo);
   }

@@ -10,6 +10,7 @@
   const allowedTypes = ["application/pdf"];
 
   const copyRows = {
+    globalCvNeedsConfirmation: ["CV taslağınız kayıtlı. Maritime CV sayfasında Kaydet'e basıp cihaz doğrulamasını tamamlayın.", "CV qaralamanız saxlanılıb. Maritime CV səhifəsində Saxla düyməsinə basıb cihaz doğrulamasını tamamlayın.", "CV жобасы сақталды. Maritime CV бетінде Сақтау түймесін басып, құрылғыны растауды аяқтаңыз.", "CV qoralamasi saqlandi. Maritime CV sahifasida Saqlash tugmasini bosib, qurilmani tasdiqlang.", "CV долбоору сакталды. Maritime CV барагында Сактоо баскычын басып, түзмөктү ырастоону бүтүрүңүз.", "Your CV draft is saved. Open Maritime CV, press Save and complete device verification.", "Ihr CV-Entwurf ist gespeichert. Öffnen Sie Maritime CV, drücken Sie Speichern und bestätigen Sie Ihr Gerät.", "Черновик CV сохранён. Откройте Maritime CV, нажмите Сохранить и завершите проверку устройства.", "تم حفظ مسودة سيرتك. افتح Maritime CV واضغط حفظ وأكمل التحقق من الجهاز."],
     maritimeCvKicker: ["Ana Bilgi Kaynağı", "Əsas məlumat mənbəyi", "Негізгі дерек көзі", "Asosiy maʼlumot manbai", "Негизги маалымат булагы", "Primary Information Source", "Primäre Datenquelle", "Основной источник данных", "مصدر المعلومات الأساسي"],
     maritimeCvTitle: ["Maritime CV", "Maritime CV", "Maritime CV", "Maritime CV", "Maritime CV", "Maritime CV", "Maritime CV", "Maritime CV", "Maritime CV"],
     maritimeCvLead: ["Bilgilerinizi ve fotoğrafınızı kendiniz girin. Global CV yalnızca kaydettiğiniz bu bilgilerden hazırlanır.", "Məlumatlarınızı və şəklinizi özünüz daxil edin. Global CV yalnız saxladığınız bu məlumatlardan hazırlanır.", "Деректеріңіз бен фотосуретіңізді өзіңіз енгізіңіз. Global CV тек сақталған деректерден жасалады.", "Maʼlumotlaringiz va suratingizni o‘zingiz kiriting. Global CV faqat saqlangan maʼlumotlardan yaratiladi.", "Маалыматыңызды жана сүрөтүңүздү өзүңүз киргизиңиз. Global CV сакталган маалыматтан гана түзүлөт.", "Enter your details and photo yourself. Global CV is created only from the information you save.", "Geben Sie Ihre Daten und Ihr Foto selbst ein. Der Global CV wird nur aus Ihren gespeicherten Angaben erstellt.", "Введите данные и фотографию самостоятельно. Global CV создается только из сохраненных вами данных.", "أدخل بياناتك وصورتك بنفسك. يتم إنشاء Global CV فقط من المعلومات التي تحفظها."],
@@ -183,6 +184,11 @@
     return state.remote?.cv_profile?.profile_payload?.data_origin === "user_entered_maritime_cv";
   }
 
+  function hasConfirmedMaritimeCv() {
+    const profile = state.remote?.cv_profile;
+    return Boolean(profile?.last_user_confirmed_at && ["user_confirmed", "verification_pending", "verified"].includes(profile.profile_status));
+  }
+
   function renderCvSource() {
     const status = document.querySelector("[data-maritime-cv-status]");
     const link = document.querySelector("[data-maritime-cv-source] a[href='maritime-cv.html'] span");
@@ -190,11 +196,12 @@
     const cvReady = hasMaritimeCv();
     const photoReady = state.remote?.profile_photo_ready === true;
     const fieldsReady = state.remote?.global_cv_readiness?.ready === true;
-    if (status) status.textContent = text(cvReady ? "maritimeCvReady" : "maritimeCvMissing");
+    const confirmed = hasConfirmedMaritimeCv();
+    if (status) status.textContent = text(cvReady ? fieldsReady && !confirmed ? "globalCvNeedsConfirmation" : "maritimeCvReady" : "maritimeCvMissing");
     if (link) link.textContent = text(cvReady ? "editMaritimeCv" : "openMaritimeCv");
     if (create) {
-      create.disabled = state.busy || !cvReady || !photoReady || !fieldsReady;
-      create.title = !cvReady ? text("globalCvNeedsMaritimeCv") : !photoReady ? text("globalCvNeedsPhoto") : !fieldsReady ? text("globalCvNeedsFields") : "";
+      create.disabled = state.busy || !cvReady || !photoReady || !fieldsReady || !confirmed;
+      create.title = !cvReady ? text("globalCvNeedsMaritimeCv") : !photoReady ? text("globalCvNeedsPhoto") : !fieldsReady ? text("globalCvNeedsFields") : !confirmed ? text("globalCvNeedsConfirmation") : "";
     }
   }
 
@@ -288,6 +295,7 @@
     if (!hasMaritimeCv()) return setStatus(text("globalCvNeedsMaritimeCv"), "error");
     if (state.remote?.profile_photo_ready !== true) return setStatus(text("globalCvNeedsPhoto"), "error");
     if (state.remote?.global_cv_readiness?.ready !== true) return setStatus(text("globalCvNeedsFields"), "error");
+    if (!hasConfirmedMaritimeCv()) return setStatus(text("globalCvNeedsConfirmation"), "error");
     state.busy = true;
     button.disabled = true;
     setStatus(text("globalCvCreating"));

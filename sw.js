@@ -1,4 +1,4 @@
-const ALLONAHUB_CACHE = "allonahub-pwa-20260920-pending-release1";
+const ALLONAHUB_CACHE = "allonahub-pwa-20260920-cv-photo3";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -82,7 +82,8 @@ self.addEventListener("fetch", event => {
     requestUrl.pathname === "/js/partner-products.js" ||
     requestUrl.pathname === "/js/supabase-client.js" ||
     requestUrl.pathname === "/js/user-profile-sync.js" ||
-    requestUrl.pathname === "/js/allona-maritime-portal.js"
+    requestUrl.pathname === "/js/allona-maritime-portal.js" ||
+    /\/js\/(?:maritime-cv-(?:draft|account|form)|allona-maritime-documents)\.js$/.test(requestUrl.pathname)
   );
 
   if(partnerAuthPath){

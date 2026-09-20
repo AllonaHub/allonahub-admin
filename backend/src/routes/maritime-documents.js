@@ -416,7 +416,7 @@ async function documentState(userId) {
       .limit(100),
     supabaseAdmin
       .from("maritime_cv_profiles")
-      .select("profile_payload,completion_percent,last_user_confirmed_at,updated_at")
+      .select("profile_status,profile_payload,completion_percent,last_user_confirmed_at,updated_at")
       .eq("seafarer_user_id", userId)
       .maybeSingle(),
     storageRows(userId)
