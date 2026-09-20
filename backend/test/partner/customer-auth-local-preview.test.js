@@ -59,6 +59,17 @@ test("local registration keeps required profile metadata", async () => {
   assert.match(page, /emailRedirectTo:pageUrl\("\/pages\/account\/user\.html\?tab=login"\)/);
 });
 
+test("email registration uses relaxed attempt limits and returns to sign-in without automatic login", async () => {
+  const page = await source("pages/account/user.html");
+
+  assert.match(page, /rateLimitAction\("register",8,60\*60\*1000\)/);
+  assert.match(page, /rateLimitAction\("login",15,15\*60\*1000\)/);
+  assert.match(page, /if\(result\.session\)\{\s*try\{await supabaseClient\.auth\.signOut\(\{scope:"local"\}\)/);
+  assert.match(page, /openTab\("login",\{target:loginTab\}\)/);
+  assert.match(page, /loginUrl\.searchParams\.set\("tab","login"\)/);
+  assert.doesNotMatch(page, /const session=await applyBackendSession\(result\.session\)/);
+});
+
 test("device binding is bypassed only for the local static preview", async () => {
   const page = await source("pages/account/user.html");
 

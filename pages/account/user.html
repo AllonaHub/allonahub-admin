@@ -1795,7 +1795,7 @@ async function registerUser(){
     return;
   }
 
-  const limit=rateLimitAction("register",5,60*60*1000);
+  const limit=rateLimitAction("register",8,60*60*1000);
   if(!limit.allowed){
     secureAuthAlert(authText("tooMany","Çok fazla deneme yapıldı. Lütfen kısa süre sonra tekrar deneyin."));
     return;
@@ -1827,22 +1827,17 @@ async function registerUser(){
       result=await authApi("/v1/auth/register",registrationPayload);
     }
 
-    const session=await applyBackendSession(result.session);
-
-    localStorage.setItem("allonahub_user_profile",JSON.stringify({
-      full_name:fullName,
-      phone:phone.value,
-      country:country.n
-    }));
-
-    if(session){
-      localStorage.setItem("allonahub_auth_verified_at",new Date().toISOString());
-      const returnTo=await authorizedReturnTo(session.user,"user-panel.html");
-      clearStoredReturnTo();
-      window.location.href=returnTo;
-      return;
+    // Email/password registration never opens an authenticated session
+    // automatically. The user continues from the normal sign-in tab.
+    if(result.session){
+      try{await supabaseClient.auth.signOut({scope:"local"});}catch(error){}
     }
-
+    document.getElementById("loginEmail").value=email;
+    const loginTab=document.getElementById("authTabLogin");
+    openTab("login",{target:loginTab});
+    const loginUrl=new URL(window.location.href);
+    loginUrl.searchParams.set("tab","login");
+    window.history.replaceState({},"",loginUrl.href);
     showVerificationHelp(email);
     showAuthDialog(authText("registerSuccess","Kayıt başarılı. E-posta doğrulaması için gelen kutunu kontrol et."));
   }catch(error){
@@ -1857,7 +1852,7 @@ async function loginUser(){
   const submit=document.getElementById("loginBtn");
   const email=normalizeEmail(document.getElementById("loginEmail").value);
   const password=document.getElementById("loginPassword").value;
-  const limit=rateLimitAction("login",10,15*60*1000);
+  const limit=rateLimitAction("login",15,15*60*1000);
 
   if(!limit.allowed){
     secureAuthAlert("Çok fazla giriş denemesi. Lütfen kısa süre sonra tekrar deneyin.");
