@@ -1278,6 +1278,9 @@ function loginFailureMessage(error){
   if(code==="customer_account_required"){
     return "Bu hesap bir yönetici veya şirket hesabıdır. Güvenli yönetim girişine yönlendiriliyorsunuz.";
   }
+  if(code==="auth_email_not_confirmed"){
+    return String(error && error.message || "E-posta adresinizi doğruladıktan sonra giriş yapabilirsiniz. Gelen kutusu ve spam klasörünü kontrol edin.");
+  }
   if(
     code.includes("turnstile") ||
     raw.includes("robot") ||
@@ -1702,6 +1705,12 @@ function registerFailureMessage(error){
   }
   if(code==="CUSTOMER_ACCOUNT_REQUIRED"){
     return original || "Bu hesap kişisel kullanıcı hesabı değildir. Hesap türünüze ait giriş alanını kullanın.";
+  }
+  if(code==="AUTH_ACCOUNT_EXISTS"){
+    return original || authText("accountExists","Bu e-posta adresiyle zaten bir hesap var. Giriş yapın veya şifrenizi sıfırlayın.");
+  }
+  if(code==="AUTH_EMAIL_DELIVERY_FAILED"){
+    return original || "Doğrulama e-postası şu anda gönderilemedi. Lütfen kısa süre sonra yeniden deneyin.";
   }
   if(status===429 || raw.includes("rate") || raw.includes("too many")){
     return authText("tooMany","Çok fazla deneme yapıldı. Lütfen kısa süre sonra tekrar deneyin.");

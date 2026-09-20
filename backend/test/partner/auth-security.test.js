@@ -11,7 +11,11 @@ process.env.COMPANY_LOOKUP_TR_PROVIDER = "generic";
 process.env.COMPANY_LOOKUP_GB_API_KEY = "";
 
 const { config } = await import("../../src/config.js");
-const { publicLoginAccessForRole, resolvePartnerPasswordResetEligibility } = await import("../../src/routes/index.js");
+const {
+  classifyAuthFailure,
+  publicLoginAccessForRole,
+  resolvePartnerPasswordResetEligibility
+} = await import("../../src/routes/index.js");
 
 function queryResult(data = null, error = null) {
   return { data, error };
@@ -68,6 +72,14 @@ test("normal customer login rejects privileged accounts and points to their dedi
   assert.equal(publicLoginAccessForRole({ authRole: "admin" }).login_path, "/admin/admin-login.html");
   assert.equal(publicLoginAccessForRole({ profileRole: "partner" }).login_path, "/pages/partner/partner.html");
   assert.equal(publicLoginAccessForRole({ profileLookupFailed: true }).error, "ACCOUNT_ROLE_UNAVAILABLE");
+});
+
+test("authentication failure classifier reports actionable login, registration and email reasons", () => {
+  assert.equal(classifyAuthFailure({ code: "invalid_credentials" }, "login").reason_code, "invalid_credentials");
+  assert.equal(classifyAuthFailure({ message: "Email not confirmed" }, "login").reason_code, "email_not_confirmed");
+  assert.equal(classifyAuthFailure({ message: "535 Authentication credentials invalid" }, "password_reset").reason_code, "email_delivery_failed");
+  assert.equal(classifyAuthFailure({ code: "ACCOUNT_DEVICE_SECURITY_UNAVAILABLE" }, "register").reason_code, "device_security_unavailable");
+  assert.equal(classifyAuthFailure({ message: "Turnstile challenge failed" }, "register").reason_code, "robot_verification_failed");
 });
 
 test("partner password reset eligibility allows active partner businesses only", async () => {

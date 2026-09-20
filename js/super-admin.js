@@ -21,7 +21,8 @@
     marsohTopics: [],
     marsohMessages: [],
     marsohAudit: [],
-    marsohMessageCursor: null
+    marsohMessageCursor: null,
+    authFailures: []
   };
 
   const viewLoaders = {
@@ -1048,6 +1049,7 @@
     modules: ["Modül Yönetimi", "Aktiflik, görünürlük, komisyon ve başvuru durumu"],
     system: ["Sistem Ayarları", "Bakım, ödeme, partner başvurusu ve komisyon kontrolleri"],
     security: ["Güvenlik Merkezi", "Başarısız giriş, IP, audit ve auto-defense sinyalleri"],
+    "auth-failures": ["Giriş Hataları", "Son 90 gündeki giriş, kayıt ve e-posta teslim sorunları"],
     "maritime-trust": ["Maritime Trust", "Denizcilik metadata, risk, şikayet ve audit kontrolü"],
     "maripartner-management": ["MariPartner Yönetimi", "Denizcilik şirketleri, aday havuzu, kanıt, SLA, devir ve güvenli inceleme kontrolü"],
     "marsoh-moderation": ["MarSoh Yönetimi", "Odalar, günlük konu, mesajlar, bildirimler ve güvenlik kararları"],
@@ -1569,6 +1571,35 @@
       ownerLine("Bloklu IP", formatNumber(metrics.blocked_ip_count), "Auto-defense", metrics.blocked_ip_count ? "high" : "low"),
       ipRows.join("") || ownerLine("Şüpheli IP", "Aktif IP uyarısı yok.", "", "low"),
       eventRows.join("") || ownerEmpty("Güvenlik kaydı bulunamadı.")
+    ].join(""));
+  }
+
+  function authFlowLabel(value) {
+    return { login: "Giriş", register: "Kayıt", password_reset: "Şifre sıfırlama" }[value] || "Kimlik doğrulama";
+  }
+
+  async function loadOwnerAuthFailures() {
+    ownerLoading("Giriş Hataları");
+    const payload = await api("/v1/control-center/auth-failures?days=90&limit=300");
+    const summary = payload.summary || {};
+    state.authFailures = payload.attempts || [];
+    const reasonRows = Object.entries(summary.by_reason || {})
+      .sort((a, b) => Number(b[1]) - Number(a[1]))
+      .slice(0, 12)
+      .map(([reason, count]) => ownerLine(reason, `${formatNumber(count)} hata`, "", count > 5 ? "high" : "medium"));
+    const attemptRows = state.authFailures.map((item) => ownerLine(
+      `${authFlowLabel(item.flow)} · ${item.email_masked || "-"}`,
+      `${escape(item.reason || "İşlem tamamlanamadı.")} · ${formatDate(item.occurred_at)} · aşama ${escape(item.stage || "-")}`,
+      `${item.provider ? `Sağlayıcı: ${escape(item.provider)}` : ""}${item.status_code ? ` · HTTP ${escape(item.status_code)}` : ""}`,
+      item.reason_category === "credentials" ? "medium" : "high"
+    ));
+    ownerSetOutput([
+      ownerLine("90 günlük toplam", formatNumber(summary.total), "Kişisel bilgiler maskeli tutulur.", summary.total ? "high" : "low"),
+      ownerLine("Giriş", formatNumber(summary.by_flow && summary.by_flow.login), "", "medium"),
+      ownerLine("Kayıt", formatNumber(summary.by_flow && summary.by_flow.register), "", "medium"),
+      ownerLine("Şifre / e-posta", formatNumber(summary.by_flow && summary.by_flow.password_reset), "", "medium"),
+      reasonRows.length ? reasonRows.join("") : ownerEmpty("Hata nedeni özeti bulunmuyor."),
+      attemptRows.length ? attemptRows.join("") : ownerEmpty("Son 90 günde kayıtlı giriş hatası bulunmuyor.")
     ].join(""));
   }
 
@@ -2183,6 +2214,7 @@
       else if (view === "modules") await loadOwnerModules();
       else if (view === "system") await loadOwnerSystem();
       else if (view === "security") await loadOwnerSecurity();
+      else if (view === "auth-failures") await loadOwnerAuthFailures();
       else if (view === "maritime-trust") await loadOwnerMaritimeTrust();
       else if (view === "maripartner-management") await loadOwnerMariPartner();
       else if (view === "marsoh-moderation") await loadOwnerMarsohModeration();

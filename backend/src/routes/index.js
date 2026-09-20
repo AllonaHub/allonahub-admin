@@ -150,6 +150,12 @@ const auditQuerySchema = z.object({
   to: z.string().datetime().optional()
 });
 
+const authFailureQuerySchema = z.object({
+  days: z.coerce.number().int().min(1).max(90).optional().default(90),
+  limit: z.coerce.number().int().min(1).max(500).optional().default(200),
+  flow: z.enum(["all", "login", "register", "password_reset"]).optional().default("all")
+});
+
 const clientLocationSchema = z.object({
   latitude: z.coerce.number().min(-90).max(90).optional(),
   longitude: z.coerce.number().min(-180).max(180).optional(),
@@ -1487,6 +1493,108 @@ function authEmailDomain(value) {
   return authEmail(value).split("@")[1] || "";
 }
 
+const AUTH_FAILURE_ACTIONS = Object.freeze([
+  "auth.login_failed",
+  "auth.login_wrong_portal",
+  "auth.register_failed",
+  "auth.register_device_denied",
+  "auth.register_device_binding_failed",
+  "auth.password_reset_delivery_failed",
+  "partner.password_reset_delivery_failed"
+]);
+
+function maskAuthEmail(value) {
+  const normalized = authEmail(value);
+  const [localPart = "", domain = ""] = normalized.split("@");
+  if (!localPart || !domain) return "-";
+  const visible = localPart.slice(0, Math.min(2, localPart.length));
+  return `${visible}${"*".repeat(Math.max(3, Math.min(8, localPart.length - visible.length)))}@${domain}`;
+}
+
+export function classifyAuthFailure(error, stage = "unknown") {
+  const code = String(error?.code || error?.error_code || error?.statusCode || "").trim().toUpperCase();
+  const raw = `${code} ${error?.message || ""} ${error?.details || ""}`.toLowerCase();
+  if (/maritime_device_already_bound|device.*already.*bound|cihaz.*başka.*hesaba/.test(raw)) {
+    return { reason_code: "device_already_bound", category: "device_security", summary: "Cihaz başka bir hesaba bağlı." };
+  }
+  if (/account_device_security_unavailable|digest\(|device security|cihaz güvenlik/.test(raw)) {
+    return { reason_code: "device_security_unavailable", category: "service_configuration", summary: "Cihaz güvenliği servisi tamamlanamadı." };
+  }
+  if (/email_not_confirmed|email not confirmed|not confirmed/.test(raw)) {
+    return { reason_code: "email_not_confirmed", category: "email_confirmation", summary: "E-posta doğrulaması tamamlanmamış." };
+  }
+  if (/invalid_credentials|invalid login credentials|invalid password|wrong password/.test(raw)) {
+    return { reason_code: "invalid_credentials", category: "credentials", summary: "E-posta veya şifre eşleşmedi." };
+  }
+  if (/smtp|535|mail.*send|email.*deliver|confirmation.*email/.test(raw)) {
+    return { reason_code: "email_delivery_failed", category: "email_delivery", summary: "Doğrulama veya sıfırlama e-postası gönderilemedi." };
+  }
+  if (/turnstile|robot doğrulama|challenge/.test(raw)) {
+    return { reason_code: "robot_verification_failed", category: "robot_verification", summary: "Robot doğrulaması tamamlanamadı." };
+  }
+  if (/rate|too many|429|limit/.test(raw)) {
+    return { reason_code: "rate_limited", category: "rate_limit", summary: "Çok fazla deneme nedeniyle işlem sınırlandı." };
+  }
+  if (/already registered|user_already_exists|already exists|email_exists/.test(raw)) {
+    return { reason_code: "account_already_exists", category: "registration", summary: "Bu e-posta ile daha önce hesap oluşturulmuş." };
+  }
+  if (/account_role_unavailable|wrong_portal|login_required|portal_required/.test(raw)) {
+    return { reason_code: "wrong_login_portal", category: "account_role", summary: "Hesap türü için yanlış giriş kapısı kullanıldı." };
+  }
+  return { reason_code: `${String(stage || "unknown").replace(/[^a-z0-9_]/gi, "_").toLowerCase()}_failed`, category: "unknown", summary: "İşlem güvenli şekilde tamamlanamadı." };
+}
+
+async function resolveAuthActorId(email) {
+  if (!email) return null;
+  const { data, error } = await supabaseAdmin
+    .from("profiles")
+    .select("id")
+    .eq("email", authEmail(email))
+    .maybeSingle();
+  return error ? null : data?.id || null;
+}
+
+async function recordAuthFailure({
+  request,
+  action,
+  email,
+  stage,
+  error = null,
+  actorId = null,
+  statusCode = null,
+  provider = "supabase",
+  metadata = {}
+}) {
+  const classification = classifyAuthFailure(error, stage);
+  const resolvedActorId = actorId || await resolveAuthActorId(email);
+  await auditEvent({
+    request,
+    actorId: resolvedActorId,
+    actorRole: resolvedActorId ? "customer" : null,
+    action,
+    resourceType: "authentication_attempt",
+    severity: "warning",
+    source: "server",
+    purpose: "auth_failure_diagnostics",
+    retentionDays: 90,
+    evidenceTags: ["auth", "failure", classification.category, String(stage || "unknown")],
+    metadata: {
+      email_hash: authEmailHash(email),
+      email_masked: maskAuthEmail(email),
+      email_domain: authEmailDomain(email),
+      failure_stage: String(stage || "unknown").slice(0, 80),
+      failure_reason: classification.reason_code,
+      failure_category: classification.category,
+      failure_summary: classification.summary,
+      provider,
+      provider_code: String(error?.code || error?.error_code || "").slice(0, 120) || null,
+      status_code: Number(statusCode || error?.status || error?.statusCode || 0) || null,
+      ...metadata
+    }
+  });
+  return classification;
+}
+
 function assertAuthDeviceSecurity(result, fallbackMessage) {
   if (result.error) {
     const source = `${result.error.message || ""} ${result.error.details || ""}`;
@@ -2227,6 +2335,39 @@ function securityEventPublic(event) {
     risk_severity: securityRiskSeverity(event),
     trusted_internal: isTrustedPrivilegedAuditEvent(event),
     external_threat: isExternalSecurityAuditEvent(event)
+  };
+}
+
+function authFailureFlow(action) {
+  const value = String(action || "");
+  if (value.includes("register")) return "register";
+  if (value.includes("password_reset")) return "password_reset";
+  return "login";
+}
+
+function authFailurePublic(event) {
+  const metadata = event?.metadata && typeof event.metadata === "object" ? event.metadata : {};
+  const fallback = classifyAuthFailure({
+    code: metadata.code || metadata.provider_code || metadata.error || ""
+  }, authFailureFlow(event?.action));
+  return {
+    id: event?.id || null,
+    occurred_at: event?.created_at || null,
+    expires_at: event?.retention_until || null,
+    flow: authFailureFlow(event?.action),
+    action: event?.action || "auth.failure",
+    stage: metadata.failure_stage || "unknown",
+    reason_code: metadata.failure_reason || fallback.reason_code,
+    reason_category: metadata.failure_category || fallback.category,
+    reason: metadata.failure_summary || fallback.summary,
+    status_code: metadata.status_code || null,
+    provider: metadata.provider || "unknown",
+    provider_code: metadata.provider_code || metadata.code || null,
+    email_masked: metadata.email_masked || (metadata.email_domain ? `***@${metadata.email_domain}` : "-"),
+    email_domain: metadata.email_domain || "",
+    user_id: event?.actor_id || null,
+    request_id: event?.request_id || null,
+    origin: metadata.request_context?.origin || metadata.request_context?.referer || null
   };
 }
 
@@ -10816,7 +10957,19 @@ export function registerRoutes(app) {
   app.post("/v1/auth/login", async (request, reply) => {
     const payload = parseAuthPayload(authLoginSchema, request.body);
     const email = authEmail(payload.email);
-    await verifyTurnstile(request, "login", payload.turnstileToken);
+    try {
+      await verifyTurnstile(request, "login", payload.turnstileToken);
+    } catch (error) {
+      await recordAuthFailure({
+        request,
+        action: "auth.login_failed",
+        email,
+        stage: "robot_verification",
+        error,
+        provider: "cloudflare"
+      });
+      throw error;
+    }
 
     const { data, error } = await supabasePublic.auth.signInWithPassword({
       email,
@@ -10824,18 +10977,22 @@ export function registerRoutes(app) {
     });
 
     if (error || !data?.session || !data?.user) {
-      await auditEvent({
+      const failure = await recordAuthFailure({
         request,
         action: "auth.login_failed",
-        severity: "warning",
-        metadata: {
-          email_hash: authEmailHash(email),
-          email_domain: authEmailDomain(email),
-          code: error?.code || null
-        },
-        evidenceTags: ["auth", "login", "failed"]
+        email,
+        stage: "credentials",
+        error,
+        statusCode: 401
       });
-      return reply.code(401).send({ ok: false, message: "E-posta veya şifre doğru değil." });
+      if (failure.reason_code === "email_not_confirmed") {
+        return reply.code(403).send({
+          ok: false,
+          error: "AUTH_EMAIL_NOT_CONFIRMED",
+          message: "E-posta adresinizi doğruladıktan sonra giriş yapabilirsiniz. Gelen kutusu ve spam klasörünü kontrol edin."
+        });
+      }
+      return reply.code(401).send({ ok: false, error: "AUTH_INVALID_CREDENTIALS", message: "E-posta veya şifre doğru değil." });
     }
 
     const profileResult = await supabaseAdmin
@@ -10861,7 +11018,8 @@ export function registerRoutes(app) {
           login_path: portalAccess.login_path || null,
           profile_lookup_failed: Boolean(profileResult.error)
         },
-        evidenceTags: ["auth", "login", "account_boundary"]
+        evidenceTags: ["auth", "login", "account_boundary"],
+        retentionDays: 90
       });
       return reply.code(portalAccess.error === "ACCOUNT_ROLE_UNAVAILABLE" ? 503 : 403).send({
         ok: false,
@@ -10894,23 +11052,33 @@ export function registerRoutes(app) {
   app.post("/v1/auth/register", async (request, reply) => {
     const payload = parseAuthPayload(authRegisterSchema, request.body);
     const email = authEmail(payload.email);
-    await verifyTurnstile(request, "register", payload.turnstileToken);
+    try {
+      await verifyTurnstile(request, "register", payload.turnstileToken);
+    } catch (error) {
+      await recordAuthFailure({
+        request,
+        action: "auth.register_failed",
+        email,
+        stage: "robot_verification",
+        error,
+        provider: "cloudflare"
+      });
+      throw error;
+    }
 
     try {
       assertAuthDeviceSecurity(await supabaseAdmin.rpc("maritime_device_registration_allowed", {
         p_device_key: payload.device_key.toLowerCase()
       }), "Cihaz güvenlik kontrolü şu anda tamamlanamadı.");
     } catch (error) {
-      await auditEvent({
+      await recordAuthFailure({
         request,
         action: "auth.register_device_denied",
-        severity: "warning",
-        metadata: {
-          email_hash: authEmailHash(email),
-          email_domain: authEmailDomain(email),
-          code: error.code || null
-        },
-        evidenceTags: ["auth", "register", "device_security", "denied"]
+        email,
+        stage: "device_precheck",
+        error,
+        statusCode: error.statusCode || error.status || 503,
+        provider: "allonahub"
       });
       throw error;
     }
@@ -10925,18 +11093,21 @@ export function registerRoutes(app) {
     });
 
     if (error || !data?.user) {
-      await auditEvent({
+      const failure = await recordAuthFailure({
         request,
         action: "auth.register_failed",
-        severity: "warning",
-        metadata: {
-          email_hash: authEmailHash(email),
-          email_domain: authEmailDomain(email),
-          code: error?.code || null
-        },
-        evidenceTags: ["auth", "register", "failed"]
+        email,
+        stage: "account_creation",
+        error,
+        statusCode: error?.status || 400
       });
-      return reply.code(400).send({ ok: false, message: "Kayıt oluşturulamadı. Lütfen bilgilerinizi kontrol edin." });
+      if (failure.reason_code === "account_already_exists") {
+        return reply.code(409).send({ ok: false, error: "AUTH_ACCOUNT_EXISTS", message: "Bu e-posta adresiyle zaten bir hesap var. Giriş yapın veya şifrenizi sıfırlayın." });
+      }
+      if (failure.reason_code === "email_delivery_failed") {
+        return reply.code(503).send({ ok: false, error: "AUTH_EMAIL_DELIVERY_FAILED", message: "Doğrulama e-postası şu anda gönderilemedi. Lütfen kısa süre sonra yeniden deneyin." });
+      }
+      return reply.code(400).send({ ok: false, error: "AUTH_REGISTRATION_FAILED", message: "Kayıt oluşturulamadı. Lütfen bilgilerinizi kontrol edin." });
     }
 
     await upsertAuthProfile(data.user, { ...payload, email }, request);
@@ -10955,18 +11126,18 @@ export function registerRoutes(app) {
         deviceError: deviceError.message,
         rollbackError: rollback.error?.message || null
       }, "Registration rolled back after device binding failure");
-      await auditEvent({
+      await recordAuthFailure({
         request,
         actorId: data.user.id,
-        actorRole: "customer",
         action: "auth.register_device_binding_failed",
-        severity: "critical",
+        email,
+        stage: "device_binding",
+        error: deviceError,
+        statusCode: deviceError.statusCode || deviceError.status || 503,
+        provider: "allonahub",
         metadata: {
-          email_hash: authEmailHash(email),
-          code: deviceError.code || null,
           rollback_succeeded: !rollback.error
-        },
-        evidenceTags: ["auth", "register", "device_security", "rollback"]
+        }
       });
       throw deviceError;
     }
@@ -11022,7 +11193,19 @@ export function registerRoutes(app) {
     const payload = parseAuthPayload(authForgotPasswordSchema, request.body);
     const email = authEmail(payload.email);
     const redirectTo = partnerPasswordResetRedirectUrl();
-    await verifyTurnstile(request, "forgot_password", payload.turnstileToken);
+    try {
+      await verifyTurnstile(request, "forgot_password", payload.turnstileToken);
+    } catch (error) {
+      await recordAuthFailure({
+        request,
+        action: "partner.password_reset_delivery_failed",
+        email,
+        stage: "robot_verification",
+        error,
+        provider: "cloudflare"
+      });
+      throw error;
+    }
 
     const eligibility = await resolvePartnerPasswordResetEligibility({ email, request });
     let deliveryError = null;
@@ -11041,28 +11224,42 @@ export function registerRoutes(app) {
       }
     }
 
-    await auditEvent({
-      request,
-      actorId: eligibility.user_id || null,
-      actorRole: eligibility.eligible ? "partner" : null,
-      action: eligibility.eligible
-        ? (deliveryError ? "partner.password_reset_delivery_failed" : "partner.password_reset_requested")
-        : "partner.password_reset_skipped",
-      severity: eligibility.eligible && !deliveryError ? "info" : "warning",
-      source: "server",
-      resourceType: "partner_auth",
-      resourceId: eligibility.partner_id || null,
-      metadata: {
-        email_hash: authEmailHash(email),
-        email_domain: authEmailDomain(email),
-        eligibility_reason: eligibility.reason,
-        partner_source: eligibility.partner_source || null,
-        delivery_requested: deliveryRequested,
-        redirect_to: redirectTo,
-        code: deliveryError?.code || null
-      },
-      evidenceTags: ["partner", "auth", "password_reset"]
-    });
+    if (deliveryError) {
+      await recordAuthFailure({
+        request,
+        action: "partner.password_reset_delivery_failed",
+        email,
+        stage: "password_reset_email",
+        error: deliveryError,
+        actorId: eligibility.user_id || null,
+        provider: "supabase",
+        metadata: {
+          eligibility_reason: eligibility.reason,
+          partner_source: eligibility.partner_source || null,
+          delivery_requested: deliveryRequested
+        }
+      });
+    } else {
+      await auditEvent({
+        request,
+        actorId: eligibility.user_id || null,
+        actorRole: eligibility.eligible ? "partner" : null,
+        action: eligibility.eligible ? "partner.password_reset_requested" : "partner.password_reset_skipped",
+        severity: eligibility.eligible ? "info" : "warning",
+        source: "server",
+        resourceType: "partner_auth",
+        resourceId: eligibility.partner_id || null,
+        metadata: {
+          email_hash: authEmailHash(email),
+          email_domain: authEmailDomain(email),
+          eligibility_reason: eligibility.reason,
+          partner_source: eligibility.partner_source || null,
+          delivery_requested: deliveryRequested,
+          redirect_to: redirectTo
+        },
+        evidenceTags: ["partner", "auth", "password_reset"]
+      });
+    }
 
     return reply.code(202).send({
       ok: true,
@@ -11073,24 +11270,46 @@ export function registerRoutes(app) {
   app.post("/v1/auth/forgot-password", async (request, reply) => {
     const payload = parseAuthPayload(authForgotPasswordSchema, request.body);
     const email = authEmail(payload.email);
-    await verifyTurnstile(request, "forgot_password", payload.turnstileToken);
+    try {
+      await verifyTurnstile(request, "forgot_password", payload.turnstileToken);
+    } catch (error) {
+      await recordAuthFailure({
+        request,
+        action: "auth.password_reset_delivery_failed",
+        email,
+        stage: "robot_verification",
+        error,
+        provider: "cloudflare"
+      });
+      throw error;
+    }
 
     const { error } = await supabasePublic.auth.resetPasswordForEmail(email, {
       redirectTo: resetPasswordRedirectUrl()
     });
 
-    await auditEvent({
-      request,
-      action: error ? "auth.password_reset_delivery_failed" : "auth.password_reset_requested",
-      severity: error ? "warning" : "info",
-      metadata: {
-        email_hash: authEmailHash(email),
-        email_domain: authEmailDomain(email),
-        redirect_to: resetPasswordRedirectUrl(),
-        code: error?.code || null
-      },
-      evidenceTags: ["auth", "password_reset"]
-    });
+    if (error) {
+      await recordAuthFailure({
+        request,
+        action: "auth.password_reset_delivery_failed",
+        email,
+        stage: "password_reset_email",
+        error,
+        provider: "supabase"
+      });
+    } else {
+      await auditEvent({
+        request,
+        action: "auth.password_reset_requested",
+        severity: "info",
+        metadata: {
+          email_hash: authEmailHash(email),
+          email_domain: authEmailDomain(email),
+          redirect_to: resetPasswordRedirectUrl()
+        },
+        evidenceTags: ["auth", "password_reset"]
+      });
+    }
 
     if (error) {
       request.log.warn({ error: error.message, emailDomain: authEmailDomain(email) }, "Password reset email could not be requested");
@@ -16270,6 +16489,51 @@ export function registerRoutes(app) {
     return decidePartnerApplicationRequest({ request, applicationId, body });
   });
 
+  superGet("/auth-failures", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.auth_failures.view");
+    const query = authFailureQuerySchema.parse(request.query || {});
+    const since = new Date(Date.now() - query.days * 24 * 60 * 60 * 1000).toISOString();
+    const result = await runAdminQuery(
+      "super_admin_auth_failures",
+      supabaseAdmin
+        .from("security_audit_events")
+        .select("id,actor_id,action,request_id,metadata,retention_until,created_at")
+        .in("action", AUTH_FAILURE_ACTIONS)
+        .gte("created_at", since)
+        .order("created_at", { ascending: false })
+        .limit(query.limit),
+      []
+    );
+    const attempts = (result.data || [])
+      .map(authFailurePublic)
+      .filter((item) => query.flow === "all" || item.flow === query.flow);
+    const summary = attempts.reduce((acc, item) => {
+      acc.total += 1;
+      acc.by_flow[item.flow] = (acc.by_flow[item.flow] || 0) + 1;
+      acc.by_reason[item.reason_code] = (acc.by_reason[item.reason_code] || 0) + 1;
+      return acc;
+    }, { total: 0, by_flow: {}, by_reason: {} });
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.auth_failures_viewed",
+      source: "admin",
+      resourceType: "authentication_failure_report",
+      metadata: { days: query.days, flow: query.flow, result_count: attempts.length }
+    });
+
+    return {
+      ok: true,
+      retention_days: 90,
+      range_days: query.days,
+      summary,
+      attempts,
+      schema_warnings: result.warning ? [result.warning] : []
+    };
+  });
+
   superGet("/security", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.security.view");
     const warnings = [];
@@ -16290,7 +16554,7 @@ export function registerRoutes(app) {
       supabaseAdmin
         .from("security_audit_events")
         .select("id, actor_role, action, resource_type, resource_id, severity, ip_address, source, purpose, metadata, created_at")
-        .in("action", ["auth.denied", "authz.denied", "mfa.required", "admin.boundary_denied"])
+        .in("action", [...AUTH_FAILURE_ACTIONS, "auth.denied", "authz.denied", "mfa.required", "admin.boundary_denied"])
         .gte("created_at", since24h)
         .order("created_at", { ascending: false })
         .limit(500),
@@ -16300,7 +16564,7 @@ export function registerRoutes(app) {
 
     const publicEvents = (events.data || []).map(securityEventPublic);
     const threatEvents = publicEvents.filter((event) => event.external_threat);
-    const failedAuthThreats = (failedAuth.data || []).filter(isExternalSecurityAuditEvent);
+    const failedAuthEvents = failedAuth.data || [];
     const criticalEvents = threatEvents.filter((event) => event.severity === "critical").length;
     const suspiciousIps = Object.entries(threatEvents
       .filter((event) => event.ip_address && ["warning", "critical"].includes(event.severity))
@@ -16321,7 +16585,7 @@ export function registerRoutes(app) {
       source: "admin",
       resourceType: "security_center",
       metadata: {
-        failed_auth_24h: failedAuthThreats.length,
+        failed_auth_24h: failedAuthEvents.length,
         critical_event_sample_count: criticalEvents
       }
     });
@@ -16330,7 +16594,7 @@ export function registerRoutes(app) {
       ok: true,
       security: {
         metrics: {
-          failed_auth_24h: failedAuthThreats.length,
+          failed_auth_24h: failedAuthEvents.length,
           critical_events_sample: criticalEvents,
           suspicious_ip_count: suspiciousIps.length,
           blocked_ip_count: autoDefense.blockedIpCount
