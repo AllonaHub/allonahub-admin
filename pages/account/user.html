@@ -34,7 +34,7 @@
 </script>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.108.2"></script>
 <script src="../../js/config.js?v=20260919-authfix2"></script>
 
 <style>
@@ -1301,6 +1301,12 @@ function loginFailureMessage(error){
   if(status===429 || code.includes("auto_defense") || raw.includes("sınırlandırıldı") || raw.includes("sinirlandirildi")){
     return "Çok fazla deneme algılandı. Lütfen kısa süre bekleyip aynı cihazdan tekrar deneyin.";
   }
+  if(status===0 || raw.includes("failed to fetch") || raw.includes("network") || raw.includes("çevrimdışı") || raw.includes("cevrimdisi")){
+    return "Bağlantı kurulamadı. Mevcut oturumunuz korunuyor; internet bağlantınızı kontrol edip yeniden deneyin.";
+  }
+  if(status>=500 || code.includes("service_unavailable") || raw.includes("servisine şu anda ulaşılamıyor")){
+    return "Giriş servisine şu anda ulaşılamıyor. Mevcut oturumunuz korunuyor; kısa süre sonra yeniden deneyin.";
+  }
   if(raw.includes("email not confirmed") || raw.includes("not confirmed")){
     return "E-posta adresi henüz doğrulanmamış görünüyor. Lütfen e-posta kutundaki doğrulama bağlantısını kontrol et.";
   }
@@ -1347,12 +1353,21 @@ async function claimCustomerAccountDevice(user){
     const token=data && data.session && data.session.access_token;
     if(!token || !user || !user.id)throw new Error("Oturum cihaz doğrulaması için hazır değil.");
     const deviceKey=await window.Allona.cvAccess.getDeviceKey();
-    const response=await fetch(apiBaseUrl()+"/v1/auth/device/claim",{
-      method:"POST",
-      headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},
-      body:JSON.stringify({device_key:deviceKey})
-    });
-    const result=await response.json().catch(()=>({}));
+    const requestClaim=async accessToken=>{
+      const response=await fetch(apiBaseUrl()+"/v1/auth/device/claim",{
+        method:"POST",
+        headers:{"Content-Type":"application/json",Authorization:"Bearer "+accessToken},
+        body:JSON.stringify({device_key:deviceKey})
+      });
+      const result=await response.json().catch(()=>({}));
+      return {response,result};
+    };
+    let {response,result}=await requestClaim(token);
+    if(response.status===401 && supabaseClient.auth.refreshSession){
+      const refreshed=await supabaseClient.auth.refreshSession().catch(()=>({data:null,error:true}));
+      const refreshedToken=refreshed && refreshed.data && refreshed.data.session && refreshed.data.session.access_token;
+      if(refreshedToken)({response,result}=await requestClaim(refreshedToken));
+    }
     if(!response.ok || result.ok===false){
       const error=new Error(result.message || "Cihaz güvenlik kontrolü tamamlanamadı.");
       error.status=response.status;
@@ -1363,9 +1378,32 @@ async function claimCustomerAccountDevice(user){
     return true;
   }catch(error){
     try{sessionStorage.removeItem("allonahub.oauth.mode");}catch(ignore){}
-    try{await supabaseClient.auth.signOut({scope:"local"});}catch(ignore){}
-    showAuthDialog(registerFailureMessage(error));
+    const code=String(error && error.payload && error.payload.error || "").toUpperCase();
+    const terminalDeviceDenial=Number(error && error.status || 0)===409 || code==="MARITIME_DEVICE_ALREADY_BOUND";
+    if(terminalDeviceDenial){
+      try{await supabaseClient.auth.signOut({scope:"local"});}catch(ignore){}
+      showAuthDialog(registerFailureMessage(error));
+    }else{
+      showAuthDialog("Oturum açıldı ancak cihaz güvenlik kontrolü şu anda tamamlanamadı. Oturumunuz korunuyor; lütfen kısa süre sonra yeniden deneyin.");
+    }
     return false;
+  }
+}
+
+async function verifiedSignedInUser(expectedUser){
+  for(let attempt=0;attempt<2;attempt+=1){
+    try{
+      const {data,error}=await supabaseClient.auth.getUser();
+      if(!error && data && data.user && (!expectedUser || data.user.id===expectedUser.id))return data.user;
+    }catch(error){}
+    if(attempt===0)await new Promise(resolve=>setTimeout(resolve,250));
+  }
+  try{
+    const {data,error}=await supabaseClient.auth.getSession();
+    const user=!error && data && data.session && data.session.user;
+    return user && (!expectedUser || user.id===expectedUser.id) ? user : null;
+  }catch(error){
+    return null;
   }
 }
 
@@ -1868,10 +1906,6 @@ async function loginUser(){
     manualAuthInProgress=true;
     setAuthBusy(submit,true);
     announceAuthMessage("");
-    clearAuthArtifacts();
-    try{
-      await supabaseClient.auth.signOut({scope:"local"});
-    }catch(error){}
 
     let data;
     if(isLocalAuthPreview()){
@@ -1891,21 +1925,17 @@ async function loginUser(){
       return;
     }
 
-    const { data:verified, error:verifyError } = await supabaseClient.auth.getUser();
-    if(verifyError || !verified || !verified.user || verified.user.id !== data.user.id){
-      clearAuthArtifacts();
-      try{
-        await supabaseClient.auth.signOut({scope:"local"});
-      }catch(error){}
+    const verifiedUser=await verifiedSignedInUser(data.user);
+    if(!verifiedUser){
       secureAuthAlert("Oturum güvenli şekilde doğrulanamadı. Lütfen tekrar deneyin.");
       return;
     }
 
-    const context=await accountContext(verified.user);
-    if(context.type==="customer" && !await claimCustomerAccountDevice(verified.user))return;
+    const context=await accountContext(verifiedUser);
+    if(context.type==="customer" && !await claimCustomerAccountDevice(verifiedUser))return;
 
     localStorage.setItem("allonahub_auth_verified_at",new Date().toISOString());
-    const returnTo=await authorizedReturnTo(verified.user,"user-panel.html");
+    const returnTo=await authorizedReturnTo(verifiedUser,"user-panel.html");
     if(await needsMfaVerification()){
       redirectMfa(returnTo);
       return;

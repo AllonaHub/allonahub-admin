@@ -52,3 +52,15 @@ test("customer registration reports email throttling and supports secure confirm
   assert.match(page, /authApi\("\/v1\/auth\/resend-confirmation"/);
   assert.match(page, /AUTH_EMAIL_RATE_LIMITED/);
 });
+
+test("customer login separates provider outages and rate limits from invalid credentials", async () => {
+  const [routes, page] = await Promise.all([
+    source("backend/src/routes/index.js"),
+    source("pages/account/user.html")
+  ]);
+
+  assert.match(routes, /error: "AUTH_RATE_LIMITED"/);
+  assert.match(routes, /error: "AUTH_SERVICE_UNAVAILABLE"/);
+  assert.match(page, /code\.includes\("service_unavailable"\)/);
+  assert.match(page, /status>=500/);
+});

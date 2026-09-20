@@ -15,13 +15,35 @@
     return value.length >= 8;
   }
 
+  function sessionIsUsable(session, skewMs) {
+    if (!session) return false;
+    if (!session.expires_at) return true;
+    return session.expires_at * 1000 > Date.now() + Number(skewMs || 0);
+  }
+
+  async function refreshCurrentSession() {
+    if (!App.supabase?.auth?.refreshSession) return null;
+    try {
+      const { data, error } = await App.supabase.auth.refreshSession();
+      if (error) return null;
+      return data?.session || null;
+    } catch (error) {
+      return null;
+    }
+  }
+
   async function getSession() {
     if (!App.supabase) return null;
     try {
-      const { data } = await App.supabase.auth.getSession();
+      const { data, error } = await App.supabase.auth.getSession();
+      if (error) return null;
       const session = data.session || null;
       if (!session) return null;
-      if (session.expires_at && session.expires_at * 1000 < Date.now() - 30000) return null;
+      if (!sessionIsUsable(session, 60000)) {
+        const refreshed = await refreshCurrentSession();
+        if (sessionIsUsable(refreshed, 0)) return refreshed;
+        return sessionIsUsable(session, 0) ? session : null;
+      }
       return session;
     } catch (error) {
       return null;
@@ -32,10 +54,12 @@
     if (!App.supabase) return null;
     try {
       const { data, error } = await App.supabase.auth.getUser();
-      if (error) return null;
-      return data.user || null;
+      if (!error && data?.user) return data.user;
+      const session = await getSession();
+      return session?.user || null;
     } catch (error) {
-      return null;
+      const session = await getSession();
+      return session?.user || null;
     }
   }
 
@@ -144,22 +168,10 @@
     const cleanEmail = security ? security.normalizeText(email, { max: 180 }).toLowerCase() : String(email || "").trim().toLowerCase();
     if (security && !security.isEmail(cleanEmail)) throw authSafeError("Geçerli bir e-posta adresi girin.");
     if (!String(password || "")) throw authSafeError("E-posta ve şifrenizi kontrol edin.");
-    clearLocalAuthState();
-    try {
-      await App.supabase.auth.signOut({ scope: "local" });
-    } catch (error) {
-      // Eski veya bozuk local session giriş denemesini engellemesin.
-    }
     const { data, error } = await App.supabase.auth.signInWithPassword({ email: cleanEmail, password });
     if (error) throw authSafeError("Giriş yapılamadı. E-posta ve şifrenizi kontrol edin.");
     const verifiedUser = await getUser();
     if (!verifiedUser || (data.user && verifiedUser.id !== data.user.id)) {
-      clearLocalAuthState({ supabaseTokens: true });
-      try {
-        await App.supabase.auth.signOut({ scope: "local" });
-      } catch (error) {
-        // Giriş zaten doğrulanmadı.
-      }
       throw authSafeError("Oturum güvenli şekilde doğrulanamadı. Lütfen tekrar deneyin.");
     }
     localStorage.setItem("allonahub_auth_verified_at", new Date().toISOString());

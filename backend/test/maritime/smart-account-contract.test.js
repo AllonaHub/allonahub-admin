@@ -220,7 +220,7 @@ test("email and Google registration flows enforce the one-device account boundar
   assert.match(routes, /\/v1\/auth\/device\/claim/);
   assert.match(accountPage, /device_key:deviceKey/);
   assert.match(accountPage, /claimCustomerAccountDevice/);
-  assert.match(accountPage, /context\.type==="customer" && !await claimCustomerAccountDevice\(verified\.user\)/);
+  assert.match(accountPage, /context\.type==="customer" && !await claimCustomerAccountDevice\(verifiedUser\)/);
   assert.match(accountPage, /window\.Allona\.cvAccess\.getDeviceKey\(\)/);
   assert.match(authPage, /allonahub\.oauth\.mode/);
 });

@@ -10998,6 +10998,20 @@ export function registerRoutes(app) {
           message: "E-posta adresinizi doğruladıktan sonra giriş yapabilirsiniz. Gelen kutusu ve spam klasörünü kontrol edin."
         });
       }
+      if (failure.reason_code === "rate_limited") {
+        return reply.code(429).send({
+          ok: false,
+          error: "AUTH_RATE_LIMITED",
+          message: "Çok fazla giriş denemesi algılandı. Kısa süre bekleyip yeniden deneyin."
+        });
+      }
+      if (failure.category === "unknown") {
+        return reply.code(503).send({
+          ok: false,
+          error: "AUTH_SERVICE_UNAVAILABLE",
+          message: "Giriş servisine şu anda ulaşılamıyor. Oturumunuz silinmedi; kısa süre sonra yeniden deneyin."
+        });
+      }
       return reply.code(401).send({ ok: false, error: "AUTH_INVALID_CREDENTIALS", message: "E-posta veya şifre doğru değil." });
     }
 

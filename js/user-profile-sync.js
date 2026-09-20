@@ -448,8 +448,15 @@
   }
 
   function createClient() {
+    if (window.Allona?.supabase) return window.Allona.supabase;
     if (!window.supabase) return null;
-    return window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    return window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false
+      }
+    });
   }
 
   window.AllonaProfileSync = {
