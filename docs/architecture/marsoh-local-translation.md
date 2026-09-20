@@ -63,7 +63,7 @@ MARSOH_LOCAL_TRANSLATION_SECRET=
 
 1. Build both Compose services. The first build downloads and converts the pinned models, so it is substantially slower than a normal API-only build.
 2. Confirm `marsoh-translator` is healthy before the API starts.
-3. Confirm API `/health` reports `build: marsoh-translation-quality-v2-20260920`, `marsoh_translation_mode: local`, and `marsoh_translation_engine_version: 2.0.0`.
+3. Confirm API `/health` reports `build: marsoh-translation-quality-v2-cache-20260920`, `marsoh_translation_mode: local`, and `marsoh_translation_engine_version: 2.0.0`.
 4. Confirm translator `/health` reports `provider: local_ctranslate2_quality_v2`, `engine_version: 2.0.0`, nine languages, and the expected glossary metadata.
 5. Test at least one uncached translation in each direction, including a Kyrgyz route and a message containing IMO/STCW identifiers.
 6. Confirm a repeated request is returned from the existing database cache.
