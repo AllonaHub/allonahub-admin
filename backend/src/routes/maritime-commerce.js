@@ -13,6 +13,8 @@ const authorizeSchema = z.object({
   idempotency_key: z.string().uuid()
 }).strict();
 const imoParamsSchema = z.object({ imo: z.string().trim().max(24) }).strict();
+const imoQuerySchema = z.object({ fresh_position: z.enum(["0", "1"]).optional().default("0") }).strict();
+const POSITION_CACHE_MS = 15 * 60 * 1000;
 
 function httpError(message, statusCode = 400, code = "MARITIME_COMMERCE_REQUEST_ERROR") {
   const error = new Error(message);
@@ -246,6 +248,7 @@ export function registerMaritimeCommerceRoutes(app) {
   }, async (request) => {
     const ctx = await authContext(request);
     const input = imoParamsSchema.parse(request.params || {});
+    const query = imoQuerySchema.parse(request.query || {});
     const imo = normalizeImoNumber(input.imo);
     if (!isValidImoNumber(imo)) {
       throw httpError("Geçerli, yedi haneli ve kontrol basamağı doğru bir IMO numarası girin.", 400, "MARITIME_IMO_INVALID");
@@ -257,7 +260,11 @@ export function registerMaritimeCommerceRoutes(app) {
       .gt("expires_at", new Date().toISOString())
       .maybeSingle(), "IMO önbelleği okunamadı.");
     const cachedPayload = cached?.provider !== "wikidata" ? cached?.vessel_payload || null : null;
+    const cachedAt = Date.parse(cached?.fetched_at || cachedPayload?.fetched_at || "");
+    const freshPositionRequested = query.fresh_position === "1";
+    const positionCacheFresh = Number.isFinite(cachedAt) && Date.now() - cachedAt <= POSITION_CACHE_MS;
     let vessel = cachedPayload && Object.prototype.hasOwnProperty.call(cachedPayload, "vessel_photo_url")
+      && (!freshPositionRequested || positionCacheFresh)
       ? cachedPayload
       : null;
     let cacheHit = Boolean(vessel);

@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
-import { buildMariPartnerJobPresentation, canReadMariPartnerFinance } from "../../src/lib/maritime-partner-center.js";
+import {
+  MARIPARTNER_CONTRACT_OPTIONS,
+  buildMariPartnerJobPresentation,
+  canReadMariPartnerFinance,
+  recommendedVesselCertificateCodes
+} from "../../src/lib/maritime-partner-center.js";
 
 const root = new URL("../../../", import.meta.url);
 const read = (path) => readFileSync(new URL(path, root), "utf8");
@@ -73,7 +78,7 @@ test("MariPartner keeps URL state, theme controls and responsive safeguards", ()
   const css = read("css/maripartner.css");
   assert.match(html, /data-platform-controls-slot="home"/);
   assert.match(html, /js\/platform\.js/);
-  assert.match(html, /js\/maripartner-i18n\.js\?v=20260920-maripartner-job2/);
+  assert.match(html, /js\/maripartner-i18n\.js\?v=20260920-maripartner-job3/);
   assert.match(script, /searchParams\.set\("view"/);
   assert.match(script, /searchParams\.set\("tab"/);
   assert.match(css, /@media \(max-width: 1100px\)/);
@@ -117,7 +122,7 @@ test("job creation records operational requirements and invites only against ope
   const html = read("pages/partner/maripartner.html");
   const script = read("js/maripartner.js");
   const route = read("backend/src/routes/maritime-partner-center.js");
-  for (const field of ["vessel_profile_id", "joining_date", "joining_port", "current_port", "next_port", "trading_area", "war_risk_status", "contract_label", "salary_amount", "salary_currency", "minimum_sea_service_months"]) {
+  for (const field of ["vessel_profile_id", "joining_date", "joining_port", "current_port", "next_port", "trading_area", "war_risk_status", "contract_code", "salary_amount", "salary_currency", "minimum_sea_service_months"]) {
     assert.match(html, new RegExp(`name="${field}"[^>]*required`));
     assert.match(script, new RegExp(`${field}:`));
   }
@@ -145,7 +150,7 @@ test("smart job presentation never exposes vessel identity and converts experien
     next_port: "Valensiya",
     trading_area: "mediterranean",
     war_risk_status: "no_known_listed_area",
-    contract_label: "4+1 ay"
+    contract_code: "four_plus_one"
   }, {
     vessel_name: "Gizli Gemi",
     imo_number: "9389370",
@@ -156,7 +161,22 @@ test("smart job presentation never exposes vessel identity and converts experien
   assert.equal(result.title, "Yağcı / Motorman");
   assert.equal(result.minimum_sea_service_days, 180);
   assert.equal(result.public_vessel.deadweight, 8200);
+  assert.equal(result.route.contract_label, "4+1 aylık kontrat");
+  assert.match(result.summary, /en az 6 ay deniz hizmeti bulunan Yağcı \/ Motorman/);
   assert.doesNotMatch(JSON.stringify(result), /Gizli Gemi|9389370/);
+});
+
+test("contract choices include reliever work and cap standard contracts at 9+1 months", () => {
+  assert.equal(MARIPARTNER_CONTRACT_OPTIONS.relief_2_months, "2 aylık değiştirmeci kontratı");
+  assert.equal(MARIPARTNER_CONTRACT_OPTIONS.relief_3_months, "3 aylık değiştirmeci kontratı");
+  assert.equal(MARIPARTNER_CONTRACT_OPTIONS.nine_plus_one, "9+1 aylık kontrat");
+  assert.equal(Object.values(MARIPARTNER_CONTRACT_OPTIONS).some((label) => /^10/.test(label)), false);
+});
+
+test("vessel certificate recommendations stay optional and rank aware", () => {
+  assert.deepEqual(recommendedVesselCertificateCodes("Chemical Tanker", "chief_engineer"), ["SA", "V/1-1-BASIC", "V/1-1-CHEM-ADV"]);
+  assert.deepEqual(recommendedVesselCertificateCodes("Chemical Tanker", "oiler"), ["SA", "V/1-1-BASIC"]);
+  assert.deepEqual(recommendedVesselCertificateCodes("LNG Tanker", "master"), ["V/1-2-BASIC", "V/1-2-GAS-ADV"]);
 });
 
 test("public maritime jobs expose safe operational facts without vessel name or IMO", () => {

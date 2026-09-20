@@ -95,28 +95,100 @@ export const MARIPARTNER_WAR_RISK_STATUSES = Object.freeze({
   route_under_review: "Rota ve risk değerlendirmesi henüz kesinleşmedi"
 });
 
+export const MARIPARTNER_CONTRACT_OPTIONS = Object.freeze({
+  relief_1_month: "1 aylık değiştirmeci kontratı",
+  relief_2_months: "2 aylık değiştirmeci kontratı",
+  relief_3_months: "3 aylık değiştirmeci kontratı",
+  two_months: "2 aylık kontrat",
+  three_months: "3 aylık kontrat",
+  four_months: "4 aylık kontrat",
+  four_plus_one: "4+1 aylık kontrat",
+  five_months: "5 aylık kontrat",
+  five_plus_one: "5+1 aylık kontrat",
+  six_months: "6 aylık kontrat",
+  six_plus_one: "6+1 aylık kontrat",
+  seven_months: "7 aylık kontrat",
+  seven_plus_one: "7+1 aylık kontrat",
+  eight_months: "8 aylık kontrat",
+  eight_plus_one: "8+1 aylık kontrat",
+  nine_months: "9 aylık kontrat",
+  nine_plus_one: "9+1 aylık kontrat"
+});
+
+export const MARIPARTNER_CERTIFICATE_CATALOG = Object.freeze({
+  SP: "Uluslararası Emniyet Yönetimi (ISM)",
+  SH: "Belirlenmiş Güvenlik Görevleri (STCW VI/6)",
+  SI: "Güvenlik Farkındalığı (STCW VI/6)",
+  SL: "Can Kurtarma Araçları ve Kurtarma Botları (STCW VI/2-1)",
+  SO: "Temel Emniyet Eğitimi (STCW VI/1)",
+  SA: "Kimyasal Tanker Sertifikası",
+  "II/1": "Seyir Vardiyası Zabiti Yeterliliği",
+  "II/2": "Kaptan / Baş Zabit Yeterliliği",
+  "II/4": "Güverte Vardiyasına Katılan Tayfa",
+  "II/5": "Usta Gemici Yeterliliği",
+  "III/1": "Makine Vardiyası Zabiti Yeterliliği",
+  "III/2": "Baş / İkinci Mühendis Yeterliliği",
+  "III/4": "Makine Vardiyasına Katılan Tayfa",
+  "III/5": "Usta Makine Tayfası Yeterliliği",
+  "III/6": "Elektro-Teknik Zabit Yeterliliği",
+  "III/7": "Elektro-Teknik Tayfa Yeterliliği",
+  "IV/2": "GMDSS Genel Telsiz Operatörü",
+  "VI/2-1": "Can Kurtarma Araçları ve Kurtarma Botları",
+  "VI/3": "İleri Yangınla Mücadele",
+  "VI/4-1": "Tıbbi İlk Yardım",
+  "VI/4-2": "Gemide Tıbbi Bakım",
+  "VI/5": "Gemi Güvenlik Zabiti",
+  "VI/6-1": "Güvenlik Farkındalığı",
+  "VI/6-2": "Belirlenmiş Güvenlik Görevleri",
+  "V/1-1-BASIC": "Petrol ve Kimyasal Tanker Temel Eğitimi",
+  "V/1-1-OIL-ADV": "Petrol Tankeri İleri Eğitimi",
+  "V/1-1-CHEM-ADV": "Kimyasal Tanker İleri Eğitimi",
+  "V/1-2-BASIC": "Sıvılaştırılmış Gaz Tankeri Temel Eğitimi",
+  "V/1-2-GAS-ADV": "Sıvılaştırılmış Gaz Tankeri İleri Eğitimi",
+  "V/2": "Yolcu Gemileri Özel Eğitimi",
+  "V/3-BASIC": "IGF Kodlu Gemiler Temel Eğitimi",
+  "V/3-ADV": "IGF Kodlu Gemiler İleri Eğitimi",
+  "V/4-BASIC": "Kutup Sularında Temel Eğitim",
+  "V/4-ADV": "Kutup Sularında İleri Eğitim",
+  ECDIS: "ECDIS Eğitimi",
+  "RADAR-ARPA": "Radar ve ARPA Eğitimi",
+  BRM: "Köprüüstü Kaynak Yönetimi",
+  ERM: "Makine Dairesi Kaynak Yönetimi",
+  "SHIP-COOK": "Gemi Aşçısı Yeterlilik Belgesi",
+  "ADVANCED-DP": "İleri Dinamik Konumlandırma Yeterliliği"
+});
+
 export const MARIPARTNER_JOB_CERTIFICATE_CODES = Object.freeze([
-  "SP", "SH", "SI", "SL", "SO", "SA",
-  "II/1", "II/2", "II/4", "II/5",
-  "III/1", "III/2", "III/4", "III/6",
-  "IV/2", "V/1-1", "V/1-2", "V/2",
-  "SHIP-COOK", "ADVANCED-DP"
+  ...Object.keys(MARIPARTNER_CERTIFICATE_CATALOG)
 ]);
 
 export const MARIPARTNER_RANK_CERTIFICATE_CODES = Object.freeze({
-  master: "II/2",
-  chief_officer: "II/2",
-  second_officer: "II/1",
-  third_officer: "II/1",
-  chief_engineer: "III/2",
-  second_engineer: "III/2",
-  third_engineer: "III/1",
-  oiler: "III/4",
-  able_seaman: "II/5",
-  ordinary_seaman: "II/4",
-  cook: "SHIP-COOK",
-  electrician: "III/6"
+  master: Object.freeze(["II/2", "IV/2", "VI/2-1", "VI/3", "VI/4-2", "VI/5", "ECDIS", "RADAR-ARPA", "BRM"]),
+  chief_officer: Object.freeze(["II/2", "IV/2", "VI/2-1", "VI/3", "VI/4-1", "ECDIS", "RADAR-ARPA", "BRM"]),
+  second_officer: Object.freeze(["II/1", "IV/2", "VI/2-1", "VI/3", "VI/4-1", "ECDIS", "RADAR-ARPA", "BRM"]),
+  third_officer: Object.freeze(["II/1", "IV/2", "VI/2-1", "VI/3", "VI/4-1", "ECDIS", "RADAR-ARPA", "BRM"]),
+  chief_engineer: Object.freeze(["III/2", "VI/2-1", "VI/3", "VI/4-1", "ERM"]),
+  second_engineer: Object.freeze(["III/2", "VI/2-1", "VI/3", "VI/4-1", "ERM"]),
+  third_engineer: Object.freeze(["III/1", "VI/2-1", "VI/3", "VI/4-1", "ERM"]),
+  oiler: Object.freeze(["III/4"]),
+  able_seaman: Object.freeze(["II/5", "VI/2-1"]),
+  ordinary_seaman: Object.freeze(["II/4"]),
+  cook: Object.freeze(["SHIP-COOK"]),
+  electrician: Object.freeze(["III/6", "VI/2-1", "VI/3", "VI/4-1"])
 });
+
+export function recommendedVesselCertificateCodes(vesselType, rankCode) {
+  const type = String(vesselType || "").normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const senior = ["master", "chief_officer", "chief_engineer", "second_engineer"].includes(rankCode);
+  const codes = [];
+  if (/(chemical|kimyasal)/.test(type)) codes.push("SA", "V/1-1-BASIC", ...(senior ? ["V/1-1-CHEM-ADV"] : []));
+  else if (/(oil tanker|petrol tanker|ham petrol|product tanker)/.test(type)) codes.push("V/1-1-BASIC", ...(senior ? ["V/1-1-OIL-ADV"] : []));
+  if (/(lng|lpg|gas tanker|gaz tanker|sivilastirilmis gaz)/.test(type)) codes.push("V/1-2-BASIC", ...(senior ? ["V/1-2-GAS-ADV"] : []));
+  if (/(passenger|yolcu|ro-?ro passenger)/.test(type)) codes.push("V/2");
+  if (/(igf|methanol|metanol|low flashpoint|alternative fuel)/.test(type)) codes.push("V/3-BASIC", ...(senior ? ["V/3-ADV"] : []));
+  if (/(polar|kutup|ice class|buz sinifi)/.test(type)) codes.push("V/4-BASIC", ...(senior ? ["V/4-ADV"] : []));
+  return [...new Set(codes)];
+}
 
 function compactJobText(value, maxLength = 160) {
   return String(value ?? "").replace(/\s+/g, " ").trim().slice(0, maxLength);
@@ -130,15 +202,19 @@ export function buildMariPartnerJobPresentation(input, vessel) {
   const amount = Number(input?.salary_amount);
   const salary = Number.isFinite(amount) ? `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(amount)} ${input?.salary_currency || ""}`.trim() : "";
   const vesselType = compactJobText(vessel?.vessel_type, 120) || "Deniz ticaret gemisi";
-  const experience = months ? `en az ${months} ay deniz hizmeti` : "deniz hizmeti için başlangıç seviyesi kabul edilebilir";
+  const experience = months ? `en az ${months} ay deniz hizmeti bulunan` : "deniz hizmetinde başlangıç seviyesinde değerlendirilebilecek";
   const route = [compactJobText(input?.joining_port, 120), tradingAreaLabel].filter(Boolean).join(" / ");
-  const summary = `${vesselType} tipi gemide ${rankLabel} pozisyonu; ${experience}. ${compactJobText(input?.joining_date, 10)} tarihinde ${compactJobText(input?.joining_port, 120)} limanından katılım. Çalışma bölgesi: ${tradingAreaLabel}.`;
+  const joiningDate = /^\d{4}-\d{2}-\d{2}$/.test(String(input?.joining_date || ""))
+    ? new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${input.joining_date}T00:00:00Z`))
+    : compactJobText(input?.joining_date, 20);
+  const contractLabel = MARIPARTNER_CONTRACT_OPTIONS[input?.contract_code] || compactJobText(input?.contract_label, 120) || "kontrat süresi şirketle netleştirilecek";
+  const summary = `${vesselType} tipi, ${tradingAreaLabel} sefer bölgesinde çalışan gemimizde görev yapmak üzere ${experience} ${rankLabel} arıyoruz. Ücret ${salary || "görüşmede paylaşılacak"}, kontrat ${contractLabel}; katılım ${joiningDate || "belirtilen tarihte"} tarihinde ${compactJobText(input?.joining_port, 120)} limanından planlanmaktadır.`;
   const metadata = vessel?.metadata && typeof vessel.metadata === "object" ? vessel.metadata : {};
   return {
     title: rankLabel,
     summary: compactJobText(summary, 360),
     location_label: compactJobText(route, 120),
-    detail_label: compactJobText([input?.contract_label, salary].filter(Boolean).join(" · "), 120),
+    detail_label: compactJobText([contractLabel, salary].filter(Boolean).join(" · "), 120),
     minimum_sea_service_days: months * 30,
     public_vessel: {
       vessel_type: vesselType,
@@ -149,14 +225,16 @@ export function buildMariPartnerJobPresentation(input, vessel) {
     },
     route: {
       current_port: compactJobText(input?.current_port, 120),
-      current_position_source: "company_confirmed",
+      current_position_source: [metadata.current_port, metadata.last_port].filter(Boolean).includes(input?.current_port) ? "imo_lookup" : "company_confirmed",
       joining_port: compactJobText(input?.joining_port, 120),
       next_port: compactJobText(input?.next_port, 120),
       trading_area: input?.trading_area,
       trading_area_label: tradingAreaLabel,
       war_risk_status: input?.war_risk_status,
       war_risk_label: warRiskLabel,
-      war_risk_note: compactJobText(input?.war_risk_note, 240) || null
+      war_risk_note: compactJobText(input?.war_risk_note, 240) || null,
+      contract_code: input?.contract_code || null,
+      contract_label: contractLabel
     }
   };
 }

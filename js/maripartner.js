@@ -25,11 +25,22 @@
     ["SP", "SP · Uluslararası Emniyet Yönetimi"], ["SH", "SH · Belirlenmiş Güvenlik Görevleri"], ["SI", "SI · Güvenlik Farkındalığı"],
     ["SL", "SL · Can Kurtarma Araçları"], ["SO", "SO · Temel Emniyet Eğitimi"]
   ]);
-  const rankCertificates = Object.freeze({ master: ["II/2", "STCW II/2 · Kaptan / Baş Zabit"], chief_officer: ["II/2", "STCW II/2 · Kaptan / Baş Zabit"], second_officer: ["II/1", "STCW II/1 · Vardiya Zabiti"], third_officer: ["II/1", "STCW II/1 · Vardiya Zabiti"], chief_engineer: ["III/2", "STCW III/2 · Baş / İkinci Mühendis"], second_engineer: ["III/2", "STCW III/2 · Baş / İkinci Mühendis"], third_engineer: ["III/1", "STCW III/1 · Makine Vardiya Zabiti"], oiler: ["III/4", "STCW III/4 · Makine Vardiya Tayfası"], able_seaman: ["II/5", "STCW II/5 · Usta Gemici"], ordinary_seaman: ["II/4", "STCW II/4 · Güverte Vardiya Tayfası"], cook: ["SHIP-COOK", "Gemi Aşçısı Yeterlilik Belgesi"], electrician: ["III/6", "STCW III/6 · Elektro-Teknik Zabit"] });
-  const optionalCertificates = Object.freeze([
-    ["IV/2", "STCW IV/2 · GMDSS"], ["SA", "SA · Kimyasal Tanker"], ["V/1-1", "STCW V/1-1 · Petrol/Kimyasal Tanker"],
-    ["V/1-2", "STCW V/1-2 · İleri Petrol/Kimyasal Tanker"], ["V/2", "STCW V/2 · Sıvılaştırılmış Gaz Tankeri"], ["ADVANCED-DP", "İleri DP Yeterliliği"]
-  ]);
+  const certificateCatalog = Object.freeze({
+    "II/1": "STCW II/1 · Seyir Vardiyası Zabiti", "II/2": "STCW II/2 · Kaptan / Baş Zabit", "II/4": "STCW II/4 · Güverte Vardiya Tayfası", "II/5": "STCW II/5 · Usta Gemici",
+    "III/1": "STCW III/1 · Makine Vardiyası Zabiti", "III/2": "STCW III/2 · Baş / İkinci Mühendis", "III/4": "STCW III/4 · Makine Vardiya Tayfası", "III/5": "STCW III/5 · Usta Makine Tayfası", "III/6": "STCW III/6 · Elektro-Teknik Zabit", "III/7": "STCW III/7 · Elektro-Teknik Tayfa",
+    "IV/2": "STCW IV/2 · GMDSS Genel Telsiz Operatörü", "VI/2-1": "STCW VI/2-1 · Can Kurtarma Araçları", "VI/3": "STCW VI/3 · İleri Yangınla Mücadele", "VI/4-1": "STCW VI/4-1 · Tıbbi İlk Yardım", "VI/4-2": "STCW VI/4-2 · Gemide Tıbbi Bakım", "VI/5": "STCW VI/5 · Gemi Güvenlik Zabiti", "VI/6-1": "STCW VI/6-1 · Güvenlik Farkındalığı", "VI/6-2": "STCW VI/6-2 · Belirlenmiş Güvenlik Görevleri",
+    "V/1-1-BASIC": "STCW V/1-1 · Petrol/Kimyasal Tanker Temel", "V/1-1-OIL-ADV": "STCW V/1-1 · Petrol Tankeri İleri", "V/1-1-CHEM-ADV": "STCW V/1-1 · Kimyasal Tanker İleri", "V/1-2-BASIC": "STCW V/1-2 · Gaz Tankeri Temel", "V/1-2-GAS-ADV": "STCW V/1-2 · Gaz Tankeri İleri", "V/2": "STCW V/2 · Yolcu Gemileri", "V/3-BASIC": "STCW V/3 · IGF Temel", "V/3-ADV": "STCW V/3 · IGF İleri", "V/4-BASIC": "STCW V/4 · Kutup Suları Temel", "V/4-ADV": "STCW V/4 · Kutup Suları İleri",
+    ECDIS: "ECDIS Eğitimi", "RADAR-ARPA": "Radar ve ARPA Eğitimi", BRM: "Köprüüstü Kaynak Yönetimi", ERM: "Makine Dairesi Kaynak Yönetimi", SA: "SA · Kimyasal Tanker", "SHIP-COOK": "Gemi Aşçısı Yeterlilik Belgesi", "ADVANCED-DP": "İleri DP Yeterliliği"
+  });
+  const rankCertificates = Object.freeze({
+    master: ["II/2", "IV/2", "VI/2-1", "VI/3", "VI/4-2", "VI/5", "ECDIS", "RADAR-ARPA", "BRM"],
+    chief_officer: ["II/2", "IV/2", "VI/2-1", "VI/3", "VI/4-1", "ECDIS", "RADAR-ARPA", "BRM"],
+    second_officer: ["II/1", "IV/2", "VI/2-1", "VI/3", "VI/4-1", "ECDIS", "RADAR-ARPA", "BRM"],
+    third_officer: ["II/1", "IV/2", "VI/2-1", "VI/3", "VI/4-1", "ECDIS", "RADAR-ARPA", "BRM"],
+    chief_engineer: ["III/2", "VI/2-1", "VI/3", "VI/4-1", "ERM"], second_engineer: ["III/2", "VI/2-1", "VI/3", "VI/4-1", "ERM"], third_engineer: ["III/1", "VI/2-1", "VI/3", "VI/4-1", "ERM"],
+    oiler: ["III/4"], able_seaman: ["II/5", "VI/2-1"], ordinary_seaman: ["II/4"], cook: ["SHIP-COOK"], electrician: ["III/6", "VI/2-1", "VI/3", "VI/4-1"]
+  });
+  const optionalCertificates = Object.freeze(Object.entries(certificateCatalog));
   const $ = (selector, root) => (root || document).querySelector(selector);
   const $$ = (selector, root) => Array.from((root || document).querySelectorAll(selector));
 
@@ -190,20 +201,45 @@
     return '<label class="mp-check' + (locked ? ' is-locked' : '') + '"><input type="checkbox" name="certificates" value="' + escape(code) + '" ' + (checked ? 'checked' : '') + ' ' + (locked ? 'disabled' : '') + '> <span><strong>' + escape(code) + '</strong><small>' + escape(t(label)) + '</small></span></label>';
   }
 
+  function vesselCertificateRecommendations(vesselType, rankCode) {
+    const type = String(vesselType || "").normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("tr-TR");
+    const senior = ["master", "chief_officer", "chief_engineer", "second_engineer"].includes(rankCode);
+    const codes = [];
+    if (/(chemical|kimyasal)/.test(type)) codes.push("SA", "V/1-1-BASIC", ...(senior ? ["V/1-1-CHEM-ADV"] : []));
+    else if (/(oil tanker|petrol tanker|ham petrol|product tanker)/.test(type)) codes.push("V/1-1-BASIC", ...(senior ? ["V/1-1-OIL-ADV"] : []));
+    if (/(lng|lpg|gas tanker|gaz tanker|sivilastirilmis gaz)/.test(type)) codes.push("V/1-2-BASIC", ...(senior ? ["V/1-2-GAS-ADV"] : []));
+    if (/(passenger|yolcu|ro-?ro passenger)/.test(type)) codes.push("V/2");
+    if (/(igf|methanol|metanol|low flashpoint|alternative fuel)/.test(type)) codes.push("V/3-BASIC", ...(senior ? ["V/3-ADV"] : []));
+    if (/(polar|kutup|ice class|buz sinifi)/.test(type)) codes.push("V/4-BASIC", ...(senior ? ["V/4-ADV"] : []));
+    return [...new Set(codes)];
+  }
+
+  function optionalCertificateCodesForRank(rankCode) {
+    const vesselSpecific = ["SA", "V/1-1-BASIC", "V/1-1-OIL-ADV", "V/1-1-CHEM-ADV", "V/1-2-BASIC", "V/1-2-GAS-ADV", "V/2", "V/3-BASIC", "V/3-ADV", "V/4-BASIC", "V/4-ADV"];
+    if (["master", "chief_officer", "second_officer", "third_officer"].includes(rankCode)) return [...vesselSpecific, "ADVANCED-DP"];
+    if (["chief_engineer", "second_engineer", "third_engineer", "electrician"].includes(rankCode)) return vesselSpecific;
+    if (["oiler", "able_seaman", "ordinary_seaman", "cook"].includes(rankCode)) return ["V/1-1-BASIC", "V/1-2-BASIC", "V/2", "V/3-BASIC", "V/4-BASIC"];
+    return [];
+  }
+
   function renderJobCertificates(form) {
     const target = $("[data-mp-job-certificates]", form);
     if (!target) return;
     const previous = new Set(selectedValues(form, "certificates"));
     const rankCode = $('[name="rank_code"]', form)?.value;
-    const vesselType = String(vesselForJob(form)?.vessel_type || "").toLocaleLowerCase("tr-TR");
-    const rankCertificate = rankCertificates[rankCode];
-    const recommended = new Set(previous);
-    if (/chemical|kimyasal/.test(vesselType)) recommended.add("SA");
+    const vesselType = String(vesselForJob(form)?.vessel_type || "");
+    const rankCertificateCodes = rankCertificates[rankCode] || [];
+    const recommendedByVessel = vesselCertificateRecommendations(vesselType, rankCode);
+    const recommended = new Set([...previous, ...recommendedByVessel]);
+    const locked = new Set([...coreCertificates.map(([code]) => code), ...rankCertificateCodes]);
+    const visibleOptional = new Set([...optionalCertificateCodesForRank(rankCode), ...recommendedByVessel]);
     target.innerHTML = [
       ...coreCertificates.map(([code, label]) => certificateCheck(code, label, true, true)),
-      ...(rankCertificate ? [certificateCheck(rankCertificate[0], rankCertificate[1], true, true)] : []),
-      ...optionalCertificates.filter(([code]) => code !== rankCertificate?.[0]).map(([code, label]) => certificateCheck(code, label, recommended.has(code), false))
+      ...rankCertificateCodes.map((code) => certificateCheck(code, certificateCatalog[code] || code, true, true)),
+      ...optionalCertificates.filter(([code]) => visibleOptional.has(code) && !locked.has(code)).map(([code, label]) => certificateCheck(code, label, recommended.has(code), false))
     ].join("");
+    const hint = target.previousElementSibling;
+    if (hint && recommendedByVessel.length) hint.textContent = t("Rütbe belgeleri zorunlu, gemi türüne özel belgeler önerili olarak seçildi. Şirket operasyon kapsamına göre önerileri kaldırabilir.");
   }
 
   function addDays(dateValue, days) {
@@ -252,10 +288,51 @@
       const currency = $('[name="salary_currency"]', form)?.value;
       const area = tradingAreaLabels[$('[name="trading_area"]', form)?.value] || "çalışma bölgesi";
       const vesselType = vessel?.vessel_type || "gemi türü";
-      summary.textContent = rank + " · " + (months ? "en az " + months + " ay deneyim" : "başlangıç seviyesi") + " · " + (salary && currency ? salary + " " + currency : "ücret bekleniyor") + " · " + vesselType + " · " + area;
+      const contract = $('[name="contract_code"] option:checked', form)?.textContent?.trim() || "kontrat süresi seçilecek";
+      const experience = months ? `en az ${months} ay deniz hizmeti bulunan` : "başlangıç seviyesinde değerlendirilebilecek";
+      summary.textContent = `${vesselType} tipi, ${area} sefer bölgesinde çalışan gemimizde görev yapmak üzere ${experience} ${rank} arıyoruz. Ücret ${salary && currency ? `${salary} ${currency}` : "ilan koşullarında belirtilecek"}, kontrat ${contract}; katılım tarihi ve limanı ilan bilgilerinde paylaşılacaktır.`;
     }
     renderJobCertificates(form);
     applyI18n(form);
+  }
+
+  async function refreshJobVesselPosition(form) {
+    const vessel = vesselForJob(form);
+    const status = $("[data-mp-position-status]", form);
+    if (!vessel) {
+      if (status) status.textContent = t("Gemi seçildiğinde güncel açık konum kaydı aranır.");
+      refreshJobForm(form);
+      return;
+    }
+    if (status) status.textContent = t("IMO ve son açık AIS konumu kontrol ediliyor...");
+    try {
+      const payload = await api(`/v1/maritime/vessels/${encodeURIComponent(vessel.imo_number)}?fresh_position=1`);
+      const lookup = payload.vessel || {};
+      vessel.metadata = {
+        ...(vessel.metadata || {}),
+        current_port: lookup.current_port || lookup.last_port || vessel.metadata?.current_port || null,
+        last_port: lookup.last_port || lookup.current_port || vessel.metadata?.last_port || null,
+        destination: lookup.destination || vessel.metadata?.destination || null,
+        navigation_status: lookup.navigation_status || vessel.metadata?.navigation_status || null,
+        position_received_at: lookup.position_received_at || vessel.metadata?.position_received_at || null,
+        latitude: lookup.latitude ?? vessel.metadata?.latitude ?? null,
+        longitude: lookup.longitude ?? vessel.metadata?.longitude ?? null,
+        position_provider: lookup.provider || vessel.metadata?.position_provider || null
+      };
+      const currentPort = $('[name="current_port"]', form);
+      const nextPort = $('[name="next_port"]', form);
+      if (currentPort && vessel.metadata.current_port) currentPort.value = vessel.metadata.current_port;
+      if (nextPort && vessel.metadata.destination) nextPort.value = vessel.metadata.destination;
+      if (status) {
+        const received = vessel.metadata.position_received_at ? ` · ${dateTime(vessel.metadata.position_received_at)}` : "";
+        status.textContent = vessel.metadata.current_port
+          ? t("Son açık AIS kaydı getirildi. Şirket doğrulaması gerekir.") + received
+          : t("Açık AIS kaydında liman bulunamadı. Mevcut konumu elle doğrulayın.");
+      }
+    } catch (error) {
+      if (status) status.textContent = t("Güncel açık konum alınamadı. Mevcut limanı elle yazıp doğrulayabilirsiniz.");
+    }
+    refreshJobForm(form);
   }
 
   function candidateFacts(room) {
@@ -834,9 +911,10 @@
     if (!certificates.length) throw new Error("En az bir zorunlu sertifika seçin.");
     const language = String(data.get("language") || "");
     const expiry = new Date(`${data.get("expires_at")}T23:59:59`);
+    if (!form.dataset.clientListingId) form.dataset.clientListingId = clientId();
     const payload = {
       partner_id: state.partnerId,
-      client_listing_id: clientId(),
+      client_listing_id: form.dataset.clientListingId,
       vessel_profile_id: data.get("vessel_profile_id"),
       joining_date: data.get("joining_date"),
       joining_port: data.get("joining_port"),
@@ -845,7 +923,7 @@
       trading_area: data.get("trading_area"),
       war_risk_status: data.get("war_risk_status"),
       war_risk_note: data.get("war_risk_note") || "",
-      contract_label: data.get("contract_label"),
+      contract_code: data.get("contract_code"),
       salary_amount: Number(data.get("salary_amount")),
       salary_currency: data.get("salary_currency"),
       preferred_conditions: data.get("preferred_conditions") || "",
@@ -857,6 +935,7 @@
       expires_at: expiry.toISOString()
     };
     await api("/v1/maritime/partner-center/jobs", { method: "POST", body: payload });
+    delete form.dataset.clientListingId;
     await load(state.partnerId);
     openPanel("jobs", state.lastFocus);
     alert("İlanınız doğrulama ve yayın incelemesine gönderildi.", "success");
@@ -881,7 +960,7 @@
     result.classList.remove("is-error");
     result.textContent = "Gemi bilgileri aranıyor...";
     try {
-      const payload = await api(`/v1/maritime/vessels/${encodeURIComponent(imo)}`);
+      const payload = await api(`/v1/maritime/vessels/${encodeURIComponent(imo)}?fresh_position=1`);
       const vessel = payload.vessel || {};
       const values = {
         vessel_name: vessel.vessel_name,
@@ -892,7 +971,14 @@
         gross_tonnage: vessel.grt,
         deadweight: vessel.dwt,
         year_built: vessel.build_year,
-        provider: vessel.provider
+        provider: vessel.provider,
+        current_port: vessel.current_port || vessel.last_port,
+        destination: vessel.destination,
+        navigation_status: vessel.navigation_status,
+        position_received_at: vessel.position_received_at,
+        latitude: vessel.latitude,
+        longitude: vessel.longitude,
+        position_provider: vessel.provider
       };
       Object.entries(values).forEach(([key, value]) => { if (form.elements[key] && value !== null && value !== undefined && value !== "") form.elements[key].value = value; });
       result.textContent = `${vessel.vessel_name || `IMO ${imo}`} bilgileri getirildi. Eksik alanları kontrol edip tamamlayın.`;
@@ -922,6 +1008,13 @@
       gross_tonnage: vesselNumber(data.get("gross_tonnage")),
       deadweight: vesselNumber(data.get("deadweight")),
       year_built: vesselNumber(data.get("year_built")),
+      current_port: String(data.get("current_port") || "").trim() || null,
+      destination: String(data.get("destination") || "").trim() || null,
+      navigation_status: String(data.get("navigation_status") || "").trim() || null,
+      position_received_at: String(data.get("position_received_at") || "").trim() || null,
+      latitude: vesselNumber(data.get("latitude")),
+      longitude: vesselNumber(data.get("longitude")),
+      position_provider: String(data.get("position_provider") || "").trim() || null,
       valid_from: validFrom,
       valid_until: validUntil,
       provider: String(data.get("provider") || "").trim() || null
@@ -1238,9 +1331,13 @@
     catch (error) { alert(error.message || "İşlem tamamlanamadı."); }
   });
 
-  document.addEventListener("change", (event) => {
+  document.addEventListener("change", async (event) => {
     const jobForm = event.target.closest("[data-mp-job-form]");
-    if (jobForm && event.target.matches('[name="vessel_profile_id"], [name="rank_code"], [name="joining_date"], [name="salary_currency"], [name="trading_area"], [name="war_risk_status"], [name="language"]')) {
+    if (jobForm && event.target.matches('[name="vessel_profile_id"]')) {
+      await refreshJobVesselPosition(jobForm);
+      return;
+    }
+    if (jobForm && event.target.matches('[name="rank_code"], [name="joining_date"], [name="contract_code"], [name="salary_currency"], [name="trading_area"], [name="war_risk_status"], [name="language"]')) {
       refreshJobForm(jobForm);
       return;
     }

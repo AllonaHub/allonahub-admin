@@ -7,7 +7,7 @@
   <title>MariPartner | AllonaHub Denizcilik</title>
   <meta name="description" content="AllonaHub Denizcilik doğrulanmış şirket personel merkezi.">
   <link rel="stylesheet" href="../../css/platform.css?v=20260920-maripartner1">
-  <link rel="stylesheet" href="../../css/maripartner.css?v=20260920-maripartner-job2">
+  <link rel="stylesheet" href="../../css/maripartner.css?v=20260920-maripartner-job3">
 </head>
 <body class="mp-body">
   <a class="mp-skip" href="#mainContent">İçeriğe geç</a>
@@ -144,9 +144,9 @@
       <label><span>Para birimi</span><select name="salary_currency" required><option value="">Seçin</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="GBP">GBP</option><option value="TRY">TRY</option><option value="AZN">AZN</option></select></label>
       <label><span>Katılım tarihi</span><input type="date" name="joining_date" required></label>
       <label><span>İlan bitiş tarihi</span><input type="date" name="expires_at" required><small>Katılım tarihinden en fazla 3 gün sonrası.</small></label>
-      <label><span>Kontrat bilgisi</span><input name="contract_label" required minlength="2" maxlength="120" placeholder="Örn. 4+1 ay kontrat"></label>
+      <label><span>Kontrat bilgisi</span><select name="contract_code" required><option value="">Kontrat seçin</option><optgroup label="Değiştirmeci kontratları"><option value="relief_1_month">1 aylık değiştirmeci</option><option value="relief_2_months">2 aylık değiştirmeci</option><option value="relief_3_months">3 aylık değiştirmeci</option></optgroup><optgroup label="Standart kontratlar"><option value="two_months">2 ay</option><option value="three_months">3 ay</option><option value="four_months">4 ay</option><option value="four_plus_one">4+1 ay</option><option value="five_months">5 ay</option><option value="five_plus_one">5+1 ay</option><option value="six_months">6 ay</option><option value="six_plus_one">6+1 ay</option><option value="seven_months">7 ay</option><option value="seven_plus_one">7+1 ay</option><option value="eight_months">8 ay</option><option value="eight_plus_one">8+1 ay</option><option value="nine_months">9 ay</option><option value="nine_plus_one">9+1 ay</option></optgroup></select><small>En uzun seçenek 9+1 aydır.</small></label>
       <label><span>Katılım limanı</span><input name="joining_port" required minlength="2" maxlength="120" placeholder="Örn. İstanbul Ambarlı"></label>
-      <label><span>Geminin mevcut limanı / konumu</span><input name="current_port" required minlength="2" maxlength="120" placeholder="Şirket tarafından güncel olarak doğrulanır"></label>
+      <label><span>Geminin mevcut limanı / konumu</span><input name="current_port" required minlength="2" maxlength="120" placeholder="IMO/AIS kaydından getirilir; şirket doğrular"><small data-mp-position-status>Gemi seçildiğinde güncel açık konum kaydı aranır.</small></label>
       <label><span>Bir sonraki liman</span><input name="next_port" required minlength="2" maxlength="120" placeholder="Örn. Pire"></label>
       <label><span>Çalışma bölgesi</span><select name="trading_area" required><option value="">Seçin</option><option value="worldwide">Dünya geneli</option><option value="mediterranean">Akdeniz</option><option value="black_sea">Karadeniz</option><option value="north_sea_baltic">Kuzey Denizi ve Baltık</option><option value="north_atlantic">Kuzey Atlantik</option><option value="south_atlantic">Güney Atlantik</option><option value="red_sea_gulf_of_aden">Kızıldeniz ve Aden Körfezi</option><option value="arabian_gulf_indian_ocean">Basra Körfezi ve Hint Okyanusu</option><option value="west_africa_gulf_of_guinea">Batı Afrika ve Gine Körfezi</option><option value="east_africa">Doğu Afrika</option><option value="southeast_asia">Güneydoğu Asya</option><option value="east_asia">Doğu Asya</option><option value="australia_pacific">Avustralya ve Pasifik</option><option value="north_america">Kuzey Amerika</option><option value="central_south_america_caribbean">Orta/Güney Amerika ve Karayipler</option><option value="domestic_coastal">Kabotaj / kıyı seferi</option><option value="other">Diğer rota</option></select></label>
       <label><span>Savaş / yüksek risk bölgesi</span><select name="war_risk_status" required><option value="">Seçin</option><option value="no_known_listed_area">Bilinen listelenmiş risk bölgesi yok</option><option value="listed_area_planned">Riskli bölge geçişi planlanıyor</option><option value="route_under_review">Rota ve risk değerlendirmesi kesinleşmedi</option></select></label>
@@ -238,6 +238,13 @@
       <label><span>İlişki başlangıcı</span><input name="valid_from" type="date"></label>
       <label><span>İlişki bitişi</span><input name="valid_until" type="date"></label>
       <input name="provider" type="hidden">
+      <input name="current_port" type="hidden">
+      <input name="destination" type="hidden">
+      <input name="navigation_status" type="hidden">
+      <input name="position_received_at" type="hidden">
+      <input name="latitude" type="hidden">
+      <input name="longitude" type="hidden">
+      <input name="position_provider" type="hidden">
       <button class="mp-primary" type="submit">Gemiyi Doğrulamaya Gönder</button>
     </form>
   </template>
@@ -458,7 +465,7 @@
   <script src="../../js/supabase-client.js?v=20260920-maripartner1" defer></script>
   <script src="../../js/auth.js?v=20260920-partner-routing1" defer></script>
   <script src="../../js/platform.js?v=20260920-maripartner5" defer></script>
-  <script src="../../js/maripartner-i18n.js?v=20260920-maripartner-job2" defer></script>
-  <script src="../../js/maripartner.js?v=20260920-maripartner-job2" defer></script>
+  <script src="../../js/maripartner-i18n.js?v=20260920-maripartner-job3" defer></script>
+  <script src="../../js/maripartner.js?v=20260920-maripartner-job3" defer></script>
 </body>
 </html>

@@ -106,9 +106,63 @@ export function normalizeMarineTrafficVessel(value) {
     build_year: number(row.BUILD ?? row.YEAR_BUILT ?? row.build_year),
     length_overall_m: number(row.LENGTH_OVERALL ?? row.length_overall_m),
     breadth_m: number(row.BREADTH_EXTREME ?? row.BREADTH_MOULDED ?? row.breadth_m),
+    current_port: text(row.CURRENT_PORT || row.PORT_NAME || row.LAST_PORT || row.current_port),
+    last_port: text(row.LAST_PORT || row.current_port),
+    destination: text(row.DESTINATION || row.NEXT_PORT || row.destination),
+    navigation_status: text(row.NAV_STATUS_NAME || row.NAVIGATION_STATUS || row.navigation_status),
+    position_received_at: text(row.TIMESTAMP || row.LAST_POS || row.position_received_at),
+    latitude: number(row.LAT ?? row.LATITUDE ?? row.latitude),
+    longitude: number(row.LON ?? row.LONGITUDE ?? row.longitude),
     provider: "marinetraffic",
     provider_record_kind: "vessel_particulars_legacy",
     provider_license: "commercial_api"
+  };
+}
+
+function voyageValue(html, label) {
+  const escaped = String(label).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const raw = String(html || "");
+  const marker = raw.match(new RegExp(`<div\\s+class=["']vilabel["']>\\s*${escaped}\\s*<\\/div>`, "i"));
+  if (!marker || marker.index === undefined) return null;
+  const tail = raw.slice(marker.index + marker[0].length, marker.index + marker[0].length + 1600);
+  const nextLabel = tail.search(/<div\s+class=["']vilabel["']>/i);
+  const block = tail.slice(0, nextLabel >= 0 ? nextLabel : 1600);
+  const immediate = block.match(/^\s*(?:<a\b[^>]*>([\s\S]*?)<\/a>|<div\b[^>]*>([\s\S]*?)<\/div>)/i);
+  const immediateMarkup = immediate?.[1] || immediate?.[2] || "";
+  const immediateAnchor = immediateMarkup.match(/<a\b[^>]*>([\s\S]*?)<\/a>/i)?.[1];
+  const immediateText = text(decodeHtml(immediateAnchor || immediateMarkup));
+  if (immediateText && !/^(?:ETA|ATA):/i.test(immediateText)) return immediateText;
+  const anchor = block.match(/<a\b[^>]*>([\s\S]*?)<\/a>/i)?.[1];
+  if (anchor) return text(decodeHtml(anchor));
+  const candidates = [...block.matchAll(/<div\b[^>]*>([\s\S]*?)<\/div>/gi)]
+    .map((match) => decodeHtml(match[1]))
+    .filter((entry) => entry && !/^(?:ETA|ATA):/i.test(entry));
+  return text(candidates[0]);
+}
+
+function tableValue(html, label) {
+  const escaped = String(label).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const value = String(html || "").match(new RegExp(`<tr[^>]*>\\s*<td[^>]*>\\s*${escaped}\\s*<\\/td>\\s*<td[^>]*>([\\s\\S]*?)<\\/td>`, "i"))?.[1];
+  return text(decodeHtml(value || ""));
+}
+
+function vesselFinderPosition(html) {
+  const raw = String(html || "");
+  const latitude = number(raw.match(/(?:["']?ship_lat["']?)\s*(?::|=)\s*(-?\d+(?:\.\d+)?)/i)?.[1]);
+  const longitude = number(raw.match(/(?:["']?ship_lon["']?)\s*(?::|=)\s*(-?\d+(?:\.\d+)?)/i)?.[1]);
+  const positionBlock = raw.match(/<td[^>]*>\s*Position Received\s*<\/td>\s*<td[^>]*>([\s\S]{0,1200}?)<\/td>/i)?.[1] || "";
+  const positionLabel = decodeHtml(positionBlock);
+  const positionTitle = decodeHtml(positionBlock.match(/data-title=["']([^"']+)["']/i)?.[1] || "");
+  const parsedPositionAt = Date.parse(positionTitle);
+  return {
+    current_port: voyageValue(raw, "Last Port"),
+    last_port: voyageValue(raw, "Last Port"),
+    destination: voyageValue(raw, "Destination"),
+    navigation_status: tableValue(raw, "Navigation Status"),
+    position_received_at: Number.isFinite(parsedPositionAt) ? new Date(parsedPositionAt).toISOString() : null,
+    position_received_label: text(positionLabel),
+    latitude,
+    longitude
   };
 }
 
@@ -140,6 +194,7 @@ export function normalizeVesselFinderHtml(value, expectedImo = "") {
     build_year: number(rows.get("year of build")),
     length_overall_m: number(rows.get("length overall")),
     breadth_m: number(rows.get("beam")),
+    ...vesselFinderPosition(html),
     vessel_photo_url: vesselFinderPhoto(html, imo),
     vessel_photo_source_url: providerSourceUrl,
     vessel_photo_credit: "VesselFinder",

@@ -247,7 +247,12 @@ test("IMO check digit and MarineTraffic normalization reject bad identifiers", a
       <tr><td>Deadweight <small>(t)</small></td><td>3349</td></tr>
       <tr><td>IMO / MMSI</td><td>9389370 / 620800377</td></tr>
       <tr><td>Callsign</td><td>D6A4377</td></tr>
+      <tr><td>Navigation Status</td><td>At anchor</td></tr>
     </table>
+    <div class="vilabel">Destination</div><div><a>Kalamaki, Greece</a><div>ETA: Sep 21, 12:00</div></div>
+    <div class="vilabel">Last Port</div><div><a>Corinth Easth Anch., Greece</a></div>
+    <script>var ship_lat = 37.91; var ship_lon = 23.71;</script>
+    <table><tr><td>Position Received</td><td><span data-title="2026-09-20T10:15:00Z">2 minutes ago</span></td></tr></table>
   `, "9389370");
   assert.deepEqual({
     name: currentPublicVessel.vessel_name,
@@ -260,7 +265,11 @@ test("IMO check digit and MarineTraffic normalization reject bad identifiers", a
     build: currentPublicVessel.build_year,
     provider: currentPublicVessel.provider,
     photo: currentPublicVessel.vessel_photo_url,
-    photoCredit: currentPublicVessel.vessel_photo_credit
+    photoCredit: currentPublicVessel.vessel_photo_credit,
+    currentPort: currentPublicVessel.current_port,
+    destination: currentPublicVessel.destination,
+    navigationStatus: currentPublicVessel.navigation_status,
+    positionReceivedAt: currentPublicVessel.position_received_at
   }, {
     name: "NUR K",
     type: "General Cargo Ship",
@@ -272,7 +281,11 @@ test("IMO check digit and MarineTraffic normalization reject bad identifiers", a
     build: 2006,
     provider: "vesselfinder_public",
     photo: "https://static.vesselfinder.net/ship-photo/9389370-354186000-photo/1?v1",
-    photoCredit: "VesselFinder"
+    photoCredit: "VesselFinder",
+    currentPort: "Corinth Easth Anch., Greece",
+    destination: "Kalamaki, Greece",
+    navigationStatus: "At anchor",
+    positionReceivedAt: "2026-09-20T10:15:00.000Z"
   });
   assert.equal(provider.normalizeVesselFinderHtml(`
     <table><tr><td>IMO number</td><td>9389370</td></tr><tr><td>Vessel Name</td><td>NUR K</td></tr></table>

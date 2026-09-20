@@ -11,6 +11,7 @@ import {
   MARIPARTNER_JOB_RANKS,
   MARIPARTNER_JOB_CERTIFICATE_CODES,
   MARIPARTNER_RANK_CERTIFICATE_CODES,
+  MARIPARTNER_CONTRACT_OPTIONS,
   MARIPARTNER_TRADING_AREAS,
   MARIPARTNER_WAR_RISK_STATUSES,
   approvedReferenceSummary,
@@ -192,7 +193,7 @@ const partnerJobSchema = z.object({
   trading_area: z.enum(Object.keys(MARIPARTNER_TRADING_AREAS)),
   war_risk_status: z.enum(Object.keys(MARIPARTNER_WAR_RISK_STATUSES)),
   war_risk_note: z.string().trim().max(240).optional().default(""),
-  contract_label: z.string().trim().min(2).max(120),
+  contract_code: z.enum(Object.keys(MARIPARTNER_CONTRACT_OPTIONS)),
   salary_amount: z.number().positive().max(1000000),
   salary_currency: z.enum(["USD", "EUR", "GBP", "TRY", "AZN"]),
   preferred_conditions: z.string().trim().max(500).optional().default(""),
@@ -208,8 +209,8 @@ const partnerJobSchema = z.object({
   if (!Number.isFinite(joining) || joining < Date.now() - 86400000 || joining > Date.now() + 365 * 86400000) ctx.addIssue({ code: "custom", path: ["joining_date"], message: "Katılım tarihi bugün ile bir yıl sonrası arasında olmalıdır." });
   if (!Number.isFinite(expiry) || expiry < Date.now() || expiry > joining + 3 * 86400000 + 86399999) ctx.addIssue({ code: "custom", path: ["expires_at"], message: "İlan bitiş tarihi katılım tarihinden en fazla üç gün sonra olabilir." });
   if (value.war_risk_status !== "no_known_listed_area" && value.war_risk_note.length < 6) ctx.addIssue({ code: "custom", path: ["war_risk_note"], message: "Riskli veya kesinleşmemiş rota için kısa bir açıklama girin." });
-  const requiredCodes = ["SP", "SH", "SI", "SL", "SO", MARIPARTNER_RANK_CERTIFICATE_CODES[value.rank_code]];
-  requiredCodes.filter(Boolean).forEach((code) => {
+  const requiredCodes = ["SP", "SH", "SI", "SL", "SO", ...(MARIPARTNER_RANK_CERTIFICATE_CODES[value.rank_code] || [])];
+  requiredCodes.forEach((code) => {
     if (!value.required_certificate_codes.includes(code)) ctx.addIssue({ code: "custom", path: ["required_certificate_codes"], message: code + " rütbe ve temel emniyet eşleştirmesi için zorunludur." });
   });
 });
@@ -227,7 +228,14 @@ const partnerVesselSchema = z.object({
   year_built: z.number().int().min(1850).max(new Date().getUTCFullYear() + 1).nullable().optional(),
   valid_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
   valid_until: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
-  provider: z.string().trim().max(80).nullable().optional()
+  provider: z.string().trim().max(80).nullable().optional(),
+  current_port: z.string().trim().max(120).nullable().optional(),
+  destination: z.string().trim().max(120).nullable().optional(),
+  navigation_status: z.string().trim().max(120).nullable().optional(),
+  position_received_at: z.string().datetime().nullable().optional(),
+  latitude: z.number().min(-90).max(90).nullable().optional(),
+  longitude: z.number().min(-180).max(180).nullable().optional(),
+  position_provider: z.string().trim().max(80).nullable().optional()
 }).strict().superRefine((value, ctx) => {
   if (!isValidImoNumber(value.imo_number)) ctx.addIssue({ code: "custom", path: ["imo_number"], message: "Geçerli ve kontrol basamağı doğru bir IMO numarası girin." });
   if (value.valid_from && value.valid_until && value.valid_until < value.valid_from) ctx.addIssue({ code: "custom", path: ["valid_until"], message: "İlişki bitiş tarihi başlangıç tarihinden önce olamaz." });
@@ -860,7 +868,9 @@ export function registerMaritimePartnerCenterRoutes(app) {
       war_risk_status: body.war_risk_status,
       war_risk_label: presentation.route.war_risk_label,
       war_risk_note: presentation.route.war_risk_note,
-      salary: { amount: body.salary_amount, currency: body.salary_currency }
+      salary: { amount: body.salary_amount, currency: body.salary_currency },
+      contract_code: body.contract_code,
+      contract_label: presentation.route.contract_label
     };
     const listing = existing || assertDb(await supabaseAdmin.from("maritime_public_listings").insert({
         partner_user_id: access.ctx.user.id,
@@ -891,7 +901,7 @@ export function registerMaritimePartnerCenterRoutes(app) {
       job_title: presentation.title,
       contract_start: body.joining_date,
       hard_gates: { required_certificate_codes: body.required_certificate_codes, minimum_sea_service_days: presentation.minimum_sea_service_days, medical_required: true, available_now_required: body.available_now_required, requirements_complete: true },
-      structured_requirements: { required_languages: body.required_languages, location_label: presentation.location_label, contract_label: body.contract_label, vessel_type: presentation.public_vessel.vessel_type, vessel_public_profile: presentation.public_vessel, joining_date: body.joining_date, joining_port: body.joining_port, current_port: body.current_port, next_port: body.next_port, trading_area: body.trading_area, trading_area_label: presentation.route.trading_area_label, war_risk_status: body.war_risk_status, war_risk_label: presentation.route.war_risk_label, war_risk_note: presentation.route.war_risk_note, salary: { amount: body.salary_amount, currency: body.salary_currency }, minimum_sea_service_months: body.minimum_sea_service_months, preferred_conditions: body.preferred_conditions },
+      structured_requirements: { required_languages: body.required_languages, location_label: presentation.location_label, contract_code: body.contract_code, contract_label: presentation.route.contract_label, vessel_type: presentation.public_vessel.vessel_type, vessel_public_profile: presentation.public_vessel, joining_date: body.joining_date, joining_port: body.joining_port, current_port: body.current_port, next_port: body.next_port, trading_area: body.trading_area, trading_area_label: presentation.route.trading_area_label, war_risk_status: body.war_risk_status, war_risk_label: presentation.route.war_risk_label, war_risk_note: presentation.route.war_risk_note, salary: { amount: body.salary_amount, currency: body.salary_currency }, minimum_sea_service_months: body.minimum_sea_service_months, preferred_conditions: body.preferred_conditions },
       source_free_text: presentation.summary,
       submitted_at: now,
       metadata: { source: "maripartner", public_listing_id: listing.id, expires_at: body.expires_at, company_contact_visible: false, vessel_identity_visible: false, current_position_source: presentation.route.current_position_source }
@@ -916,6 +926,14 @@ export function registerMaritimePartnerCenterRoutes(app) {
       gross_tonnage: body.gross_tonnage ?? null,
       deadweight: body.deadweight ?? null,
       year_built: body.year_built ?? null,
+      current_port: body.current_port || null,
+      last_port: body.current_port || null,
+      destination: body.destination || null,
+      navigation_status: body.navigation_status || null,
+      position_received_at: body.position_received_at || null,
+      latitude: body.latitude ?? null,
+      longitude: body.longitude ?? null,
+      position_provider: body.position_provider || body.provider || null,
       source: "maripartner",
       lookup_provider: body.provider || null
     };
