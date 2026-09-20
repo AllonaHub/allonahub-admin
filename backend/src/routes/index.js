@@ -137,6 +137,10 @@ const authForgotPasswordSchema = z.object({
   turnstileToken: z.string().trim().max(4096).optional().default("")
 });
 
+const authCompleteTemporaryPasswordSchema = z.object({
+  password: z.string().min(8).max(512)
+}).strict();
+
 const authResendConfirmationSchema = z.object({
   email: emailSchema,
   turnstileToken: z.string().trim().max(4096).optional().default("")
@@ -1645,6 +1649,7 @@ function publicAuthUser(user) {
     email: user.email || "",
     email_confirmed_at: user.email_confirmed_at || null,
     created_at: user.created_at || null,
+    must_change_password: Boolean(user.app_metadata?.must_change_password),
     user_metadata: {
       full_name: user.user_metadata?.full_name || "",
       phone: user.user_metadata?.phone || "",
@@ -11100,6 +11105,36 @@ export function registerRoutes(app) {
       user: publicAuthUser(data.user),
       session: data.session
     };
+  });
+
+  app.post("/v1/auth/complete-temporary-password", {
+    config: { rateLimit: { max: 5, timeWindow: "15 minutes" } }
+  }, async (request) => {
+    const ctx = await requireAuth(request);
+    const payload = authCompleteTemporaryPasswordSchema.parse(request.body || {});
+    if (!ctx.user.app_metadata?.must_change_password) {
+      throw httpError("Bu hesap için zorunlu şifre yenileme işlemi bulunmuyor.", 409, "TEMPORARY_PASSWORD_CHANGE_NOT_REQUIRED");
+    }
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(ctx.user.id, {
+      password: payload.password,
+      app_metadata: {
+        ...(ctx.user.app_metadata || {}),
+        must_change_password: false,
+        temporary_password_completed_at: new Date().toISOString()
+      }
+    });
+    if (error) throw httpError("Yeni şifre kaydedilemedi. Lütfen tekrar deneyin.", 503, "TEMPORARY_PASSWORD_CHANGE_FAILED");
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile?.role || "customer",
+      action: "auth.temporary_password_completed",
+      resourceType: "authentication",
+      resourceId: ctx.user.id,
+      severity: "info",
+      evidenceTags: ["auth", "password", "temporary_access"]
+    });
+    return { ok: true };
   });
 
   app.post("/v1/auth/register", async (request, reply) => {

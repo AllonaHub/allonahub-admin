@@ -80,3 +80,17 @@ test("customer login separates provider outages and rate limits from invalid cre
   assert.match(page, /code\.includes\("service_unavailable"\)/);
   assert.match(page, /status>=500/);
 });
+
+test("temporary recovery accounts must replace their password before normal navigation", async () => {
+  const [routes, loginPage, resetPage] = await Promise.all([
+    source("backend/src/routes/index.js"),
+    source("pages/account/user.html"),
+    source("pages/account/reset-password.html")
+  ]);
+  assert.match(routes, /must_change_password:\s*Boolean/);
+  assert.match(routes, /app\.post\("\/v1\/auth\/complete-temporary-password"/);
+  assert.match(routes, /auth\.temporary_password_completed/);
+  assert.match(loginPage, /data\.user\.must_change_password/);
+  assert.match(resetPage, /hasForcedPasswordIntent/);
+  assert.match(resetPage, /\/v1\/auth\/complete-temporary-password/);
+});

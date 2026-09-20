@@ -1936,6 +1936,14 @@ async function loginUser(){
       return;
     }
 
+    if(data.user.must_change_password){
+      const changeUrl=new URL("/pages/account/reset-password.html",window.location.origin);
+      changeUrl.searchParams.set("forced","1");
+      changeUrl.searchParams.set("returnTo","/pages/account/user-panel.html");
+      window.location.href=changeUrl.href;
+      return;
+    }
+
     const context=await accountContext(verifiedUser);
     if(context.type==="customer" && !await claimCustomerAccountDevice(verifiedUser))return;
 
