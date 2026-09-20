@@ -1,11 +1,15 @@
 /* Auth fields must remain readable after theme changes and browser autofill. */
-body.auth-page[data-theme] {
+body:is(.auth-page, .auth-reset-page)[data-theme] {
   --auth-field-bg: color-mix(in srgb, var(--ah-bg-strong) 94%, var(--ah-primary) 6%);
   --auth-field-ink: var(--ah-ink, #f8fbff);
   --auth-field-placeholder: var(--ah-muted, rgba(255, 255, 255, 0.76));
+  --auth-action-ink: #041624;
+  --auth-action-bg: linear-gradient(135deg, var(--ah-primary), color-mix(in srgb, var(--ah-primary-strong) 65%, #ffffff));
+  --auth-error-ink: #ffadbb;
+  --auth-focus: var(--ah-primary);
 }
 
-body.auth-page[data-theme] :where(
+body:is(.auth-page, .auth-reset-page)[data-theme] :where(
   .input,
   .select-box,
   .country-selected,
@@ -18,24 +22,25 @@ body.auth-page[data-theme] :where(
   color: var(--auth-field-ink) !important;
 }
 
-body.auth-page[data-theme] :where(
+body:is(.auth-page, .auth-reset-page)[data-theme] :where(
   .search input,
   .input input,
   .select-box select,
   .country-selected,
   .country-search,
   .country-item,
-  .profession-item
+  .profession-item,
+  .auth-verification-code
 ) {
   background-color: transparent !important;
   color: var(--auth-field-ink) !important;
   -webkit-text-fill-color: var(--auth-field-ink) !important;
-  caret-color: var(--ah-primary) !important;
+  caret-color: var(--auth-focus) !important;
   opacity: 1 !important;
   text-shadow: none !important;
 }
 
-body.auth-page[data-theme] :where(
+body:is(.auth-page, .auth-reset-page)[data-theme] :where(
   .search input,
   .input input,
   .country-search
@@ -45,45 +50,45 @@ body.auth-page[data-theme] :where(
   opacity: 1 !important;
 }
 
-body.auth-page[data-theme] :where(
+body:is(.auth-page, .auth-reset-page)[data-theme] :where(
   .search input,
   .input input,
   .country-search
 ):-webkit-autofill,
-body.auth-page[data-theme] :where(
+body:is(.auth-page, .auth-reset-page)[data-theme] :where(
   .search input,
   .input input,
   .country-search
 ):-webkit-autofill:hover,
-body.auth-page[data-theme] :where(
+body:is(.auth-page, .auth-reset-page)[data-theme] :where(
   .search input,
   .input input,
   .country-search
 ):-webkit-autofill:focus,
-body.auth-page[data-theme] :where(
+body:is(.auth-page, .auth-reset-page)[data-theme] :where(
   .search input,
   .input input,
   .country-search
 ):autofill {
   color: var(--auth-field-ink) !important;
   -webkit-text-fill-color: var(--auth-field-ink) !important;
-  caret-color: var(--ah-primary) !important;
+  caret-color: var(--auth-focus) !important;
   -webkit-box-shadow: 0 0 0 1000px var(--auth-field-bg) inset !important;
   box-shadow: 0 0 0 1000px var(--auth-field-bg) inset !important;
   transition: background-color 99999s ease-out 0s;
 }
 
-body.auth-page[data-theme] :where(
+body:is(.auth-page, .auth-reset-page)[data-theme] :where(
   .search input,
   .input input,
   .country-search
 )::selection {
-  background: var(--ah-primary);
+  background: var(--auth-focus);
   color: var(--ah-bg-strong);
   -webkit-text-fill-color: var(--ah-bg-strong);
 }
 
-body.auth-page[data-theme="white"] :where(
+body:is(.auth-page, .auth-reset-page)[data-theme="white"] :where(
   .search input,
   .input input,
   .select-box select,
@@ -93,7 +98,7 @@ body.auth-page[data-theme="white"] :where(
   color-scheme: light;
 }
 
-body.auth-page[data-theme]:not([data-theme="white"]) :where(
+body:is(.auth-page, .auth-reset-page)[data-theme]:not([data-theme="white"]) :where(
   .search input,
   .input input,
   .select-box select,
@@ -107,4 +112,128 @@ body.auth-page[data-theme] .select-box select option {
   background: var(--ah-bg-strong) !important;
   color: var(--ah-ink) !important;
   -webkit-text-fill-color: var(--ah-ink) !important;
+}
+
+body:is(.auth-page, .auth-reset-page)[data-theme="white"] {
+  --auth-error-ink: #a61c35;
+  --auth-focus: #005b9f;
+}
+
+/* Legacy button styles use white text on bright gradients, including nested labels. */
+body:is(.auth-page, .auth-reset-page)[data-theme] .page :is(
+  .btn:not(.social-btn), .tab.active, .search button, .partner-entry-btn:not(.secondary), .platform-theme-btn
+) {
+  background: var(--auth-action-bg) !important;
+  color: var(--auth-action-ink) !important;
+  -webkit-text-fill-color: var(--auth-action-ink) !important;
+  text-shadow: none !important;
+}
+
+body:is(.auth-page, .auth-reset-page)[data-theme] .page :is(
+  .btn:not(.social-btn), .tab.active, .search button, .partner-entry-btn:not(.secondary), .platform-theme-btn
+) :is(span, i) {
+  color: inherit !important;
+  -webkit-text-fill-color: inherit !important;
+}
+
+body:is(.auth-page, .auth-reset-page)[data-theme] .page .btn:disabled {
+  opacity: 1;
+  background: var(--auth-field-bg) !important;
+  color: var(--auth-field-placeholder) !important;
+  -webkit-text-fill-color: var(--auth-field-placeholder) !important;
+  box-shadow: none;
+  border: 1px solid var(--ah-line);
+  cursor: not-allowed;
+}
+
+body.auth-page[data-theme] .page .btn.error {
+  background: linear-gradient(135deg, #9b1c31, #7f142b) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+body.auth-page[data-theme] .warning-text {
+  color: var(--auth-error-ink) !important;
+  -webkit-text-fill-color: var(--auth-error-ink) !important;
+}
+
+/* Text outside the glass panels also needs a stable surface behind it. */
+body.auth-page[data-theme] .quick-title {
+  background: var(--ah-bg-strong);
+}
+
+body.auth-page[data-theme] .page :is(.link-row a, .quick-title a) {
+  color: var(--auth-focus) !important;
+  -webkit-text-fill-color: var(--auth-focus) !important;
+}
+
+body.auth-page[data-theme] .page .auth-forgot-note {
+  color: var(--ah-muted) !important;
+  -webkit-text-fill-color: var(--ah-muted) !important;
+}
+
+body.auth-page[data-theme] .partner-entry-btn.secondary,
+body.auth-page[data-theme] .partner-entry-btn.secondary :is(span, i) {
+  background: var(--auth-field-bg) !important;
+  color: var(--auth-field-ink) !important;
+  -webkit-text-fill-color: var(--auth-field-ink) !important;
+}
+
+body:is(.auth-page, .auth-reset-page)[data-theme] .password-visibility-toggle {
+  color: var(--auth-field-ink) !important;
+  opacity: 1;
+}
+
+body:is(.auth-page, .auth-reset-page)[data-theme] .password-visibility-toggle:is(:hover, [aria-pressed="true"]) {
+  background: color-mix(in srgb, var(--ah-primary) 12%, var(--auth-field-bg));
+}
+
+body:is(.auth-page, .auth-reset-page)[data-theme] .page :is(button, a, input, select, [role="tab"]):focus-visible {
+  outline: 2px solid var(--auth-focus);
+  outline-offset: 3px;
+}
+
+body.auth-page[data-theme="white"] .page .brand .gold {
+  color: #806000 !important;
+  -webkit-text-fill-color: #806000 !important;
+}
+
+body.auth-page[data-theme="white"] .page .brand .blue,
+body.auth-page[data-theme="white"] .login-box h1 .auth-brand > span,
+body.auth-page[data-theme="white"] .quick-card h3 {
+  color: #005b9f !important;
+  -webkit-text-fill-color: #005b9f !important;
+}
+
+body.auth-reset-page[data-theme] .box {
+  background: var(--ah-bg-strong);
+  border-color: var(--ah-line);
+  color: var(--ah-ink);
+}
+
+body.auth-reset-page[data-theme] .box :is(h1, a) {
+  color: var(--ah-ink) !important;
+  -webkit-text-fill-color: var(--ah-ink) !important;
+}
+
+body.auth-reset-page[data-theme] .box > p {
+  color: var(--ah-muted) !important;
+  -webkit-text-fill-color: var(--ah-muted) !important;
+  text-shadow: none !important;
+}
+
+body.auth-reset-page[data-theme] .reset-status {
+  background: color-mix(in srgb, var(--ah-primary) 8%, var(--ah-bg-strong));
+  border-color: var(--ah-line);
+  color: var(--ah-ink);
+}
+
+body.auth-reset-page[data-theme] .reset-status.error {
+  background: color-mix(in srgb, #a61c35 8%, var(--ah-bg-strong));
+  border-color: var(--auth-error-ink);
+  color: var(--auth-error-ink);
+}
+
+body.auth-reset-page[data-theme] .reset-status.success {
+  border-color: #268267;
 }

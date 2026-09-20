@@ -1,4 +1,4 @@
-const ALLONAHUB_CACHE = "allonahub-pwa-20260920-auth-session1-avatar2";
+const ALLONAHUB_CACHE = "allonahub-pwa-20260920-auth-session1-avatar2-theme2";
 const APP_SHELL = [
   "./",
   "./index.html",
