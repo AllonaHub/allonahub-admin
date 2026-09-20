@@ -5,7 +5,6 @@
   const pendingKeys = new Map();
 
   function apiBase() {
-    if (/^(localhost|127\.0\.0\.1)$/i.test(window.location.hostname)) return "http://localhost:3000";
     return String(App.config && App.config.apiBaseUrl || "https://api.allonahub.com").replace(/\/$/, "");
   }
 
@@ -25,26 +24,41 @@
       error.code = "MARITIME_DEVICE_KEY_REQUIRED";
       throw error;
     }
-    return App.cvAccess.getDeviceKey();
+    try {
+      return await App.cvAccess.getDeviceKey();
+    } catch (cause) {
+      const error = new Error("MARITIME_DEVICE_KEY_REQUIRED", { cause });
+      error.code = "MARITIME_DEVICE_KEY_REQUIRED";
+      throw error;
+    }
   }
 
   async function api(path, options) {
     const current = await session();
-    const response = await fetch(`${apiBase()}${path}`, {
-      ...options,
-      headers: {
-        Accept: "application/json",
-        Authorization: `Bearer ${current.access_token}`,
-        "X-Allona-Device-Key": await deviceKey(),
-        ...(options && options.body ? { "Content-Type": "application/json" } : {}),
-        ...(options && options.headers || {})
-      }
-    });
+    const key = await deviceKey();
+    let response;
+    try {
+      response = await fetch(`${apiBase()}${path}`, {
+        ...options,
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${current.access_token}`,
+          "X-Allona-Device-Key": key,
+          ...(options && options.body ? { "Content-Type": "application/json" } : {}),
+          ...(options && options.headers || {})
+        }
+      });
+    } catch (cause) {
+      const error = new Error("MARITIME_PDF_NETWORK_ERROR", { cause });
+      error.code = "MARITIME_PDF_NETWORK_ERROR";
+      throw error;
+    }
     const payload = await response.json().catch(function () { return {}; });
     if (!response.ok || payload.ok !== true) {
       const error = new Error(payload.message || "REQUEST_FAILED");
       error.status = response.status;
-      error.code = payload.error || payload.code || "REQUEST_FAILED";
+      error.code = payload.code || payload.error || "REQUEST_FAILED";
+      error.requestId = /^[a-z0-9-]{1,100}$/i.test(payload.request_id || "") ? payload.request_id : "";
       error.payload = payload;
       throw error;
     }
@@ -139,5 +153,17 @@
     return publicApi(`/v1/maritime/vessels/${encodeURIComponent(String(imo || ""))}`, { method: "GET" });
   }
 
-  window.AllonaMaritimeCommerce = Object.freeze({ authorizeDownload, startCheckout, authorizeOrCheckout, lookupVessel });
+  function pdfErrorKey(error) {
+    const code = String(error?.code || "");
+    if (code === "AUTH_REQUIRED" || error?.status === 401) return "pdfLoginRequired";
+    if (code === "MARITIME_CV_REQUIRED") return "pdfSaveRequired";
+    if (code === "MARITIME_PDF_NETWORK_ERROR") return "pdfNetworkFailed";
+    if (code === "BANK_PAYMENT_NOT_CONFIGURED" || code === "PAYMENTS_DISABLED") return "pdfPaymentUnavailable";
+    if (code === "UNTRUSTED_PAYMENT_URL") return "pdfPaymentSecurityFailed";
+    if (code.startsWith("MARITIME_DEVICE_")) return "pdfDeviceFailed";
+    if (code.includes("PAYMENT") || error?.status === 402 || error?.status === 503) return "pdfPaymentFailed";
+    return "pdfGenerationFailed";
+  }
+
+  window.AllonaMaritimeCommerce = Object.freeze({ authorizeDownload, startCheckout, authorizeOrCheckout, lookupVessel, pdfErrorKey });
 })();

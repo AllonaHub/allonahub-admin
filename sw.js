@@ -1,4 +1,4 @@
-const ALLONAHUB_CACHE = "allonahub-pwa-20260920-cv-photo3";
+const ALLONAHUB_CACHE = "allonahub-pwa-20260920-pdf-errors1";
 const APP_SHELL = [
   "./",
   "./index.html",

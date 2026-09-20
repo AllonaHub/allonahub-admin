@@ -85,7 +85,7 @@ test("only paid PDF controls are visible and no Premium surface is rendered", as
   assert.match(smartUi, /authorizeOrCheckout\("global_cv_pdf"\)/);
   assert.match(smartUi, /AllonaMaritimePdfNames\.globalCv/);
   assert.match(smartUi, /addGlobalCvPages/);
-  assert.match(smartUi, /pdf\.save\(fileName\)/);
+  assert.match(smartUi, /await pdf\.save\(fileName, \{ returnPromise: true \}\)/);
   assert.doesNotMatch(smartUi, /window\.print\(\)/);
   assert.match(smartPage, /html2canvas-1\.4\.1\.min\.js/);
   assert.match(smartPage, /jspdf-2\.5\.1\.umd\.min\.js/);

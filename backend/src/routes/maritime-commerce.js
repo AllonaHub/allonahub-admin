@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import { z } from "zod";
 import { config } from "../config.js";
-import { bankPaymentPost, maritimePdfCheckoutPayload } from "../lib/bank-payment-provider.js";
+import { bankPaymentConfigured, bankPaymentPost, maritimePdfCheckoutPayload } from "../lib/bank-payment-provider.js";
 import { ensureMaritimeCustomerProfile } from "../lib/maritime-customer-profile.js";
 import { isValidImoNumber, lookupVesselByImo, normalizeImoNumber } from "../lib/maritime-vessel-provider.js";
 import { auditEvent, authContext, supabaseAdmin } from "../lib/supabase.js";
@@ -173,6 +173,9 @@ export function registerMaritimeCommerceRoutes(app) {
     if (config.paymentsDisabled) throw httpError("Ödeme sistemi geçici olarak koruma modunda.", 503, "PAYMENTS_DISABLED");
     const ctx = await requireCustomer(request, "maritime.pdf_checkout");
     const input = checkoutSchema.parse(request.body || {});
+    if (!bankPaymentConfigured()) {
+      throw httpError("PDF ödeme bağlantısı henüz etkin değil. Kayıtlı CV bilgileri korunur.", 503, "BANK_PAYMENT_NOT_CONFIGURED");
+    }
     const settings = assertDb(await supabaseAdmin
       .from("maritime_commerce_settings")
       .select("maritime_cv_pdf_price,global_cv_pdf_price,currency")

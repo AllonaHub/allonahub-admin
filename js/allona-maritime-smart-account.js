@@ -71,7 +71,12 @@
     cvTitle: ["Global CV", "Global CV", "Global CV", "Global CV", "Global CV", "Global CV", "Global CV", "Global CV", "Global CV"],
     savePdf: ["Global CV PDF İndir · 15 USD", "Global CV PDF endir · 15 USD", "Global CV PDF жүктеу · 15 USD", "Global CV PDF yuklab olish · 15 USD", "Global CV PDF жүктөп алуу · 15 USD", "Download Global CV PDF · $15", "Global CV PDF herunterladen · 15 USD", "Скачать Global CV PDF · 15 USD", "تنزيل Global CV PDF · 15 USD"],
     pdfPaymentFailed: ["15 USD tutarındaki Global CV PDF ödemesi başlatılamadı. Global CV oluşturmak ve güncellemek ücretsiz kalır.", "15 USD məbləğində Global CV PDF ödənişi başladılmadı. Global CV yaratmaq və yeniləmək pulsuz qalır.", "15 USD Global CV PDF төлемі басталмады. Global CV жасау және жаңарту тегін қалады.", "15 USD Global CV PDF to‘lovi boshlanmadi. Global CV yaratish va yangilash bepul qoladi.", "15 USD Global CV PDF төлөмү башталган жок. Global CV түзүү жана жаңыртуу акысыз бойдон калат.", "The $15 Global CV PDF payment could not be started. Creating and updating Global CV remains free.", "Die Zahlung von 15 USD für das Global-CV-PDF konnte nicht gestartet werden. Erstellen und Aktualisieren bleiben kostenlos.", "Не удалось начать оплату Global CV PDF стоимостью 15 USD. Создание и обновление Global CV остаются бесплатными.", "تعذر بدء دفع 15 دولارا لتنزيل Global CV PDF. يظل إنشاء Global CV وتحديثه مجانيا."],
-    pdfGenerationFailed: ["Global CV PDF hazırlanamadı. Bilgilerinizi ve fotoğrafınızı kontrol edip yeniden deneyin.", "Global CV PDF hazırlana bilmədi. Məlumat və şəklinizi yoxlayıb yenidən cəhd edin.", "Global CV PDF дайындалмады. Деректеріңіз бен фотоңызды тексеріп, қайталап көріңіз.", "Global CV PDF tayyorlanmadi. Maʼlumot va rasmingizni tekshirib, qayta urinib ko‘ring.", "Global CV PDF даярдалган жок. Маалымат жана сүрөтүңүздү текшерип, кайра аракет кылыңыз.", "The Global CV PDF could not be created. Check your information and photo, then try again.", "Das Global-CV-PDF konnte nicht erstellt werden. Prüfen Sie Angaben und Foto und versuchen Sie es erneut.", "Не удалось создать PDF Global CV. Проверьте данные и фотографию и повторите попытку.", "تعذر إنشاء ملف Global CV بصيغة PDF. تحقق من بياناتك وصورتك ثم أعد المحاولة."],
+    pdfGenerationFailed: ["PDF hazırlanırken teknik bir hata oluştu. Kayıtlı CV'niz değişmedi.", "PDF hazırlanarkən texniki xəta baş verdi. Saxlanmış CV dəyişməyib.", "PDF дайындауда техникалық қате. Сақталған CV өзгермеді.", "PDF tayyorlashda texnik xato. Saqlangan CV o‘zgarmadi.", "PDF даярдоодо техникалык ката. Сакталган CV өзгөргөн жок.", "A technical error occurred while preparing the PDF. Your saved CV is unchanged.", "Technischer Fehler beim Erstellen des PDFs. Ihr gespeicherter CV bleibt unverändert.", "Техническая ошибка при создании PDF. Сохранённое CV не изменилось.", "حدث خطأ تقني أثناء إعداد PDF. لم تتغير سيرتك المحفوظة."],
+    pdfNetworkFailed: ["İndirme servisine ulaşılamadı. Kayıtlı CV'niz değişmedi. Bağlantınızı kontrol edip yeniden deneyin.", "Endirmə xidmətinə qoşulmaq olmadı. Saxlanmış CV dəyişməyib. Bağlantını yoxlayıb yenidən cəhd edin.", "Жүктеу қызметі қолжетімсіз. Сақталған CV өзгермеді. Қосылымды тексеріңіз.", "Yuklab olish xizmatiga ulanib bo‘lmadi. CV o‘zgarmadi. Ulanishni tekshiring.", "Жүктөө кызматына туташуу мүмкүн эмес. CV өзгөргөн жок. Байланышты текшериңиз.", "The download service could not be reached. Your saved CV is unchanged. Check your connection and retry.", "Der Download-Dienst ist nicht erreichbar. Ihr CV bleibt gespeichert. Prüfen Sie die Verbindung.", "Сервис скачивания недоступен. CV сохранено. Проверьте соединение и повторите попытку.", "تعذر الاتصال بخدمة التنزيل. سيرتك محفوظة. تحقق من الاتصال وأعد المحاولة."],
+    pdfPaymentUnavailable: ["Ücretli PDF indirme için ödeme bağlantısı henüz etkin değil. CV kaydetme, görüntüleme ve Global CV oluşturma ücretsiz olarak kullanılabilir.", "Ödənişli PDF endirmə üçün ödəniş bağlantısı hələ aktiv deyil. CV saxlamaq, baxmaq və Global CV yaratmaq pulsuzdur.", "Ақылы PDF жүктеу үшін төлем әлі қосылмаған. CV сақтау, көру және Global CV жасау тегін.", "Pullik PDF uchun to‘lov hali yoqilmagan. CV saqlash, ko‘rish va Global CV yaratish bepul.", "Акы төлөнүүчү PDF үчүн төлөм иштей элек. CV сактоо, көрүү жана Global CV түзүү акысыз.", "Paid PDF downloads are not available yet. Saving, viewing and creating Global CV remain free.", "Bezahlte PDF-Downloads sind noch nicht verfügbar. Speichern, Ansehen und Global-CV-Erstellung bleiben kostenlos.", "Оплата скачивания PDF ещё не подключена. Сохранение, просмотр и создание Global CV бесплатны.", "تنزيل PDF المدفوع غير متاح بعد. يظل حفظ السيرة وعرضها وإنشاء Global CV مجانياً."],
+    pdfDeviceFailed: ["İndirme için cihaz doğrulaması tamamlanmalı. Maritime CV'yi açıp kaydetme doğrulamasını tamamlayın.", "Endirmə üçün cihaz təsdiqi lazımdır. Maritime CV-də saxlama təsdiqini tamamlayın.", "Жүктеу үшін құрылғыны растаңыз. Maritime CV сақтау растауын аяқтаңыз.", "Yuklash uchun qurilmani tasdiqlang. Maritime CV saqlash tasdiqini yakunlang.", "Жүктөө үчүн түзмөктү ырастаңыз. Maritime CV сактоо ырастоосун бүтүрүңүз.", "Device verification is required for this download. Open Maritime CV and complete the save verification.", "Bestätigen Sie Ihr Gerät über den Speichervorgang in Maritime CV.", "Для скачивания подтвердите устройство при сохранении Maritime CV.", "يلزم التحقق من الجهاز. افتح Maritime CV وأكمل تأكيد الحفظ."],
+    pdfSaveRequired: ["PDF indirmeden önce Maritime CV'nizi kaydedin.", "PDF endirmədən əvvəl Maritime CV-ni saxlayın.", "PDF жүктемес бұрын Maritime CV сақтаңыз.", "PDF yuklashdan oldin Maritime CV-ni saqlang.", "PDF жүктөөдөн мурун Maritime CV сактаңыз.", "Save Maritime CV before downloading the PDF.", "Speichern Sie Maritime CV vor dem PDF-Download.", "Сохраните Maritime CV перед скачиванием PDF.", "احفظ Maritime CV قبل تنزيل PDF."],
+    pdfPaymentSecurityFailed: ["Güvenli ödeme adresi doğrulanamadı. İndirme durduruldu.", "Təhlükəsiz ödəniş ünvanı təsdiqlənmədi. Endirmə dayandırıldı.", "Төлем мекенжайы расталмады. Жүктеу тоқтатылды.", "To‘lov manzili tasdiqlanmadi. Yuklash to‘xtatildi.", "Төлөм дареги ырасталган жок. Жүктөө токтотулду.", "The secure payment address could not be verified. Download stopped.", "Die sichere Zahlungsadresse konnte nicht bestätigt werden. Download gestoppt.", "Безопасный адрес оплаты не подтверждён. Скачивание остановлено.", "تعذر التحقق من عنوان الدفع الآمن. تم إيقاف التنزيل."],
     pdfLoginRequired: ["Global CV PDF indirmek için giriş yapın.", "Global CV PDF endirmək üçün daxil olun.", "Global CV PDF жүктеу үшін жүйеге кіріңіз.", "Global CV PDF yuklab olish uchun tizimga kiring.", "Global CV PDF жүктөп алуу үчүн кириңиз.", "Sign in to download the Global CV PDF.", "Melden Sie sich an, um das Global-CV-PDF herunterzuladen.", "Войдите, чтобы скачать Global CV PDF.", "سجل الدخول لتنزيل Global CV PDF."],
     close: ["Kapat", "Bağla", "Жабу", "Yopish", "Жабуу", "Close", "Schließen", "Закрыть", "إغلاق"],
     personalDetails: ["Kişisel Bilgiler", "Şəxsi məlumatlar", "Жеке мәліметтер", "Shaxsiy maʼlumotlar", "Жеке маалыматтар", "Personal Details", "Persönliche Angaben", "Личные данные", "البيانات الشخصية"],
@@ -664,6 +669,7 @@
           <button class="maritime-button maritime-button--primary" type="button" data-print-cv><i class="fa-solid fa-file-pdf" aria-hidden="true"></i>${escapeHtml(text("savePdf"))}</button>
           <button class="maritime-button" type="button" data-close-cv><i class="fa-solid fa-xmark" aria-hidden="true"></i>${escapeHtml(text("close"))}</button>
         </div>
+        <div class="maritime-notice" role="status" aria-live="polite" data-pdf-notice></div>
       </div>
     </dialog>`;
   }
@@ -958,6 +964,8 @@
   async function printCv() {
     if (state.busy) return;
     setBusy(true);
+    const pdfNotice = document.querySelector("[data-pdf-notice]");
+    if (pdfNotice) { pdfNotice.textContent = ""; pdfNotice.className = "maritime-notice"; }
     try {
       const html2canvas = window.html2canvas;
       const JsPdf = window.jspdf && window.jspdf.jsPDF;
@@ -997,15 +1005,20 @@
       }
       const authorization = await window.AllonaMaritimeCommerce.authorizeOrCheckout("global_cv_pdf");
       if (!authorization) return;
-      pdf.save(fileName);
+      await pdf.save(fileName, { returnPromise: true });
     } catch (error) {
       const code = String(error?.code || "");
-      const key = code === "AUTH_REQUIRED"
+      const key = window.AllonaMaritimeCommerce?.pdfErrorKey ? window.AllonaMaritimeCommerce.pdfErrorKey(error) : code === "AUTH_REQUIRED"
         ? "pdfLoginRequired"
         : code.includes("PAYMENT") || error?.status === 402 || error?.status === 503
         ? "pdfPaymentFailed"
         : "pdfGenerationFailed";
       setNotice(text(key), "error");
+      if (pdfNotice) {
+        pdfNotice.textContent = text(key);
+        pdfNotice.className = "maritime-notice is-visible is-error";
+        pdfNotice.scrollIntoView({ block: "nearest" });
+      }
     } finally {
       document.body.classList.remove("maritime-pdf-capture");
       setBusy(false);

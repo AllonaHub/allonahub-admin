@@ -132,9 +132,9 @@
       }
       const authorization = await window.AllonaMaritimeCommerce.authorizeOrCheckout("maritime_cv_pdf");
       if (!authorization) return;
-      pdf.save(fileName);
+      await pdf.save(fileName, { returnPromise: true });
     } catch (error) {
-      const key = error?.code === "AUTH_REQUIRED"
+      const key = window.AllonaMaritimeCommerce?.pdfErrorKey ? window.AllonaMaritimeCommerce.pdfErrorKey(error) : error?.code === "AUTH_REQUIRED"
         ? "pdfLoginRequired"
         : error?.code === "MARITIME_CV_REQUIRED"
         ? "pdfSaveRequired"
@@ -148,6 +148,9 @@
         pdfSaveRequired: "Save your Maritime CV before downloading the PDF.",
         pdfPaymentSecurityFailed: "The secure payment address could not be verified.",
         pdfPaymentFailed: "The PDF payment could not be started. Please try again.",
+        pdfNetworkFailed: "The download service could not be reached. Your saved CV is unchanged. Check your connection and retry.",
+        pdfPaymentUnavailable: "Paid PDF downloads are not available yet. Your saved CV is unchanged.",
+        pdfDeviceFailed: "Device verification is required for this download. Open Maritime CV and complete the save verification.",
         pdfGenerationFailed: "The PDF could not be created. Please try again."
       };
       window.alert(message(key, fallbacks[key]));
