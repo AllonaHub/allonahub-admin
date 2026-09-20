@@ -8,6 +8,7 @@ import {
   MARIPARTNER_REFRESH_QUESTIONS,
   MARIPARTNER_SLA_STAGES,
   approvedReferenceSummary,
+  canReadMariPartnerFinance,
   constantTimeHashEqual,
   createReviewerCredentials,
   httpError,
@@ -174,8 +175,13 @@ const partnerJobSchema = z.object({
   client_listing_id: uuid,
   title: z.string().trim().min(2).max(140),
   summary: z.string().trim().min(10).max(360),
-  location_label: z.string().trim().max(120).optional().default(""),
-  detail_label: z.string().trim().max(120).optional().default(""),
+  vessel_type: z.string().trim().min(2).max(120),
+  joining_date: z.string().date(),
+  location_label: z.string().trim().min(2).max(120),
+  detail_label: z.string().trim().min(2).max(120),
+  salary_amount: z.number().positive().max(1000000),
+  salary_currency: z.enum(["USD", "EUR", "GBP", "TRY", "AZN"]),
+  preferred_conditions: z.string().trim().max(500).optional().default(""),
   rank_code: z.string().trim().min(1).max(80),
   required_certificate_codes: z.array(z.string().trim().min(1).max(80)).min(1).max(24),
   minimum_sea_service_days: z.number().int().min(0).max(20000).default(0),
@@ -185,7 +191,9 @@ const partnerJobSchema = z.object({
   expires_at: z.string().datetime()
 }).strict().superRefine((value, ctx) => {
   const expiry = new Date(value.expires_at).getTime();
+  const joining = new Date(`${value.joining_date}T00:00:00Z`).getTime();
   if (!Number.isFinite(expiry) || expiry < Date.now() + 86400000 || expiry > Date.now() + 180 * 86400000) ctx.addIssue({ code: "custom", path: ["expires_at"], message: "İlan bitiş tarihi yarın ile 180 gün sonrası arasında olmalıdır." });
+  if (!Number.isFinite(joining) || joining < Date.now() - 86400000 || joining > expiry) ctx.addIssue({ code: "custom", path: ["joining_date"], message: "Katılım tarihi bugün ile ilan bitiş tarihi arasında olmalıdır." });
 });
 const partnerVesselSchema = z.object({
   partner_id: uuid,
@@ -206,6 +214,31 @@ const partnerVesselSchema = z.object({
   if (!isValidImoNumber(value.imo_number)) ctx.addIssue({ code: "custom", path: ["imo_number"], message: "Geçerli ve kontrol basamağı doğru bir IMO numarası girin." });
   if (value.valid_from && value.valid_until && value.valid_until < value.valid_from) ctx.addIssue({ code: "custom", path: ["valid_until"], message: "İlişki bitiş tarihi başlangıç tarihinden önce olamaz." });
 });
+const urgentCrewSchema = z.object({
+  partner_id: uuid,
+  job_id: optionalUuid,
+  vessel_profile_id: optionalUuid,
+  needed_by: z.string().datetime(),
+  ranks: z.array(z.string().trim().min(2).max(80)).min(1).max(20),
+  note: z.string().trim().max(500).nullable().optional(),
+  idempotency_key: uuid
+}).strict();
+const notificationPreferencesSchema = z.object({
+  partner_id: uuid,
+  in_app_mode: z.enum(["all", "important", "muted"]),
+  email_digest: z.enum(["off", "daily", "weekly"])
+}).strict();
+const notificationReadSchema = z.object({ partner_id: uuid, notification_ids: z.array(uuid).min(1).max(100) }).strict();
+const favoriteCandidateSchema = z.object({ partner_id: uuid, candidate_room_id: uuid, list_name: z.string().trim().min(2).max(80).default("default") }).strict();
+const candidateInviteSchema = z.object({ partner_id: uuid, candidate_room_id: uuid, job_id: uuid }).strict();
+const savedSearchFiltersSchema = z.object({
+  rank: z.string().trim().max(120).optional().default(""),
+  vessel_type: z.string().trim().max(120).optional().default(""),
+  minimum_sea_service_days: z.number().int().min(0).max(20000).optional().default(0),
+  availability_status: z.enum(["fresh", "stale", "expired", "unknown", "blocked"]).nullable().optional(),
+  ready_to_join: z.boolean().optional().default(false)
+}).strict();
+const savedSearchSchema = z.object({ partner_id: uuid, name: z.string().trim().min(2).max(120), search_scope: z.enum(["candidate_pool", "smart_matches", "replacement"]), filters: savedSearchFiltersSchema }).strict();
 
 function assertDb(result, message) {
   if (result?.error) throw httpError(message, 500, "MARIPARTNER_DATABASE_ERROR");
@@ -397,7 +430,7 @@ async function filterAuthorizedRooms(rooms, filters) {
   });
 }
 
-async function partnerDashboard(partnerId) {
+async function partnerDashboard(partnerId, userId) {
   const now = new Date().toISOString();
   const [jobs, rooms, matches, refreshes, refreshRequests, evidence, templates, policies, slas, handovers, passes, team, vesselsResult, vesselRelationshipsResult] = await Promise.all([
     supabaseAdmin.from("maritime_jobs").select("id,job_reference,job_title,rank_code,status,source_free_text,structured_requirements,submitted_at,created_at,updated_at").eq("partner_id", partnerId).order("created_at", { ascending: false }).limit(80),
@@ -418,8 +451,35 @@ async function partnerDashboard(partnerId) {
   const jobRows = assertDb(jobs, "İlanlar okunamadı.") || [];
   const roomRows = (assertDb(rooms, "Aday odaları okunamadı.") || []).filter((room) => room.candidate_visible === true && (!room.expires_at || new Date(room.expires_at).getTime() > Date.now()));
   const profileIds = [...new Set(roomRows.map((item) => item.seafarer_user_id))];
-  const profiles = profileIds.length ? assertDb(await supabaseAdmin.from("profiles").select("id,public_id,full_name").in("id", profileIds), "Aday profilleri okunamadı.") || [] : [];
-  const safeRooms = roomRows.map((room) => ({ ...room, candidate: profiles.find((profile) => profile.id === room.seafarer_user_id) || { public_id: null, full_name: "Aday" } }));
+  const [profiles, cvProfiles, workspaces] = profileIds.length ? await Promise.all([
+    supabaseAdmin.from("profiles").select("id,public_id,full_name").in("id", profileIds),
+    supabaseAdmin.from("maritime_cv_profiles").select("seafarer_user_id,profile_payload,updated_at").in("seafarer_user_id", profileIds),
+    supabaseAdmin.from("maritime_seafarer_workspaces").select("user_id,current_work_status,availability_status,readiness_level,metadata,updated_at").in("user_id", profileIds)
+  ]) : [{ data: [] }, { data: [] }, { data: [] }];
+  const profileRows = assertDb(profiles, "Aday profilleri okunamadı.") || [];
+  const cvRows = assertDb(cvProfiles, "Aday yeterlilikleri okunamadı.") || [];
+  const workspaceRows = assertDb(workspaces, "Aday hazırlık durumu okunamadı.") || [];
+  const safeRooms = roomRows.map((room) => {
+    const profile = profileRows.find((item) => item.id === room.seafarer_user_id) || { public_id: null, full_name: "Aday" };
+    const payload = cvRows.find((item) => item.seafarer_user_id === room.seafarer_user_id)?.profile_payload || {};
+    const workspace = workspaceRows.find((item) => item.user_id === room.seafarer_user_id) || {};
+    const seaService = Array.isArray(payload.sea_service) ? payload.sea_service : [];
+    return {
+      ...room,
+      candidate: {
+        ...profile,
+        rank: payload.rank || payload.suitable_positions?.[0] || null,
+        vessel_types: [...new Set(seaService.map((item) => item?.vessel_type).filter(Boolean))].slice(0, 5),
+        sea_service_count: seaService.length,
+        sea_service_days: seaService.reduce((total, item) => total + Math.max(0, Number(item?.total_days || 0)), 0),
+        current_work_status: workspace.current_work_status || "unknown",
+        availability_status: workspace.availability_status || "unknown",
+        readiness_level: workspace.readiness_level || "unverified",
+        available_from: workspace.metadata?.available_from || null,
+        availability_updated_at: workspace.updated_at || null
+      }
+    };
+  });
   const matchRows = (assertDb(matches, "Eşleşmeler okunamadı.") || []).filter((match) => match.hard_gate_status === "passed" && match.metadata?.eligible === true && (!match.stale_after || new Date(match.stale_after).getTime() > Date.now()) && roomRows.some((room) => room.seafarer_user_id === match.seafarer_user_id && (!match.job_id || room.job_id === match.job_id)));
   const slaRows = (assertDb(slas, "Süreç süreleri okunamadı.") || []).map((item) => ({ ...item, status: slaStatus({ dueAt: item.extended_until || item.due_at, completedAt: item.completed_at, now }) }));
   const passRows = (assertDb(passes, "İnceleme geçişleri okunamadı.") || []).map((item) => ({ ...item, status: reviewerPassState(item) }));
@@ -427,12 +487,21 @@ async function partnerDashboard(partnerId) {
   const pendingRefresh = refreshRequestRows.filter((item) => ["scheduled", "sent"].includes(item.status)).length;
   const pendingEvidence = (evidence.data || []).filter((item) => ["requested", "candidate_action"].includes(item.status)).length;
   const overdueSteps = slaRows.filter((item) => item.status === "overdue").length;
-  const [historicalMatches, referencesResult, authorityResult, notificationsResult, metricsResult] = await Promise.all([
+  const [historicalMatches, referencesResult, authorityResult, notificationsResult, metricsResult, applicationsResult, interviewsResult, offersResult, urgentResult, crewRoomsResult, reliefResult, relationshipsResult, favoritesResult, savedSearchesResult] = await Promise.all([
     referenceMatchesForPartner(partnerId),
     supabaseAdmin.from("maritime_employer_references").select("id,match_id,claim_id,status,version_number,average_score,high_impact_negative,requires_second_review,approved_at,created_at,updated_at").eq("partner_id", partnerId).order("created_at", { ascending: false }).limit(100),
     supabaseAdmin.from("maritime_recruiter_authorities").select("id,user_id,status,authority_scope,expires_at").eq("partner_id", partnerId).eq("status", "active"),
-    supabaseAdmin.from("maritime_partner_notifications").select("id,notification_type,title,message,resource_type,resource_id,is_read,created_at").eq("partner_id", partnerId).eq("is_read", false).order("created_at", { ascending: false }).limit(50),
-    supabaseAdmin.from("maritime_metric_snapshots").select("metric_key,metric_value,period_start,period_end,dimensions").eq("partner_id", partnerId).order("period_end", { ascending: false }).limit(100)
+    supabaseAdmin.from("maritime_partner_notifications").select("id,notification_type,title,message,resource_type,resource_id,is_read,created_at").eq("partner_id", partnerId).eq("recipient_user_id", userId).eq("is_read", false).order("created_at", { ascending: false }).limit(50),
+    supabaseAdmin.from("maritime_metric_snapshots").select("metric_key,metric_value,period_start,period_end,dimensions").eq("partner_id", partnerId).order("period_end", { ascending: false }).limit(100),
+    supabaseAdmin.from("maritime_hiring_applications").select("id,job_id,seafarer_user_id,status,last_stage_changed_at,created_at").eq("partner_id", partnerId).order("last_stage_changed_at", { ascending: false }).limit(500),
+    supabaseAdmin.from("maritime_interviews").select("id,application_id,candidate_room_id,seafarer_user_id,status,scheduled_start,scheduled_end,created_at").eq("partner_id", partnerId).order("created_at", { ascending: false }).limit(250),
+    supabaseAdmin.from("maritime_offers_contracts").select("id,application_id,seafarer_user_id,job_id,offer_status,contract_compare_status,expires_at,signed_at,created_at").eq("partner_id", partnerId).order("created_at", { ascending: false }).limit(250),
+    supabaseAdmin.from("maritime_urgent_crew_requests").select("id,job_id,vessel_profile_id,status,needed_by,ranks,hard_gates,metadata,created_at").eq("partner_id", partnerId).order("created_at", { ascending: false }).limit(150),
+    supabaseAdmin.from("maritime_crew_rooms").select("id,vessel_profile_id,status,join_window_start,join_window_end,privacy_mode,created_at").eq("partner_id", partnerId).order("created_at", { ascending: false }).limit(150),
+    supabaseAdmin.from("maritime_relief_rehire_plans").select("id,vessel_profile_id,current_application_id,candidate_user_id,target_join_date,status,autopilot_mode,created_at").eq("partner_id", partnerId).order("created_at", { ascending: false }).limit(250),
+    supabaseAdmin.from("maritime_work_relationships").select("id,seafarer_user_id,vessel_profile_id,job_id,rank_code,start_date,end_date,verification_status,created_at").eq("partner_id", partnerId).order("created_at", { ascending: false }).limit(500),
+    supabaseAdmin.from("maritime_favorite_candidates").select("id,seafarer_user_id,list_name,reason,created_at").eq("partner_id", partnerId).order("created_at", { ascending: false }).limit(500),
+    supabaseAdmin.from("maritime_partner_saved_searches").select("id,name,search_scope,filters,updated_at").eq("partner_id", partnerId).eq("owner_user_id", userId).order("updated_at", { ascending: false }).limit(50)
   ]);
   const referenceRows = assertDb(referencesResult, "İşveren referansları okunamadı.") || [];
   const vesselRelationships = assertDb(vesselRelationshipsResult, "Şirket-gemi ilişkileri okunamadı.") || [];
@@ -440,11 +509,38 @@ async function partnerDashboard(partnerId) {
     ...vessel,
     relationship: vesselRelationships.find((relationship) => relationship.vessel_profile_id === vessel.id || relationship.imo_number === vessel.imo_number) || null
   }));
+  const applications = assertDb(applicationsResult, "İşe alım başvuruları okunamadı.") || [];
+  const interviews = assertDb(interviewsResult, "Görüşmeler okunamadı.") || [];
+  const offers = assertDb(offersResult, "Teklifler okunamadı.") || [];
+  const urgentCrew = assertDb(urgentResult, "Acil personel talepleri okunamadı.") || [];
+  const crewRooms = assertDb(crewRoomsResult, "Aktif mürettebat odaları okunamadı.") || [];
+  const reliefPlans = assertDb(reliefResult, "Relief planları okunamadı.") || [];
+  const workRelationships = assertDb(relationshipsResult, "Aktif çalışma ilişkileri okunamadı.") || [];
+  const favoriteCandidates = assertDb(favoritesResult, "Favori adaylar okunamadı.") || [];
+  const savedSearches = assertDb(savedSearchesResult, "Kayıtlı aday aramaları okunamadı.") || [];
+  const readyToJoin = safeRooms.filter((room) => room.candidate.current_work_status === "available_now" && room.candidate.availability_status === "fresh" && room.candidate.readiness_level === "verified_ready").length;
+  const activePipeline = applications.filter((item) => !["withdrawn", "rejected", "closed", "hired"].includes(item.status)).length;
+  const pendingInterviews = interviews.filter((item) => ["draft", "scheduled", "rescheduled"].includes(item.status)).length;
+  const pendingOffers = offers.filter((item) => ["draft", "sent"].includes(item.offer_status)).length;
+  const activeCrew = workRelationships.filter((item) => !item.end_date || item.end_date >= now.slice(0, 10)).length;
+  const reliefCutoff = new Date(Date.now() + 60 * 86400000).toISOString().slice(0, 10);
+  const upcomingRelief = reliefPlans.filter((item) => !["closed", "paused"].includes(item.status) && item.target_join_date && item.target_join_date <= reliefCutoff).length
+    + workRelationships.filter((item) => item.end_date && item.end_date >= now.slice(0, 10) && item.end_date <= reliefCutoff).length;
+  const urgentReplacements = urgentCrew.filter((item) => ["open", "matching"].includes(item.status)).length;
   return {
     jobs: jobRows,
     vessels: vesselRows,
     candidate_rooms: safeRooms,
     matches: matchRows,
+    applications,
+    interviews,
+    offers,
+    urgent_crew_requests: urgentCrew,
+    crew_rooms: crewRooms,
+    relief_plans: reliefPlans,
+    work_relationships: workRelationships,
+    favorite_candidates: favoriteCandidates,
+    saved_searches: savedSearches,
     refresh_campaigns: assertDb(refreshes, "Yenileme kayıtları okunamadı.") || [],
     refresh_requests: refreshRequestRows,
     evidence_requests: assertDb(evidence, "Kanıt talepleri okunamadı.") || [],
@@ -477,6 +573,14 @@ async function partnerDashboard(partnerId) {
       open_jobs: jobRows.filter((item) => item.status === "open").length,
       authorized_candidates: safeRooms.length,
       eligible_matches: matchRows.length,
+      ready_to_join: readyToJoin,
+      active_pipeline: activePipeline,
+      pending_interviews: pendingInterviews,
+      pending_offers: pendingOffers,
+      pending_hiring_approvals: applications.filter((item) => item.status === "offer_accepted").length,
+      active_crew: activeCrew,
+      upcoming_relief: upcomingRelief,
+      urgent_replacements: urgentReplacements,
       overdue_steps: overdueSteps,
       pending_evidence: pendingEvidence,
       pending_refresh: pendingRefresh,
@@ -499,10 +603,138 @@ export function registerMaritimePartnerCenterRoutes(app) {
     const verification = await partnerVerificationSummary(access.membership.business.id, access.ctx.user.id, access.membership.business);
     const base = { ok: true, partner: access.membership.business, memberships: access.memberships.map((item) => ({ ...item.business, role: item.role })), verification };
     if (access.membership.business.verification_status !== "verified") {
-      return { ...base, restricted: true, jobs: [], vessels: [], candidate_rooms: [], matches: [], partner_notifications: [], team: [], counters: { open_jobs: 0, authorized_candidates: 0, eligible_matches: 0, overdue_steps: 0, pending_evidence: 0, action_required: 0 } };
+      return { ...base, restricted: true, jobs: [], vessels: [], candidate_rooms: [], matches: [], applications: [], interviews: [], offers: [], urgent_crew_requests: [], crew_rooms: [], relief_plans: [], work_relationships: [], favorite_candidates: [], saved_searches: [], partner_notifications: [], notification_preferences: null, team: [], counters: { open_jobs: 0, authorized_candidates: 0, eligible_matches: 0, ready_to_join: 0, pending_interviews: 0, pending_offers: 0, urgent_replacements: 0, overdue_steps: 0, pending_evidence: 0, action_required: 0 } };
     }
-    const dashboard = await partnerDashboard(access.membership.business.id);
-    return { ...base, restricted: false, ...dashboard };
+    const [dashboard, preferenceResult] = await Promise.all([
+      partnerDashboard(access.membership.business.id, access.ctx.user.id),
+      supabaseAdmin.from("maritime_partner_notification_preferences").select("in_app_mode,email_digest,category_preferences").eq("partner_id", access.membership.business.id).eq("user_id", access.ctx.user.id).maybeSingle()
+    ]);
+    const notificationPreferences = assertDb(preferenceResult, "Bildirim tercihleri okunamadı.") || { in_app_mode: "all", email_digest: "off", category_preferences: {} };
+    return { ...base, restricted: false, ...dashboard, notification_preferences: notificationPreferences };
+  });
+
+  app.get("/v1/maritime/partner-center/finance", async (request) => {
+    const partnerId = uuid.parse(request.query?.partner_id);
+    const access = await requirePartnerMembership(request, "finance.read", partnerId);
+    if (!canReadMariPartnerFinance(access.membership)) throw httpError("Finans ve faturalandırma kayıtları için finans yetkisi gerekir.", 403, "MARIPARTNER_FINANCE_DENIED");
+    const events = assertDb(await supabaseAdmin.from("maritime_billing_events")
+      .select("id,event_type,status,amount,currency,provider_reference,metadata,created_at")
+      .eq("partner_id", partnerId).order("created_at", { ascending: false }).limit(200), "Finans kayıtları okunamadı.") || [];
+    await logAction(request, access.ctx, "maripartner.finance_viewed", "partner_business", partnerId, { event_count: events.length });
+    return { ok: true, events };
+  });
+
+  app.patch("/v1/maritime/partner-center/notifications/read", async (request) => {
+    const body = notificationReadSchema.parse(request.body || {});
+    const access = await requirePartnerMembership(request, "notifications.update", body.partner_id);
+    const updated = assertDb(await supabaseAdmin.from("maritime_partner_notifications")
+      .update({ is_read: true, read_at: new Date().toISOString() })
+      .eq("partner_id", body.partner_id).eq("recipient_user_id", access.ctx.user.id).in("id", body.notification_ids)
+      .select("id"), "Bildirimler güncellenemedi.") || [];
+    await logAction(request, access.ctx, "maripartner.notifications_read", "partner_business", body.partner_id, { notification_count: updated.length });
+    return { ok: true, updated_count: updated.length };
+  });
+
+  app.put("/v1/maritime/partner-center/notification-preferences", async (request) => {
+    const body = notificationPreferencesSchema.parse(request.body || {});
+    const access = await requirePartnerMembership(request, "notifications.preferences.update", body.partner_id);
+    const preferences = assertDb(await supabaseAdmin.from("maritime_partner_notification_preferences").upsert({
+      partner_id: body.partner_id,
+      user_id: access.ctx.user.id,
+      in_app_mode: body.in_app_mode,
+      email_digest: body.email_digest
+    }, { onConflict: "partner_id,user_id" }).select("in_app_mode,email_digest,category_preferences").single(), "Bildirim tercihleri kaydedilemedi.");
+    await logAction(request, access.ctx, "maripartner.notification_preferences_updated", "partner_business", body.partner_id, { in_app_mode: body.in_app_mode, email_digest: body.email_digest });
+    return { ok: true, preferences };
+  });
+
+  app.post("/v1/maritime/partner-center/saved-searches", async (request, reply) => {
+    const body = savedSearchSchema.parse(request.body || {});
+    const access = await requirePartnerMembership(request, "candidate_search.save", body.partner_id);
+    const search = assertDb(await supabaseAdmin.from("maritime_partner_saved_searches").upsert({
+      partner_id: body.partner_id,
+      owner_user_id: access.ctx.user.id,
+      name: body.name,
+      search_scope: body.search_scope,
+      filters: body.filters
+    }, { onConflict: "partner_id,owner_user_id,name" }).select("id,name,search_scope,filters,updated_at").single(), "Aday araması kaydedilemedi.");
+    await logAction(request, access.ctx, "maripartner.candidate_search_saved", "maritime_partner_saved_search", search.id, { partner_id: body.partner_id, search_scope: body.search_scope });
+    return reply.code(201).send({ ok: true, search });
+  });
+
+  app.post("/v1/maritime/partner-center/urgent-crew", { config: { rateLimit: { max: 12, timeWindow: "1 hour" } } }, async (request, reply) => {
+    const body = urgentCrewSchema.parse(request.body || {});
+    const access = await requirePartner(request, "urgent_crew.create", body.partner_id, { manager: true });
+    await ensureHiringAuthority(access);
+    assertFutureWindow(body.needed_by, { maxDays: 90, code: "URGENT_CREW_DATE_INVALID" });
+    let job = null;
+    if (body.job_id) job = assertDb(await supabaseAdmin.from("maritime_jobs").select("id,hard_gates,structured_requirements,status").eq("id", body.job_id).eq("partner_id", body.partner_id).maybeSingle(), "İlan doğrulanamadı.");
+    if (body.job_id && !job) throw httpError("Acil personel talebi yalnız şirketinizin ilanına bağlanabilir.", 403, "URGENT_CREW_JOB_DENIED");
+    if (body.vessel_profile_id) {
+      const vessel = assertDb(await supabaseAdmin.from("maritime_vessel_profiles").select("id").eq("id", body.vessel_profile_id).eq("partner_id", body.partner_id).maybeSingle(), "Gemi doğrulanamadı.");
+      if (!vessel) throw httpError("Acil personel talebi yalnız şirketinizin gemisine bağlanabilir.", 403, "URGENT_CREW_VESSEL_DENIED");
+    }
+    const urgentResult = await supabaseAdmin.from("maritime_urgent_crew_requests").insert({
+      partner_id: body.partner_id,
+      job_id: body.job_id || null,
+      vessel_profile_id: body.vessel_profile_id || null,
+      status: "open",
+      needed_by: body.needed_by,
+      ranks: body.ranks,
+      hard_gates: job?.hard_gates || {},
+      created_by: access.ctx.user.id,
+      idempotency_key: body.idempotency_key,
+      metadata: { note: body.note || null, source: "maripartner", original_requirements_preserved: Boolean(job) }
+    }).select("id,job_id,vessel_profile_id,status,needed_by,ranks,hard_gates,metadata,created_at").single();
+    if (urgentResult.error?.code === "23505") {
+      const duplicate = assertDb(await supabaseAdmin.from("maritime_urgent_crew_requests")
+        .select("id,job_id,vessel_profile_id,status,needed_by,ranks,hard_gates,metadata,created_at")
+        .eq("partner_id", body.partner_id).eq("created_by", access.ctx.user.id).eq("idempotency_key", body.idempotency_key).single(), "Acil personel tekrar kaydı okunamadı.");
+      return reply.code(200).send({ ok: true, duplicate: true, request: duplicate });
+    }
+    const urgent = assertDb(urgentResult, "Acil personel talebi oluşturulamadı.");
+    assertDb(await supabaseAdmin.from("maritime_partner_operation_requests").upsert({
+      partner_id: body.partner_id,
+      actor_user_id: access.ctx.user.id,
+      operation_type: "urgent_crew",
+      idempotency_key: body.idempotency_key,
+      resource_type: "maritime_urgent_crew_request",
+      resource_id: urgent.id,
+      request_hash: sha256(JSON.stringify(body)),
+      result_snapshot: urgent
+    }, { onConflict: "partner_id,actor_user_id,operation_type,idempotency_key" }), "Acil personel işlem kaydı oluşturulamadı.");
+    await logAction(request, access.ctx, "maripartner.urgent_crew_created", "maritime_urgent_crew_request", urgent.id, { partner_id: body.partner_id, job_id: body.job_id || null });
+    return reply.code(201).send({ ok: true, duplicate: false, request: urgent });
+  });
+
+  app.post("/v1/maritime/partner-center/candidate-favorites", async (request, reply) => {
+    const body = favoriteCandidateSchema.parse(request.body || {});
+    const access = await requirePartner(request, "candidate.favorite", body.partner_id);
+    const room = await candidateRoom(body.partner_id, body.candidate_room_id);
+    const favorite = assertDb(await supabaseAdmin.from("maritime_favorite_candidates").upsert({
+      partner_id: body.partner_id,
+      seafarer_user_id: room.seafarer_user_id,
+      list_name: body.list_name,
+      created_by: access.ctx.user.id
+    }, { onConflict: "partner_id,seafarer_user_id,list_name" }).select("id,seafarer_user_id,list_name,created_at").single(), "Aday favorilere eklenemedi.");
+    await logAction(request, access.ctx, "maripartner.candidate_favorited", "maritime_private_candidate_room", room.id, { partner_id: body.partner_id, list_name: body.list_name });
+    return reply.code(201).send({ ok: true, favorite });
+  });
+
+  app.post("/v1/maritime/partner-center/candidate-invitations", { config: { rateLimit: { max: 60, timeWindow: "1 hour" } } }, async (request, reply) => {
+    const body = candidateInviteSchema.parse(request.body || {});
+    const access = await requirePartner(request, "candidate.invite", body.partner_id);
+    await ensureHiringAuthority(access);
+    const room = await candidateRoom(body.partner_id, body.candidate_room_id);
+    if (room.job_id && room.job_id !== body.job_id) throw httpError("Aday yalnız yetkili olduğu ilan akışına davet edilebilir.", 403, "CANDIDATE_INVITE_JOB_DENIED");
+    const job = assertDb(await supabaseAdmin.from("maritime_jobs").select("id,status").eq("id", body.job_id).eq("partner_id", body.partner_id).maybeSingle(), "İlan doğrulanamadı.");
+    if (!job || job.status !== "open") throw httpError("Aday daveti yalnız yayındaki ilanlar için gönderilebilir.", 409, "CANDIDATE_INVITE_JOB_CLOSED");
+    const current = assertDb(await supabaseAdmin.from("maritime_hiring_applications").select("id,status,metadata").eq("partner_id", body.partner_id).eq("job_id", body.job_id).eq("seafarer_user_id", room.seafarer_user_id).maybeSingle(), "Aday daveti kontrol edilemedi.");
+    const application = current
+      ? assertDb(await supabaseAdmin.from("maritime_hiring_applications").update({ status: "awaiting_candidate_approval", last_stage_changed_at: new Date().toISOString(), metadata: { ...(current.metadata || {}), invitation_source: "maripartner", candidate_action_required: true } }).eq("id", current.id).eq("partner_id", body.partner_id).select("id,job_id,seafarer_user_id,status,last_stage_changed_at").single(), "Aday daveti güncellenemedi.")
+      : assertDb(await supabaseAdmin.from("maritime_hiring_applications").insert({ partner_id: body.partner_id, job_id: body.job_id, seafarer_user_id: room.seafarer_user_id, status: "awaiting_candidate_approval", metadata: { invitation_source: "maripartner", candidate_action_required: true } }).select("id,job_id,seafarer_user_id,status,last_stage_changed_at").single(), "Aday daveti oluşturulamadı.");
+    await logAction(request, access.ctx, "maripartner.candidate_invited", "maritime_hiring_application", application.id, { partner_id: body.partner_id, candidate_room_id: room.id, previous_status: current?.status || null });
+    return reply.code(current ? 200 : 201).send({ ok: true, application });
   });
 
   app.post("/v1/maritime/partner-center/profile/logo-intent", { config: { rateLimit: { max: 8, timeWindow: "10 minutes" } } }, async (request) => {
@@ -540,7 +772,10 @@ export function registerMaritimePartnerCenterRoutes(app) {
       minimum_sea_service_days: body.minimum_sea_service_days,
       required_languages: body.required_languages,
       medical_required: body.medical_required,
-      available_now_required: body.available_now_required
+      available_now_required: body.available_now_required,
+      vessel_type: body.vessel_type,
+      joining_date: body.joining_date,
+      salary: { amount: body.salary_amount, currency: body.salary_currency }
     };
     const listing = existing || assertDb(await supabaseAdmin.from("maritime_public_listings").insert({
         partner_user_id: access.ctx.user.id,
@@ -568,8 +803,9 @@ export function registerMaritimePartnerCenterRoutes(app) {
       status: "pending_review",
       rank_code: body.rank_code,
       job_title: body.title,
+      contract_start: body.joining_date,
       hard_gates: { required_certificate_codes: body.required_certificate_codes, minimum_sea_service_days: body.minimum_sea_service_days, medical_required: body.medical_required, available_now_required: body.available_now_required, requirements_complete: true },
-      structured_requirements: { required_languages: body.required_languages, location_label: body.location_label, contract_label: body.detail_label },
+      structured_requirements: { required_languages: body.required_languages, location_label: body.location_label, contract_label: body.detail_label, vessel_type: body.vessel_type, joining_date: body.joining_date, salary: { amount: body.salary_amount, currency: body.salary_currency }, preferred_conditions: body.preferred_conditions },
       source_free_text: body.summary,
       submitted_at: now,
       metadata: { source: "maripartner", public_listing_id: listing.id, expires_at: body.expires_at, company_contact_visible: false }

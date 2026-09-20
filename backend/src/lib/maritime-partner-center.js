@@ -251,3 +251,11 @@ export function reviewerPassState(pass, now = new Date()) {
   if (Number(pass.use_count || 0) >= Number(pass.max_uses || 1)) return "used";
   return "active";
 }
+
+export function canReadMariPartnerFinance(membership) {
+  if (!membership) return false;
+  if (["owner", "manager", "accounting"].includes(membership.role)) return true;
+  return membership.permissions?.all === true
+    || membership.permissions?.finance === true
+    || membership.permissions?.read_finance === true;
+}

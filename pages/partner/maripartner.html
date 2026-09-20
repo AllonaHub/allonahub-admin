@@ -7,11 +7,12 @@
   <title>MariPartner | AllonaHub Denizcilik</title>
   <meta name="description" content="AllonaHub Denizcilik doğrulanmış şirket personel merkezi.">
   <link rel="stylesheet" href="../../css/platform.css?v=20260920-maripartner1">
-  <link rel="stylesheet" href="../../css/maripartner.css?v=20260920-maripartner4">
+  <link rel="stylesheet" href="../../css/maripartner.css?v=20260920-maripartner6">
 </head>
 <body class="mp-body">
   <a class="mp-skip" href="#mainContent">İçeriğe geç</a>
   <header class="mp-header">
+    <button class="mp-mobile-menu" type="button" data-mp-mobile-menu aria-label="Ana menüyü aç" aria-expanded="false">☰</button>
     <div class="mp-brand-wrap">
       <button class="mp-brand" type="button" data-mp-company-profile aria-label="Şirket profilini aç">
         <span class="mp-brand__mark" data-mp-company-avatar aria-hidden="true">MP</span>
@@ -20,66 +21,97 @@
       <button class="mp-verify-mark" type="button" data-mp-verification-badge aria-label="Doğrulama durumunu aç">✓</button>
     </div>
     <div class="mp-header__actions">
+      <span class="mp-platform-controls" data-platform-controls-slot="home"></span>
       <a href="../ecosystem/allonadenizcilik.html" aria-label="Denizcilik modülüne dön">Modüle Dön</a>
       <button type="button" data-mp-refresh aria-label="Panel verilerini yenile">Yenile</button>
+      <button class="mp-notification-bell" type="button" data-mp-open="notifications" aria-label="Bildirimleri aç">
+        <span aria-hidden="true">!</span><b data-mp-notification-signal hidden>0</b>
+      </button>
       <button class="mp-account" type="button" data-mp-account aria-haspopup="dialog">Şirket Profili</button>
     </div>
   </header>
 
-  <main id="mainContent" class="mp-main">
-    <section class="mp-hero" aria-labelledby="mpTitle">
-      <div>
-        <p class="mp-eyebrow" data-mp-hero-eyebrow>Denizcilik şirketi çalışma alanı</p>
-        <h1 id="mpTitle">MariPartner</h1>
-        <p>Aday havuzunu güncelleyin, kanıtları minimum gerekli kapsamda yönetin ve işe alım dosyalarını güvenli biçimde ilerletin.</p>
+  <div class="mp-app-shell">
+    <aside class="mp-sidebar" data-mp-sidebar aria-label="MariPartner ana menü">
+      <div class="mp-sidebar__top">
+        <span class="mp-sidebar__label">MariPartner</span>
+        <label class="mp-company-switch" for="mpCompany">
+          <span>Aktif şirket</span>
+          <select id="mpCompany" data-mp-company aria-label="Aktif denizcilik şirketini seç"></select>
+        </label>
       </div>
-      <label class="mp-company-switch" for="mpCompany">
-        <span>Aktif şirket</span>
-        <select id="mpCompany" data-mp-company aria-label="Aktif denizcilik şirketini seç"></select>
-      </label>
-    </section>
+      <nav class="mp-primary-nav" aria-label="MariPartner ana navigasyon">
+        <button class="is-active" type="button" data-mp-view="operations" aria-current="page"><span aria-hidden="true">⌂</span><strong>Operasyon Merkezi</strong></button>
+        <button type="button" data-mp-center><span aria-hidden="true">⌘</span><strong>Personel Merkezi</strong><b class="mp-counter" data-mp-main-counter hidden></b></button>
+        <button type="button" data-mp-open="jobs"><span aria-hidden="true">▤</span><strong>İlanlar</strong><small data-mp-nav-count="jobs">0</small></button>
+        <button type="button" data-mp-open="vessels"><span aria-hidden="true">⌁</span><strong>Gemiler</strong><small data-mp-nav-count="vessels">0</small></button>
+        <a href="../ecosystem/maritime-marsoh.html"><span aria-hidden="true">◌</span><strong>MarSoh</strong></a>
+        <button type="button" data-mp-open="notifications"><span aria-hidden="true">◉</span><strong>Bildirimler</strong><small data-mp-nav-count="notifications">0</small></button>
+        <button type="button" data-mp-open="finance"><span aria-hidden="true">₺</span><strong>Finans ve Faturalandırma</strong></button>
+        <button type="button" data-mp-open="company"><span aria-hidden="true">▣</span><strong>Şirket Hesabı</strong></button>
+      </nav>
+      <p class="mp-sidebar__trust">Şirketler arası veri ayrımı, MFA ve audit kaydı ile korunur.</p>
+    </aside>
 
-    <div class="mp-alert" data-mp-alert role="status" aria-live="polite" hidden></div>
+    <main id="mainContent" class="mp-main">
+      <section class="mp-hero" aria-labelledby="mpTitle">
+        <div>
+          <p class="mp-eyebrow" data-mp-hero-eyebrow>Denizcilik şirketi çalışma alanı</p>
+          <h1 id="mpTitle">Operasyon Merkezi</h1>
+          <p>Yüzlerce CV arasında kaybolmadan, açıklanabilir eşleşmeleri ve işe alım sürecinin bekleyen adımlarını yönetin.</p>
+        </div>
+        <span class="mp-live-status"><i aria-hidden="true"></i> Canlı operasyon</span>
+      </section>
 
-    <nav class="mp-command-bar" aria-label="MariPartner ana işlemleri">
-      <button class="mp-command-bar__primary" type="button" data-mp-open="job-create">
-        <span aria-hidden="true">＋</span><span><strong>Yeni İlan Oluştur</strong><small>Doğrulama için gönder</small></span>
-      </button>
-      <button type="button" data-mp-open="jobs"><span aria-hidden="true">▤</span><span><strong>İlanlar</strong><small data-mp-nav-count="jobs">0 kayıt</small></span></button>
-      <button type="button" data-mp-open="vessels"><span aria-hidden="true">⚓</span><span><strong>Gemilerim</strong><small data-mp-nav-count="vessels">0 gemi</small></span></button>
-      <button type="button" data-mp-open="candidates"><span aria-hidden="true">◎</span><span><strong>Adaylar</strong><small data-mp-nav-count="candidates">0 aday</small></span></button>
-      <button type="button" data-mp-open="applications"><span aria-hidden="true">◇</span><span><strong>Başvurular</strong><small data-mp-nav-count="applications">0 dosya</small></span></button>
-      <button type="button" data-mp-open="notifications"><span aria-hidden="true">◉</span><span><strong>Bildirimler</strong><small data-mp-nav-count="notifications">0 yeni</small></span></button>
-      <button type="button" data-mp-center><span aria-hidden="true">⌘</span><span><strong>Personel Merkezi</strong><small>Güvenli operasyonlar</small><b class="mp-counter" data-mp-main-counter hidden></b></span></button>
-      <a href="../ecosystem/maritime-marsoh.html"><span aria-hidden="true">◌</span><span><strong>MarSoh</strong><small>Denizcilik sohbeti</small></span></a>
-    </nav>
+      <div class="mp-alert" data-mp-alert role="status" aria-live="polite" hidden></div>
 
-    <section class="mp-verification-strip" data-mp-verification-strip aria-label="Şirket doğrulama durumu">
-      <button type="button" data-mp-open="verification">
-        <span class="mp-verification-strip__icon" aria-hidden="true">✓</span>
-        <span><strong data-mp-verification-title>Şirket doğrulaması kontrol ediliyor</strong><small data-mp-verification-copy>İlan ve işe alım yetkileriniz hazırlanıyor.</small></span>
-        <span aria-hidden="true">→</span>
-      </button>
-    </section>
+      <section class="mp-verification-strip" data-mp-verification-strip aria-label="Şirket doğrulama durumu">
+        <button type="button" data-mp-open="verification">
+          <span class="mp-verification-strip__icon" aria-hidden="true">✓</span>
+          <span><strong data-mp-verification-title>Şirket doğrulaması kontrol ediliyor</strong><small data-mp-verification-copy>İlan ve işe alım yetkileriniz hazırlanıyor.</small></span>
+          <span aria-hidden="true">→</span>
+        </button>
+      </section>
 
-    <section class="mp-stats" aria-label="Canlı işe alım özeti">
-      <article><span>Açık ilan</span><strong data-mp-count="open_jobs">-</strong></article>
-      <article><span>Yetkili aday</span><strong data-mp-count="authorized_candidates">-</strong></article>
-      <article><span>Uygun eşleşme</span><strong data-mp-count="eligible_matches">-</strong></article>
-      <article><span>Geciken adım</span><strong data-mp-count="overdue_steps">-</strong></article>
-      <article><span>Bekleyen kanıt</span><strong data-mp-count="pending_evidence">-</strong></article>
-    </section>
+      <section class="mp-quick-actions" aria-label="Hızlı işlemler">
+        <button class="mp-command-bar__primary" type="button" data-mp-open="job-create"><span aria-hidden="true">＋</span><span><strong>Yeni İlan Oluştur</strong><small>Doğrulama için gönder</small></span></button>
+        <button type="button" data-mp-open="ready-pool"><span aria-hidden="true">◎</span><span><strong>Hazır Aday Bul</strong><small>Ready-to-Join havuzu</small></span></button>
+        <button type="button" data-mp-open="urgent"><span aria-hidden="true">!</span><span><strong>Acil Personel Bul</strong><small>Replacement akışı</small></span></button>
+        <button type="button" data-mp-open="matches"><span aria-hidden="true">◇</span><span><strong>Eşleşmeleri Gör</strong><small>Açıklanabilir sonuçlar</small></span></button>
+        <button type="button" data-mp-open="pending"><span aria-hidden="true">◷</span><span><strong>Bekleyen İşlemleri Gör</strong><small>Atanmış görevler ve SLA</small></span></button>
+      </section>
 
-    <section class="mp-workspace" aria-labelledby="matchesTitle">
-      <div class="mp-section-head">
-        <div><p>Mevcut ilan ve aday ilişkileri</p><h2 id="matchesTitle">Güvenli eşleşmeler</h2></div>
-        <select data-mp-job-filter aria-label="İlana göre eşleşmeleri filtrele"><option value="">Tüm ilanlar</option></select>
-      </div>
-      <div class="mp-match-list" data-mp-match-list aria-live="polite">
-        <div class="mp-skeleton"></div><div class="mp-skeleton"></div>
-      </div>
-    </section>
-  </main>
+      <section class="mp-stats" aria-label="Canlı işe alım özeti">
+        <article><span>Aktif ilan</span><strong data-mp-count="open_jobs">-</strong><button type="button" data-mp-open="jobs">İncele</button></article>
+        <article><span>Yeni eşleşme</span><strong data-mp-count="eligible_matches">-</strong><button type="button" data-mp-open="matches">Gör</button></article>
+        <article><span>Ready-to-Join</span><strong data-mp-count="ready_to_join">-</strong><button type="button" data-mp-open="ready-pool">Adaylar</button></article>
+        <article><span>İncelemede aday</span><strong data-mp-count="active_pipeline">-</strong><button type="button" data-mp-open="pipeline">İncele</button></article>
+        <article><span>Görüşme bekleyen</span><strong data-mp-count="pending_interviews">-</strong><button type="button" data-mp-open="interviews">Gör</button></article>
+        <article><span>Teklif bekleyen</span><strong data-mp-count="pending_offers">-</strong><button type="button" data-mp-open="offers">Gör</button></article>
+        <article><span>İşe alım onayı</span><strong data-mp-count="pending_hiring_approvals">-</strong><button type="button" data-mp-open="pipeline">İncele</button></article>
+        <article><span>Yaklaşan kontrat</span><strong data-mp-count="upcoming_relief">-</strong><button type="button" data-mp-open="relief">Planla</button></article>
+        <article><span>Acil replacement</span><strong data-mp-count="urgent_replacements">-</strong><button type="button" data-mp-open="urgent">Aç</button></article>
+        <article><span>Geciken SLA</span><strong data-mp-count="overdue_steps">-</strong><button type="button" data-mp-open="sla">İncele</button></article>
+        <article><span>Bekleyen kanıt</span><strong data-mp-count="pending_evidence">-</strong><button type="button" data-mp-open="evidence">İncele</button></article>
+        <article><span>Referans kontrolü</span><strong data-mp-count="pending_reference_matches">-</strong><button type="button" data-mp-open="references">İncele</button></article>
+      </section>
+
+      <section class="mp-operations-feed" aria-label="Son bildirimler ve bekleyen görevler">
+        <article><div class="mp-section-head"><div><p>Güncel</p><h2>Son bildirimler</h2></div><button type="button" data-mp-open="notifications">Tümünü Gör</button></div><div data-mp-operation-notifications></div></article>
+        <article><div class="mp-section-head"><div><p>Sorumluluklar</p><h2>Bekleyen görevler</h2></div><button type="button" data-mp-open="pending">İncele</button></div><div data-mp-operation-tasks></div></article>
+      </section>
+
+      <section class="mp-workspace" aria-labelledby="matchesTitle">
+        <div class="mp-section-head">
+          <div><p>Yetkili aday ilişkileri</p><h2 id="matchesTitle">Güvenli eşleşmeler</h2></div>
+          <select data-mp-job-filter aria-label="İlana göre eşleşmeleri filtrele"><option value="">Tüm ilanlar</option></select>
+        </div>
+        <div class="mp-match-list" data-mp-match-list aria-live="polite">
+          <div class="mp-skeleton"></div><div class="mp-skeleton"></div>
+        </div>
+      </section>
+    </main>
+  </div>
 
   <div class="mp-drawer-wrap" data-mp-drawer-wrap hidden>
     <button class="mp-backdrop" type="button" data-mp-close aria-label="Personel Merkezini kapat"></button>
@@ -107,12 +139,17 @@
       <label class="mp-full"><span>İlan başlığı</span><input name="title" required minlength="2" maxlength="140" placeholder="Örn. Genel Kargo Gemisi için Yağcı"></label>
       <label><span>Aranan rütbe</span><select name="rank_code" required><option value="">Seçin</option><option value="master">Kaptan</option><option value="chief_officer">Baş Zabit</option><option value="second_officer">İkinci Zabit</option><option value="third_officer">Üçüncü Zabit</option><option value="chief_engineer">Baş Mühendis</option><option value="second_engineer">İkinci Mühendis</option><option value="third_engineer">Üçüncü Mühendis</option><option value="oiler">Yağcı / Motorman</option><option value="able_seaman">Usta Gemici</option><option value="ordinary_seaman">Gemici</option><option value="cook">Aşçı</option><option value="electrician">Elektrikçi</option></select></label>
       <label><span>İlan bitiş tarihi</span><input type="date" name="expires_at" required></label>
-      <label><span>Katılım / bölge</span><input name="location_label" maxlength="120" placeholder="Örn. İstanbul / İlk uygun liman"></label>
-      <label><span>Kontrat bilgisi</span><input name="detail_label" maxlength="120" placeholder="Örn. 4+1 ay kontrat"></label>
+      <label><span>Gemi türü</span><input name="vessel_type" required minlength="2" maxlength="120" placeholder="Örn. Genel kargo"></label>
+      <label><span>Katılım tarihi</span><input type="date" name="joining_date" required></label>
+      <label><span>Katılım limanı / çalışma bölgesi</span><input name="location_label" required minlength="2" maxlength="120" placeholder="Örn. İstanbul / Akdeniz"></label>
+      <label><span>Kontrat bilgisi</span><input name="detail_label" required minlength="2" maxlength="120" placeholder="Örn. 4+1 ay kontrat"></label>
+      <label><span>Ücret</span><input type="number" name="salary_amount" required min="1" max="1000000" step="0.01" inputmode="decimal" placeholder="3500"></label>
+      <label><span>Para birimi</span><select name="salary_currency" required><option value="">Seçin</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="GBP">GBP</option><option value="TRY">TRY</option><option value="AZN">AZN</option></select></label>
       <label><span>En az deniz hizmeti (gün)</span><input type="number" name="minimum_sea_service_days" min="0" max="20000" value="0"></label>
       <label><span>Gerekli dil</span><select name="language"><option value="">Dil şartı yok</option><option value="English">İngilizce</option><option value="Turkish">Türkçe</option><option value="Azerbaijani">Azerbaycanca</option><option value="Russian">Rusça</option></select></label>
       <label><span>Dil seviyesi</span><select name="language_level"><option value="B1">B1</option><option value="B2">B2</option><option value="C1">C1</option><option value="C2">C2</option><option value="fluent">Akıcı</option><option value="native">Ana dil</option></select></label>
       <label class="mp-full"><span>Kısa açıklama</span><textarea name="summary" required minlength="10" maxlength="360" placeholder="Pozisyon, gemi tipi, katılım ve çalışma koşullarını kısa ve açık biçimde yazın."></textarea></label>
+      <label class="mp-full"><span>Tercih edilen ek koşullar</span><textarea name="preferred_conditions" maxlength="500" placeholder="Zorunlu olmayan tecrübe, dil veya gemi tipi tercihlerini yazın."></textarea></label>
       <fieldset><legend>Zorunlu sertifikalar</legend><div class="mp-certificate-grid">
         <label class="mp-check"><input type="checkbox" name="certificates" value="SH" checked> SH</label>
         <label class="mp-check"><input type="checkbox" name="certificates" value="SI" checked> SI</label>
@@ -127,12 +164,56 @@
   </template>
 
   <template id="mpCandidatesTemplate"><div class="mp-history" data-mp-candidates-list></div></template>
+  <template id="mpReadyPoolTemplate">
+    <form class="mp-pool-filters" data-mp-pool-filter>
+      <div class="mp-form-heading mp-full"><div><p>Yetkili aday havuzu</p><h3>Hazır aday filtreleri</h3></div><span class="mp-filter-count" data-mp-filter-count>0 aktif filtre</span></div>
+      <label><span>Rütbe / pozisyon</span><input name="rank" maxlength="120"></label>
+      <label><span>Gemi türü</span><input name="vessel_type" maxlength="120"></label>
+      <label><span>En az deniz hizmeti (gün)</span><input type="number" name="minimum_sea_service_days" min="0" max="20000" value="0"></label>
+      <label><span>Müsaitlik</span><select name="availability_status"><option value="">Tümü</option><option value="fresh">Güncel</option><option value="stale">Güncelleme gerekli</option><option value="expired">Süresi dolmuş</option><option value="unknown">Bilinmiyor</option></select></label>
+      <label class="mp-check"><input type="checkbox" name="ready_to_join"> Yalnız Ready-to-Join</label>
+      <div class="mp-filter-actions mp-full"><button class="mp-primary" type="submit">Filtreleri Uygula</button><button class="mp-secondary" type="button" data-mp-filter-clear>Temizle</button></div>
+      <label><span>Kayıtlı arama</span><select data-mp-saved-search><option value="">Kayıtlı arama seçin</option></select></label>
+      <label><span>Bu aramanın adı</span><input name="search_name" maxlength="120" placeholder="Örn. Hazır yağcı adayları"></label>
+      <button class="mp-secondary mp-full" type="button" data-mp-filter-save>Aramayı Kaydet</button>
+    </form>
+    <div class="mp-history" data-mp-personnel-data></div>
+  </template>
   <template id="mpApplicationsTemplate"><div class="mp-history" data-mp-applications-list></div></template>
-  <template id="mpNotificationsTemplate"><div class="mp-history" data-mp-notifications-list></div></template>
+  <template id="mpNotificationsTemplate">
+    <div class="mp-drawer-tools"><p class="mp-note">Yalnız bu şirket hesabına ait bildirimler gösterilir.</p><button class="mp-secondary" type="button" data-mp-mark-all-read>Tümünü okundu işaretle</button></div>
+    <div class="mp-history" data-mp-notifications-list></div>
+    <form class="mp-form" data-mp-notification-preferences-form>
+      <h3>Bildirim tercihleri</h3>
+      <label><span>Uygulama içi bildirim</span><select name="in_app_mode"><option value="all">Tümü</option><option value="important">Yalnız önemli</option><option value="muted">Sessiz</option></select></label>
+      <label><span>E-posta özeti</span><select name="email_digest"><option value="off">Kapalı</option><option value="daily">Günlük</option><option value="weekly">Haftalık</option></select></label>
+      <button class="mp-primary" type="submit">Tercihleri Kaydet</button>
+    </form>
+  </template>
+
+  <template id="mpPersonnelDataTemplate"><div class="mp-history" data-mp-personnel-data></div></template>
+
+  <template id="mpUrgentTemplate">
+    <form class="mp-form" data-mp-urgent-form>
+      <p class="mp-note">Mevcut ilan şartlarını koruyarak Ready-to-Join ve yedek aday eşleştirmesi başlatılır. Şart gevşetme otomatik yapılmaz.</p>
+      <label><span>İlan</span><select name="job_id" data-mp-form-jobs><option value="">İlan seçin</option></select></label>
+      <label><span>Gemi</span><select name="vessel_profile_id" data-mp-vessel-options><option value="">Gemi seçin</option></select></label>
+      <label><span>İhtiyaç tarihi</span><input type="datetime-local" name="needed_by" required></label>
+      <label><span>Aranan rütbe</span><input name="rank" required minlength="2" maxlength="80"></label>
+      <label class="mp-full"><span>Operasyon notu</span><textarea name="note" maxlength="500" placeholder="Acil katılım veya replacement nedeni"></textarea></label>
+      <button class="mp-primary" type="submit">Acil Eşleştirmeyi Başlat</button>
+    </form>
+    <div class="mp-history" data-mp-urgent-list></div>
+  </template>
+
+  <template id="mpFinanceTemplate">
+    <p class="mp-note">Fatura ve ödeme kayıtları yalnız şirket sahibi, yönetici veya finans yetkisi bulunan ekip üyelerine gösterilir.</p>
+    <div class="mp-history" data-mp-finance-list><div class="mp-skeleton"></div></div>
+  </template>
 
   <template id="mpVesselsTemplate">
     <div class="mp-drawer-tools">
-      <p class="mp-note">Şirketinize ait veya şirketiniz tarafından yönetilen gemileri IMO numarasıyla kaydedin. IMO kaydı gemi bilgilerini getirir; şirket-gemi ilişkiniz ayrıca doğrulanır.</p>
+      <p class="mp-note"><strong>Gemilerim:</strong> Şirketinize ait veya şirketiniz tarafından yönetilen gemileri IMO numarasıyla kaydedin. IMO kaydı gemi bilgilerini getirir; şirket-gemi ilişkiniz ayrıca doğrulanır.</p>
       <button class="mp-primary" type="button" data-mp-open="vessel-create">Gemi Ekle</button>
     </div>
     <div class="mp-history mp-vessel-list" data-mp-vessels-list></div>
@@ -197,17 +278,29 @@
         <button type="button" role="tab" aria-selected="false" aria-controls="mpTabManagement" id="mpTabManagementButton" data-mp-center-tab="management">Yönetim</button>
       </div>
       <div role="tabpanel" id="mpTabOperations" aria-labelledby="mpTabOperationsButton" data-mp-center-pane="operations">
-        <div class="mp-action-grid">
+        <div class="mp-action-grid mp-action-grid--primary">
           <button type="button" data-mp-panel="refresh"><span class="mp-action-icon" aria-hidden="true">↻</span><strong>Havuzu Güncelle</strong><small>Aday uygunluk bilgisini yenile</small><span class="mp-counter" data-mp-action-count="pending_refresh" hidden></span></button>
           <button type="button" data-mp-panel="evidence"><span class="mp-action-icon" aria-hidden="true">✓</span><strong>Kanıt Kontrolü</strong><small>Minimum gerekli belge akışı</small><span class="mp-counter" data-mp-action-count="pending_evidence" hidden></span></button>
           <button type="button" data-mp-panel="sla"><span class="mp-action-icon" aria-hidden="true">◷</span><strong>Süreç Süreleri</strong><small>SLA ve gecikme takibi</small><span class="mp-counter" data-mp-action-count="overdue_steps" hidden></span></button>
           <button type="button" data-mp-panel="handover"><span class="mp-action-icon" aria-hidden="true">⇄</span><strong>Dosya Devri</strong><small>Sorumlu ve yedek aktarımı</small></button>
           <button type="button" data-mp-panel="review"><span class="mp-action-icon" aria-hidden="true">⌁</span><strong>Güvenli İnceleme</strong><small>Süreli ve alan sınırlı erişim</small><span class="mp-counter" data-mp-action-count="active_reviewer_passes" hidden></span></button>
         </div>
+        <div class="mp-task-list mp-task-list--compact">
+          <button type="button" data-mp-panel="matches"><span><strong>Akıllı Eşleşmeler</strong><small>Kuralları geçen ve açıklanabilir adaylar</small></span><b data-mp-count="eligible_matches">0</b></button>
+          <button type="button" data-mp-panel="ready-pool"><span><strong>Hazır Aday Havuzu ve Crew Pool</strong><small>Ready-to-Join, favori ve yedek adaylar</small></span><b data-mp-count="ready_to_join">0</b></button>
+          <button type="button" data-mp-panel="urgent"><span><strong>Acil Personel ve Replacement</strong><small>Aynı şartlarla yedek aday süreci</small></span><b data-mp-count="urgent_replacements">0</b></button>
+          <button type="button" data-mp-panel="pipeline"><span><strong>Başvurular ve Hiring Pipeline</strong><small>Başvuru, kısa liste ve aktif dosyalar</small></span><b data-mp-count="active_pipeline">0</b></button>
+          <button type="button" data-mp-panel="interviews"><span><strong>Görüşmeler</strong><small>Planlanan ve tamamlanan mülakatlar</small></span><b data-mp-count="pending_interviews">0</b></button>
+          <button type="button" data-mp-panel="offers"><span><strong>Teklifler ve Kontratlar</strong><small>Aday onayı ve güncel sözleşme sürümü</small></span><b data-mp-count="pending_offers">0</b></button>
+          <button type="button" data-mp-panel="active-crew"><span><strong>Aktif Mürettebat ve Crew Matrix</strong><small>Gemi bazlı ekip ve eksik pozisyonlar</small></span><b data-mp-count="active_crew">0</b></button>
+          <button type="button" data-mp-panel="relief"><span><strong>Relief ve Rehire</strong><small>Yaklaşan kontrat bitişleri ve yeniden işe alım</small></span><b data-mp-count="upcoming_relief">0</b></button>
+        </div>
       </div>
       <div role="tabpanel" id="mpTabTrust" aria-labelledby="mpTabTrustButton" data-mp-center-pane="trust" hidden>
         <div class="mp-task-list">
           <button type="button" data-mp-panel="references"><span><strong>Firmalara Özel Doğrulanmış Referans</strong><small>Daha önce sizinle çalışmış olabilecek adayları tarihsel IMO ve hizmet tarihleriyle doğrulayın.</small></span><span class="mp-counter" data-mp-action-count="pending_reference_matches" hidden></span></button>
+          <button type="button" data-mp-panel="verification"><span><strong>Şirket ve Recruiter Doğrulaması</strong><small>Yetki döngüsü, rozetler ve süre bitişleri</small></span><b>→</b></button>
+          <button type="button" data-mp-panel="evidence"><span><strong>Belge ve Deniz Hizmeti Doğrulaması</strong><small>Document Doctor, kanıt kaynağı ve minimum veri erişimi</small></span><b>→</b></button>
           <div><span><strong>Kanıt ve doğrulama ağı</strong><small>OCR veya kullanıcı beyanı tek başına doğrulanmış kanıt sayılmaz.</small></span><b data-mp-trust-count="assertions">Sunucu kontrollü</b></div>
           <div><span><strong>İtiraz ve ikinci inceleme</strong><small>Yüksek etkili olumsuz kararlar bağımsız ikinci yönetici onayı olmadan yayımlanmaz.</small></span><b data-mp-trust-count="appeals">Korumalı</b></div>
         </div>
@@ -215,6 +308,8 @@
       <div role="tabpanel" id="mpTabManagement" aria-labelledby="mpTabManagementButton" data-mp-center-pane="management" hidden>
         <div class="mp-task-list">
           <button type="button" data-mp-panel="governance"><span><strong>Karar ve değer merkezi</strong><small>Açıklanabilir eşleştirme, görüşme kalitesi, entegrasyonlar ve ölçümler.</small></span><span aria-hidden="true">→</span></button>
+          <button type="button" data-mp-panel="notifications"><span><strong>Bildirim tercihleri</strong><small>İşe alım, güven ve operasyon uyarılarını yönetin.</small></span><span aria-hidden="true">→</span></button>
+          <button type="button" data-mp-panel="company"><span><strong>Ekip, roller ve yetkiler</strong><small>Şirket hesabı ve görev ayrımı.</small></span><span aria-hidden="true">→</span></button>
           <div><span><strong>Otomatik hazırlık</strong><small>Başvuru yalnız denizcinin açık izni, uygunluk kuralları ve günlük sınırla çalışır.</small></span><b>Kullanıcı kontrollü</b></div>
           <div><span><strong>Veri hakları</strong><small>Rıza makbuzu, erişim talebi, yasal saklama ve denetim kaydı.</small></span><b>İzlenebilir</b></div>
         </div>
@@ -363,6 +458,7 @@
   <script src="../../js/core.js?v=20260920-maripartner1" defer></script>
   <script src="../../js/supabase-client.js?v=20260920-maripartner1" defer></script>
   <script src="../../js/auth.js?v=20260920-partner-routing1" defer></script>
-  <script src="../../js/maripartner.js?v=20260920-maripartner4" defer></script>
+  <script src="../../js/platform.js?v=20260920-maripartner5" defer></script>
+  <script src="../../js/maripartner.js?v=20260920-maripartner6" defer></script>
 </body>
 </html>

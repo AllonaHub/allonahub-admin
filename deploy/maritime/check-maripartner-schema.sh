@@ -37,7 +37,9 @@ begin
     'maritime_data_rights_requests', 'maritime_legal_holds',
     'maritime_interview_template_versions', 'maritime_interview_reviews',
     'maritime_integration_connections', 'maritime_import_jobs',
-    'maritime_webhook_deliveries', 'maritime_metric_snapshots'
+    'maritime_webhook_deliveries', 'maritime_metric_snapshots',
+    'maritime_partner_notification_preferences', 'maritime_partner_saved_searches',
+    'maritime_partner_operation_requests'
   ] loop
     if to_regclass(format('public.%I', table_name)) is null then
       raise exception 'Missing MariPartner table: %', table_name;
@@ -56,6 +58,15 @@ begin
       raise exception 'Direct client privilege detected on MariPartner table: %', table_name;
     end if;
   end loop;
+
+  if not exists (
+    select 1 from pg_indexes
+    where schemaname = 'public'
+      and tablename = 'maritime_urgent_crew_requests'
+      and indexname = 'maritime_urgent_crew_requests_idempotency_uidx'
+  ) then
+    raise exception 'MariPartner urgent crew idempotency index is missing';
+  end if;
 
   if to_regprocedure('public.maritime_transfer_hiring_case(uuid,uuid,uuid,uuid,text,jsonb,uuid)') is null then
     raise exception 'MariPartner atomic handover function is missing';

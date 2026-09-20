@@ -1,10 +1,11 @@
 (function () {
   "use strict";
   const App = window.Allona = window.Allona || {};
-  const state = { session: null, data: null, partnerId: "", activePanel: "", lastFocus: null, pendingLogoPath: null };
-  const titles = { jobs: "Şirket İlanları", "job-create": "Yeni İlan Oluştur", vessels: "Gemilerim", "vessel-create": "Gemi Ekle", candidates: "Yetkili Adaylar", applications: "Başvurular ve İşe Alım Dosyaları", notifications: "Şirket Bildirimleri", company: "Şirket Profili", verification: "Doğrulama Şartları", refresh: "Havuzu Güncelle", evidence: "Kanıt Kontrolü", sla: "Süreç Süreleri", handover: "Dosya Devri", review: "Güvenli İnceleme", references: "Doğrulanmış Referans", governance: "Karar ve Değer Merkezi" };
-  const templates = { jobs: "mpJobsTemplate", "job-create": "mpJobCreateTemplate", vessels: "mpVesselsTemplate", "vessel-create": "mpVesselCreateTemplate", candidates: "mpCandidatesTemplate", applications: "mpApplicationsTemplate", notifications: "mpNotificationsTemplate", company: "mpCompanyTemplate", verification: "mpVerificationTemplate", refresh: "mpRefreshTemplate", evidence: "mpEvidenceTemplate", sla: "mpSlaTemplate", handover: "mpHandoverTemplate", review: "mpReviewTemplate", references: "mpReferencesTemplate", governance: "mpGovernanceTemplate" };
-  const standalonePanels = new Set(["jobs", "job-create", "vessels", "vessel-create", "candidates", "applications", "notifications", "company", "verification"]);
+  const state = { session: null, data: null, partnerId: "", activePanel: "", lastFocus: null, pendingLogoPath: null, finance: null, selectedRoomId: "", routeSync: false, candidateFilters: {} };
+  const titles = { jobs: "Şirket İlanları", "job-create": "Yeni İlan Oluştur", vessels: "Gemilerim", "vessel-create": "Gemi Ekle", candidates: "Yetkili Adaylar", "candidate-detail": "Aday Detayı", applications: "Başvurular ve İşe Alım Dosyaları", notifications: "Şirket Bildirimleri", finance: "Finans ve Faturalandırma", company: "Şirket Hesabı", verification: "Doğrulama Şartları", refresh: "Havuzu Güncelle", evidence: "Kanıt Kontrolü", sla: "Süreç Süreleri", handover: "Dosya Devri", review: "Güvenli İnceleme", references: "Doğrulanmış Referans", governance: "Karar ve Değer Merkezi", "ready-pool": "Hazır Aday Havuzu", matches: "Akıllı Eşleşmeler", urgent: "Acil Personel ve Replacement", pending: "Bekleyen İşlemler", pipeline: "Hiring Pipeline", interviews: "Görüşmeler", offers: "Teklifler ve Kontratlar", "active-crew": "Aktif Mürettebat", relief: "Relief ve Rehire" };
+  const templates = { jobs: "mpJobsTemplate", "job-create": "mpJobCreateTemplate", vessels: "mpVesselsTemplate", "vessel-create": "mpVesselCreateTemplate", candidates: "mpCandidatesTemplate", "candidate-detail": "mpPersonnelDataTemplate", applications: "mpApplicationsTemplate", notifications: "mpNotificationsTemplate", finance: "mpFinanceTemplate", company: "mpCompanyTemplate", verification: "mpVerificationTemplate", refresh: "mpRefreshTemplate", evidence: "mpEvidenceTemplate", sla: "mpSlaTemplate", handover: "mpHandoverTemplate", review: "mpReviewTemplate", references: "mpReferencesTemplate", governance: "mpGovernanceTemplate", "ready-pool": "mpReadyPoolTemplate", matches: "mpPersonnelDataTemplate", pending: "mpPersonnelDataTemplate", pipeline: "mpPersonnelDataTemplate", interviews: "mpPersonnelDataTemplate", offers: "mpPersonnelDataTemplate", "active-crew": "mpPersonnelDataTemplate", relief: "mpPersonnelDataTemplate", urgent: "mpUrgentTemplate" };
+  const standalonePanels = new Set(["jobs", "job-create", "vessels", "vessel-create", "candidates", "applications", "notifications", "finance", "company", "verification"]);
+  const legacyViewAliases = Object.freeze({ hiring: "pipeline", "smart-matches": "matches", candidates: "ready-pool", "urgent-crew": "urgent", "crew-matrix": "active-crew", "crew-pool": "ready-pool", interviews: "interviews", "offers-contracts": "offers", "active-crew": "active-crew", "relief-rehire": "relief", references: "references", verification: "verification", team: "company", analytics: "governance" });
   const referenceCategories = [
     ["professional_competence", "Mesleki yeterlilik"], ["safety_awareness", "Emniyet farkındalığı"], ["rule_compliance", "Kural uyumu"],
     ["teamwork", "Ekip çalışması"], ["communication", "İletişim"], ["reliability", "Güvenilirlik"], ["punctuality", "Dakiklik"],
@@ -150,6 +151,25 @@
     });
   }
 
+  function fillVessels(root) {
+    $$('[data-mp-vessel-options]', root).forEach((select) => {
+      const first = select.options[0] ? select.options[0].cloneNode(true) : null;
+      select.replaceChildren(...(first ? [first] : []));
+      (state.data.vessels || []).forEach((vessel) => select.append(option(vessel.id, `${vessel.vessel_name} · IMO ${vessel.imo_number}`)));
+    });
+  }
+
+  function candidateFacts(room) {
+    const candidate = room.candidate || {};
+    return [
+      candidate.rank,
+      candidate.current_work_status === "available_now" ? "Ready-to-Join" : null,
+      candidate.sea_service_days ? `${candidate.sea_service_days} gün deniz hizmeti` : candidate.sea_service_count ? `${candidate.sea_service_count} deniz hizmeti` : null,
+      candidate.vessel_types?.[0],
+      candidate.availability_updated_at ? `Güncel: ${dateTime(candidate.availability_updated_at)}` : null
+    ].filter(Boolean);
+  }
+
   function historyCard(title, detail, meta, className, action) {
     return `<article class="${escape(className || "")}"><strong>${escape(title)}</strong><span>${escape(detail || "")}</span><small>${escape(meta || "")}</small>${action || ""}</article>`;
   }
@@ -158,6 +178,117 @@
     if (!target) return;
     const name = business?.display_name || "MariPartner";
     target.innerHTML = business?.logo_url ? `<img src="${escape(business.logo_url)}" alt="">` : escape(initials(name));
+  }
+
+  function roomForUser(userId, jobId) {
+    return (state.data.candidate_rooms || []).find((room) => room.seafarer_user_id === userId && (!jobId || !room.job_id || room.job_id === jobId));
+  }
+
+  function personnelEmpty(text) {
+    return `<div class="mp-empty">${escape(text)}</div>`;
+  }
+
+  function personnelCandidateCard(room, match) {
+    const job = (state.data.jobs || []).find((item) => item.id === (match?.job_id || room.job_id));
+    const score = match?.preference_score === null || match?.preference_score === undefined ? "" : `${Math.round(Number(match.preference_score))}% eşleşme`;
+    const favorite = (state.data.favorite_candidates || []).some((item) => item.seafarer_user_id === room.seafarer_user_id);
+    return `<article class="mp-candidate-card"><div><strong>${escape(room.candidate?.full_name || room.candidate?.public_id || "Aday")}</strong><span>${escape(job?.job_title || room.candidate?.rank || "Denizcilik adayı")}</span><div class="mp-candidate-card__facts">${[...candidateFacts(room), score].filter(Boolean).map((fact) => `<span>${escape(fact)}</span>`).join("")}</div></div><div class="mp-candidate-card__actions"><button type="button" data-mp-candidate-inspect="${escape(room.id)}">Adayı İncele</button><button type="button" data-mp-candidate-invite="${escape(room.id)}" data-job-id="${escape(match?.job_id || room.job_id || "")}" ${match?.job_id || room.job_id ? "" : "disabled"}>Davet Et</button><details class="mp-more"><summary aria-label="Aday için diğer işlemleri aç">⋮</summary><div role="menu"><button type="button" role="menuitem" data-mp-candidate-inspect="${escape(room.id)}">Eşleşme Nedenini Gör</button><button type="button" role="menuitem" data-mp-candidate-favorite="${escape(room.id)}" ${favorite ? "disabled" : ""}>${favorite ? "Favorilerde" : "Favoriye Ekle"}</button><button type="button" role="menuitem" data-mp-panel="references">Firma Referanslarını Gör</button></div></details></div></article>`;
+  }
+
+  function normalizeSearchValue(value) {
+    return String(value || "").normalize("NFKC").toLocaleLowerCase("tr-TR").trim();
+  }
+
+  function readyPoolRooms() {
+    const filters = state.candidateFilters || {};
+    return (state.data.candidate_rooms || []).filter((room) => {
+      const candidate = room.candidate || {};
+      if (filters.rank && !normalizeSearchValue(candidate.rank).includes(normalizeSearchValue(filters.rank))) return false;
+      if (filters.vessel_type && !(candidate.vessel_types || []).some((value) => normalizeSearchValue(value).includes(normalizeSearchValue(filters.vessel_type)))) return false;
+      if (Number(filters.minimum_sea_service_days || 0) > Number(candidate.sea_service_days || 0)) return false;
+      if (filters.availability_status && candidate.availability_status !== filters.availability_status) return false;
+      if (filters.ready_to_join && !(candidate.current_work_status === "available_now" && candidate.availability_status === "fresh" && candidate.readiness_level === "verified_ready")) return false;
+      return true;
+    });
+  }
+
+  function renderPoolFilter(root) {
+    const form = $("[data-mp-pool-filter]", root);
+    if (!form) return;
+    for (const [key, value] of Object.entries(state.candidateFilters || {})) {
+      if (!form.elements[key]) continue;
+      if (form.elements[key].type === "checkbox") form.elements[key].checked = Boolean(value);
+      else form.elements[key].value = value ?? "";
+    }
+    const active = Object.entries(state.candidateFilters || {}).filter(([key, value]) => key !== "minimum_sea_service_days" ? Boolean(value) : Number(value) > 0).length;
+    $("[data-mp-filter-count]", form).textContent = `${active} aktif filtre`;
+    const saved = $("[data-mp-saved-search]", form);
+    saved.replaceChildren(option("", "Kayıtlı arama seçin"));
+    (state.data.saved_searches || []).forEach((item) => saved.append(option(item.id, item.name)));
+  }
+
+  function renderPersonnelData(root, panel) {
+    const target = $("[data-mp-personnel-data]", root);
+    if (!target) return;
+    if (panel === "candidate-detail") {
+      const room = (state.data.candidate_rooms || []).find((item) => item.id === state.selectedRoomId);
+      if (!room) { target.innerHTML = personnelEmpty("Aday yetkisi bulunamadı veya süresi doldu."); return; }
+      const favorite = (state.data.favorite_candidates || []).some((item) => item.seafarer_user_id === room.seafarer_user_id);
+      const match = (state.data.matches || []).find((item) => item.seafarer_user_id === room.seafarer_user_id && (!room.job_id || item.job_id === room.job_id));
+      const applications = (state.data.applications || []).filter((item) => item.seafarer_user_id === room.seafarer_user_id);
+      const interviews = (state.data.interviews || []).filter((item) => item.seafarer_user_id === room.seafarer_user_id);
+      const offers = (state.data.offers || []).filter((item) => item.seafarer_user_id === room.seafarer_user_id);
+      const tabs = [["overview", "Genel Bakış"], ["eligibility", "Uygunluk"], ["documents", "Belgeler"], ["service", "Deniz Hizmeti"], ["references", "Firma Referansları"], ["interviews", "Görüşmeler"], ["offers", "Teklifler"], ["history", "İşlem Geçmişi"]];
+      const cards = (rows, title) => rows.length ? rows.map((item) => historyCard(title, statusLabel(item.status || item.offer_status), dateTime(item.created_at || item.scheduled_start))).join("") : personnelEmpty(`${title} kaydı bulunmuyor.`);
+      target.innerHTML = `<section class="mp-candidate-detail"><div class="mp-history-card-head"><div><strong>${escape(room.candidate?.full_name || room.candidate?.public_id || "Aday")}</strong><span>${escape(room.candidate?.rank || "Yeterlilik bilgisi bekleniyor")}</span></div><span class="mp-status-pill is-${escape(room.status)}">${escape(statusLabel(room.status))}</span></div><div class="mp-candidate-tabs" role="tablist" aria-label="Aday detay bölümleri">${tabs.map(([key, label], index) => `<button type="button" role="tab" data-mp-candidate-tab="${key}" aria-selected="${index === 0}">${label}</button>`).join("")}</div><div data-mp-candidate-pane="overview"><div class="mp-candidate-card__facts">${candidateFacts(room).map((fact) => `<span>${escape(fact)}</span>`).join("")}</div><p class="mp-note">Bu görünüm yalnız aktif ve süreli şirket-aday ilişkisi kapsamındaki güvenli özeti gösterir.</p></div><div data-mp-candidate-pane="eligibility" hidden>${match ? historyCard(`${Math.round(Number(match.preference_score || 0))}% açıklanabilir eşleşme`, statusLabel(match.hard_gate_status), `Kural sürümü: ${match.metadata?.rule_version || "kayıtlı sürüm"}`) : personnelEmpty("Bu aday için güncel eşleşme sonucu bulunmuyor.")}</div><div data-mp-candidate-pane="documents" hidden>${historyCard("Belge hazırlığı", statusLabel(room.candidate?.readiness_level), "Hassas belge erişimi ayrıca amaç, süre ve audit kontrolü gerektirir.")}</div><div data-mp-candidate-pane="service" hidden>${historyCard("Deniz hizmeti özeti", `${room.candidate?.sea_service_days || 0} gün · ${room.candidate?.sea_service_count || 0} kayıt`, (room.candidate?.vessel_types || []).join(", ") || "Gemi türü kaydı yok")}</div><div data-mp-candidate-pane="references" hidden>${personnelEmpty("Firmalara özel referanslar yalnız doğrulanmış iş ilişkisi ve audit kaydıyla Güven bölümünde açılır.")}</div><div data-mp-candidate-pane="interviews" hidden>${cards(interviews, "Görüşme")}</div><div data-mp-candidate-pane="offers" hidden>${cards(offers, "Teklif / kontrat")}</div><div data-mp-candidate-pane="history" hidden>${cards(applications, "İşe alım işlemi")}</div><div class="mp-history-actions"><button type="button" data-mp-candidate-invite="${escape(room.id)}" data-job-id="${escape(room.job_id || "")}" ${room.job_id ? "" : "disabled"}>Davet Et</button><button type="button" data-mp-candidate-favorite="${escape(room.id)}" ${favorite ? "disabled" : ""}>${favorite ? "Favorilerde" : "Favoriye Ekle"}</button></div></section>`;
+      return;
+    }
+    if (panel === "ready-pool") {
+      const rooms = readyPoolRooms();
+      target.innerHTML = `<h3>Yetkili hazır aday havuzu</h3>${rooms.length ? rooms.map((room) => personnelCandidateCard(room)).join("") : personnelEmpty("Seçili filtrelere uygun, erişim yetkisi bulunan aday bulunmuyor.")}`;
+      return;
+    }
+    if (panel === "matches") {
+      const rows = (state.data.matches || []).map((match) => ({ match, room: roomForUser(match.seafarer_user_id, match.job_id) })).filter((item) => item.room);
+      target.innerHTML = `<h3>Açıklanabilir eşleşmeler</h3>${rows.length ? rows.map(({ room, match }) => personnelCandidateCard(room, match)).join("") : personnelEmpty("Güncel kuralları geçen yetkili eşleşme bulunmuyor.")}`;
+      return;
+    }
+    const collectionMap = {
+      pipeline: [state.data.applications || [], "Aktif işe alım dosyası bulunmuyor."],
+      interviews: [state.data.interviews || [], "Planlanmış görüşme bulunmuyor."],
+      offers: [state.data.offers || [], "Teklif veya kontrat kaydı bulunmuyor."],
+      "active-crew": [state.data.work_relationships || [], "Aktif mürettebat kaydı bulunmuyor."],
+      relief: [state.data.relief_plans || [], "Yaklaşan relief veya rehire planı bulunmuyor."]
+    };
+    if (collectionMap[panel]) {
+      const [rows, emptyText] = collectionMap[panel];
+      target.innerHTML = rows.length ? rows.map((item) => {
+        const title = item.offer_status ? `Teklif · ${statusLabel(item.offer_status)}` : item.scheduled_start ? `Görüşme · ${dateTime(item.scheduled_start)}` : item.target_join_date ? `Relief · ${item.target_join_date}` : item.rank_code ? `${item.rank_code} · Aktif çalışma` : `İşe alım · ${statusLabel(item.status)}`;
+        return historyCard(title, item.status || item.offer_status || item.verification_status || "Kayıtlı", dateTime(item.created_at));
+      }).join("") : personnelEmpty(emptyText);
+      return;
+    }
+    if (panel === "pending") {
+      const counters = state.data.counters || {};
+      const rows = [["Geciken SLA", counters.overdue_steps, "sla"], ["Bekleyen kanıt", counters.pending_evidence, "evidence"], ["Görüşme bekleyen", counters.pending_interviews, "interviews"], ["Teklif bekleyen", counters.pending_offers, "offers"], ["Referans doğrulaması", counters.pending_reference_matches, "references"]].filter((item) => Number(item[1]) > 0);
+      target.innerHTML = rows.length ? rows.map(([title, count, destination]) => `<article><strong>${escape(title)}</strong><span>${escape(count)} işlem</span><div class="mp-history-actions"><button type="button" data-mp-open="${escape(destination)}">İncele</button></div></article>`).join("") : personnelEmpty("Size atanmış bekleyen işlem bulunmuyor.");
+    }
+  }
+
+  function renderUrgent(root) {
+    const target = $("[data-mp-urgent-list]", root);
+    if (!target) return;
+    const rows = state.data.urgent_crew_requests || [];
+    target.innerHTML = `<h3>Acil personel talepleri</h3>${rows.length ? rows.map((item) => historyCard((item.ranks || []).join(", ") || "Acil pozisyon", statusLabel(item.status), `İhtiyaç: ${dateTime(item.needed_by)}`)).join("") : personnelEmpty("Aktif acil personel talebi bulunmuyor.")}`;
+    const input = $('input[name="needed_by"]', root);
+    if (input && !input.value) input.value = toInputDate(Date.now() + 2 * 86400000);
+  }
+
+  async function loadFinance(root) {
+    const payload = await api(`/v1/maritime/partner-center/finance?partner_id=${encodeURIComponent(state.partnerId)}`);
+    state.finance = payload.events || [];
+    const target = $("[data-mp-finance-list]", root);
+    target.innerHTML = state.finance.length ? state.finance.map((item) => historyCard(statusLabel(item.event_type), `${item.amount == null ? "Tutar yok" : `${item.amount} ${item.currency || ""}`} · ${statusLabel(item.status)}`, dateTime(item.created_at))).join("") : personnelEmpty("Henüz faturalandırma kaydı bulunmuyor.");
   }
 
   function renderWorkspacePanel(root, panel) {
@@ -175,7 +306,7 @@
       const rooms = state.data.candidate_rooms || [];
       target.innerHTML = `<h3>Yetkili aday ilişkileri</h3>${rooms.length ? rooms.map((room) => {
         const job = (state.data.jobs || []).find((item) => item.id === room.job_id);
-        return historyCard(room.candidate?.full_name || room.candidate?.public_id || "Aday", `${job?.job_title || "Genel aday havuzu"} · ${statusLabel(room.status)}`, room.expires_at ? `Yetki bitişi: ${dateTime(room.expires_at)}` : "Aktif şirket ilişkisi");
+        return personnelCandidateCard(room, (state.data.matches || []).find((match) => match.seafarer_user_id === room.seafarer_user_id && (!room.job_id || match.job_id === room.job_id)));
       }).join("") : '<div class="mp-empty">Henüz şirketinizle açık ve izinli bir aday ilişkisi bulunmuyor.</div>'}`;
     }
     if (panel === "applications") {
@@ -190,6 +321,12 @@
       const target = $("[data-mp-notifications-list]", root);
       const notifications = state.data.partner_notifications || [];
       target.innerHTML = `<h3>Okunmamış bildirimler</h3>${notifications.length ? notifications.map((item) => historyCard(item.title, item.message, dateTime(item.created_at))).join("") : '<div class="mp-empty">Yeni şirket bildirimi yok.</div>'}`;
+      const form = $("[data-mp-notification-preferences-form]", root);
+      const preferences = state.data.notification_preferences || {};
+      if (form) {
+        form.elements.in_app_mode.value = preferences.in_app_mode || "all";
+        form.elements.email_digest.value = preferences.email_digest || "off";
+      }
     }
     if (panel === "vessels") {
       const target = $("[data-mp-vessels-list]", root);
@@ -220,6 +357,13 @@
         ? `Şirketiniz doğrulanmış ve işe alım işlemlerine yetkilidir.${cycle?.expires_at ? ` Güncel doğrulama ${dateTime(cycle.expires_at)} tarihine kadar geçerlidir.` : ""}`
         : "Eksik bir doğrulama adımı varsa yeni ilan ve yetkili işe alım işlemleri güvenlik amacıyla sınırlandırılır. Düzenleme için AllonaHub destek ekibiyle iletişime geçin.";
     }
+    if (["candidate-detail", "ready-pool", "matches", "pending", "pipeline", "interviews", "offers", "active-crew", "relief"].includes(panel)) renderPersonnelData(root, panel);
+    if (panel === "urgent") renderUrgent(root);
+    if (panel === "ready-pool") renderPoolFilter(root);
+    if (panel === "finance") loadFinance(root).catch((error) => {
+      const target = $("[data-mp-finance-list]", root);
+      if (target) target.innerHTML = `<div class="mp-empty">${escape(error.message || "Finans kayıtları açılamadı.")}</div>`;
+    });
   }
 
   function renderHistory(root, panel) {
@@ -312,28 +456,71 @@
     }
   }
 
+  function renderOperationFeed() {
+    const notifications = $("[data-mp-operation-notifications]");
+    const tasks = $("[data-mp-operation-tasks]");
+    if (notifications) {
+      const rows = (state.data.partner_notifications || []).slice(0, 3);
+      notifications.innerHTML = rows.length ? rows.map((item) => `<div class="mp-feed-row"><span><strong>${escape(item.title)}</strong><small>${escape(item.message)}</small></span><time>${escape(dateTime(item.created_at))}</time></div>`).join("") : '<div class="mp-empty">Yeni bildirim bulunmuyor.</div>';
+    }
+    if (tasks) {
+      const counters = state.data.counters || {};
+      const rows = [["Geciken SLA", counters.overdue_steps], ["Bekleyen kanıt", counters.pending_evidence], ["Görüşme bekleyen", counters.pending_interviews], ["Referans kontrolü", counters.pending_reference_matches]].filter((item) => Number(item[1]) > 0);
+      tasks.innerHTML = rows.length ? rows.map(([label, count]) => `<div class="mp-feed-row"><strong>${escape(label)}</strong><b>${escape(count)}</b></div>`).join("") : '<div class="mp-empty">Size atanmış bekleyen görev bulunmuyor.</div>';
+    }
+  }
+
+  function setRoute(view, tab, replace) {
+    if (state.routeSync) return;
+    const url = new URL(location.href);
+    if (view && view !== "operations") url.searchParams.set("view", view);
+    else url.searchParams.delete("view");
+    if (tab) url.searchParams.set("tab", tab);
+    else url.searchParams.delete("tab");
+    history[replace ? "replaceState" : "pushState"]({ maripartner: true, view: view || "operations", tab: tab || null }, "", `${url.pathname}${url.search}${url.hash}`);
+  }
+
+  function setActiveNavigation(view) {
+    const group = view === "center" || ["ready-pool", "matches", "urgent", "pending", "pipeline", "interviews", "offers", "active-crew", "relief", "candidates", "applications", "refresh", "evidence", "sla", "handover", "review", "references", "governance", "candidate-detail"].includes(view)
+      ? "personnel"
+      : view === "job-create" ? "jobs" : view === "vessel-create" ? "vessels" : view;
+    $$(".mp-primary-nav > *").forEach((item) => {
+      const itemGroup = item.hasAttribute("data-mp-center") ? "personnel" : item.dataset.mpView || item.dataset.mpOpen || "";
+      const active = itemGroup === (group || "operations");
+      item.classList.toggle("is-active", active);
+      if (active) item.setAttribute("aria-current", "page");
+      else item.removeAttribute("aria-current");
+    });
+  }
+
   function openCenter(trigger) {
     const template = document.getElementById("mpCenterTemplate");
     const wrap = $("[data-mp-drawer-wrap]");
     const body = $("[data-mp-drawer-body]");
     state.activePanel = "center";
+    setActiveNavigation("center");
     if (trigger?.hasAttribute?.("data-mp-center")) state.lastFocus = trigger;
     else if (!state.lastFocus) state.lastFocus = document.activeElement;
     $("[data-mp-drawer-title]").textContent = "İşlemler";
     $("[data-mp-back]").hidden = true;
     body.replaceChildren(template.content.cloneNode(true));
     renderCounters(body);
+    const requestedTab = new URLSearchParams(location.search).get("tab");
+    const tabButton = requestedTab ? $(`[data-mp-center-tab="${requestedTab}"]`, body) : null;
+    if (tabButton) selectCenterTab(tabButton, true);
+    else setRoute("personnel", "operations", true);
     wrap.hidden = false;
     document.body.style.overflow = "hidden";
     $("[data-mp-close]", wrap).focus();
   }
 
-  function selectCenterTab(button) {
+  function selectCenterTab(button, replace) {
     const root = $("[data-mp-drawer-body]");
     const tab = button.dataset.mpCenterTab;
     $$('[data-mp-center-tab]', root).forEach((item) => { item.setAttribute("aria-selected", String(item === button)); item.tabIndex = item === button ? 0 : -1; });
     $$('[data-mp-center-pane]', root).forEach((pane) => { pane.hidden = pane.dataset.mpCenterPane !== tab; });
     $("[data-mp-drawer-title]").textContent = ({ operations: "İşlemler", trust: "Güven", management: "Yönetim" })[tab] || "Personel Merkezi";
+    setRoute("personnel", tab, replace);
   }
 
   function addRequirement(root) {
@@ -349,6 +536,7 @@
     const template = document.getElementById(templates[panel]);
     if (!template) return;
     state.activePanel = panel;
+    setActiveNavigation(panel);
     const wrap = $("[data-mp-drawer-wrap]");
     if (wrap.hidden) state.lastFocus = trigger || document.activeElement;
     const body = $("[data-mp-drawer-body]");
@@ -359,10 +547,17 @@
     fillCandidates(body);
     fillTeam(body);
     fillHiringRooms(body);
+    fillVessels(body);
     if (panel === "refresh" || panel === "evidence" || panel === "review") $$('input[name="expires_at"]', body).forEach((input) => { input.value = toInputDate(); });
     if (panel === "job-create") {
       const expiry = $('input[name="expires_at"]', body);
       if (expiry) expiry.value = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+      const joining = $('input[name="joining_date"]', body);
+      if (joining) {
+        const minimum = new Date().toISOString().slice(0, 10);
+        joining.min = minimum;
+        joining.value = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+      }
     }
     if (panel === "evidence") addRequirement(body);
     renderWorkspacePanel(body, panel);
@@ -370,12 +565,36 @@
     wrap.hidden = false;
     document.body.style.overflow = "hidden";
     $("[data-mp-close]", wrap).focus();
+    setRoute(panel, null, false);
   }
 
   function closePanel() {
     $("[data-mp-drawer-wrap]").hidden = true;
     document.body.style.overflow = "";
     state.lastFocus?.focus?.();
+    setActiveNavigation("operations");
+    setRoute("operations", null, true);
+  }
+
+  function applyRouteState() {
+    const params = new URLSearchParams(location.search);
+    const requestedView = params.get("view");
+    const view = legacyViewAliases[requestedView] || requestedView;
+    state.routeSync = true;
+    try {
+      if (view === "personnel") openCenter();
+      else if (view && templates[view]) openPanel(view);
+      else {
+        const wrap = $("[data-mp-drawer-wrap]");
+        if (wrap) wrap.hidden = true;
+        document.body.style.overflow = "";
+        state.activePanel = "";
+        setActiveNavigation("operations");
+      }
+    } finally {
+      state.routeSync = false;
+    }
+    if (requestedView && requestedView !== view) setRoute(view, params.get("tab"), true);
   }
 
   function renderMatches() {
@@ -392,7 +611,7 @@
   }
 
   function render() {
-    Object.entries(state.data.counters || {}).forEach(([key, value]) => { const target = $(`[data-mp-count="${key}"]`); if (target) target.textContent = Number(value || 0).toLocaleString("tr-TR"); });
+    Object.entries(state.data.counters || {}).forEach(([key, value]) => { $$(`[data-mp-count="${key}"]`).forEach((target) => { target.textContent = Number(value || 0).toLocaleString("tr-TR"); }); });
     const business = state.data.partner || {};
     const verification = state.data.verification || {};
     $("[data-mp-company-name]").textContent = business.display_name || "Şirket hesabı";
@@ -403,6 +622,7 @@
     badge.setAttribute("aria-label", verification.ready_for_hiring ? "Doğrulanmış şirket. Doğrulama ayrıntılarını aç" : "Doğrulama bekliyor. Şartları aç");
     const strip = $("[data-mp-verification-strip]");
     strip.classList.toggle("is-verified", Boolean(verification.ready_for_hiring));
+    strip.classList.toggle("mp-required-incomplete", !verification.ready_for_hiring);
     $("[data-mp-verification-title]").textContent = verification.ready_for_hiring ? "Doğrulanmış denizcilik şirketi" : "Şirket doğrulama adımları tamamlanmalı";
     $("[data-mp-verification-copy]").textContent = verification.ready_for_hiring ? "İlan ve işe alım temsilcisi yetkileriniz güncel." : "Eksik şartları görmek için doğrulama durumunu açın.";
     $("[data-mp-hero-eyebrow]").textContent = verification.ready_for_hiring ? "Doğrulanmış denizcilik şirketi çalışma alanı" : "Denizcilik şirketi doğrulama çalışma alanı";
@@ -418,8 +638,13 @@
     };
     Object.entries(counts).forEach(([key, value]) => {
       const target = $(`[data-mp-nav-count="${key}"]`);
-      if (target) target.textContent = `${Number(value).toLocaleString("tr-TR")} ${key === "candidates" ? "aday" : key === "applications" ? "dosya" : key === "notifications" ? "yeni" : key === "vessels" ? "gemi" : "kayıt"}`;
+      if (target) target.textContent = Number(value).toLocaleString("tr-TR");
     });
+    const notificationSignal = $("[data-mp-notification-signal]");
+    if (notificationSignal) {
+      notificationSignal.hidden = counts.notifications <= 0;
+      notificationSignal.textContent = counts.notifications > 99 ? "99+" : String(counts.notifications);
+    }
     const canCreateJob = !state.data.restricted && verification.ready_for_hiring;
     $$('[data-mp-open="job-create"]').forEach((button) => {
       button.dataset.mpBlocked = canCreateJob ? "false" : "true";
@@ -430,6 +655,7 @@
     fillJobs(document, true);
     renderMatches();
     renderCounters(document);
+    renderOperationFeed();
   }
 
   async function load(partnerId) {
@@ -512,8 +738,13 @@
       client_listing_id: clientId(),
       title: data.get("title"),
       summary: data.get("summary"),
-      location_label: data.get("location_label") || "",
-      detail_label: data.get("detail_label") || "",
+      vessel_type: data.get("vessel_type"),
+      joining_date: data.get("joining_date"),
+      location_label: data.get("location_label"),
+      detail_label: data.get("detail_label"),
+      salary_amount: Number(data.get("salary_amount")),
+      salary_currency: data.get("salary_currency"),
+      preferred_conditions: data.get("preferred_conditions") || "",
       rank_code: data.get("rank_code"),
       required_certificate_codes: certificates,
       minimum_sea_service_days: Number(data.get("minimum_sea_service_days") || 0),
@@ -675,6 +906,66 @@
     alert("Referans taslağı güvenli biçimde kaydedildi. Yayımlanması için incelemeye gönderin.", "success");
   }
 
+  async function submitUrgent(form) {
+    const data = new FormData(form);
+    await api("/v1/maritime/partner-center/urgent-crew", { method: "POST", body: {
+      partner_id: state.partnerId,
+      job_id: data.get("job_id") || null,
+      vessel_profile_id: data.get("vessel_profile_id") || null,
+      needed_by: new Date(data.get("needed_by")).toISOString(),
+      ranks: [String(data.get("rank") || "").trim()],
+      note: String(data.get("note") || "").trim() || null,
+      idempotency_key: clientId()
+    } });
+    await load(state.partnerId);
+    openPanel("urgent", state.lastFocus);
+    alert("Acil personel eşleştirmesi, mevcut ilan şartları korunarak başlatıldı.", "success");
+  }
+
+  async function submitNotificationPreferences(form) {
+    const data = new FormData(form);
+    await api("/v1/maritime/partner-center/notification-preferences", { method: "PUT", body: { partner_id: state.partnerId, in_app_mode: data.get("in_app_mode"), email_digest: data.get("email_digest") } });
+    await load(state.partnerId);
+    openPanel("notifications", state.lastFocus);
+    alert("Bildirim tercihleri kaydedildi.", "success");
+  }
+
+  async function inviteCandidate(button) {
+    if (!button.dataset.jobId) throw new Error("Adayı davet etmek için önce bir ilan seçilmelidir.");
+    await api("/v1/maritime/partner-center/candidate-invitations", { method: "POST", body: { partner_id: state.partnerId, candidate_room_id: button.dataset.mpCandidateInvite, job_id: button.dataset.jobId } });
+    await load(state.partnerId);
+    alert("Adaya güvenli sistem daveti gönderildi.", "success");
+  }
+
+  async function favoriteCandidate(button) {
+    await api("/v1/maritime/partner-center/candidate-favorites", { method: "POST", body: { partner_id: state.partnerId, candidate_room_id: button.dataset.mpCandidateFavorite, list_name: "default" } });
+    await load(state.partnerId);
+    state.selectedRoomId = button.dataset.mpCandidateFavorite;
+    openPanel("candidate-detail", state.lastFocus);
+    alert("Aday şirket favorilerine eklendi.", "success");
+  }
+
+  function poolFiltersFromForm(form) {
+    const data = new FormData(form);
+    return {
+      rank: String(data.get("rank") || "").trim(),
+      vessel_type: String(data.get("vessel_type") || "").trim(),
+      minimum_sea_service_days: Number(data.get("minimum_sea_service_days") || 0),
+      availability_status: data.get("availability_status") || null,
+      ready_to_join: data.get("ready_to_join") === "on"
+    };
+  }
+
+  async function savePoolSearch(form) {
+    const name = String(form.elements.search_name.value || "").trim();
+    if (name.length < 2) throw new Error("Kayıtlı arama için en az iki karakterlik bir ad yazın.");
+    state.candidateFilters = poolFiltersFromForm(form);
+    await api("/v1/maritime/partner-center/saved-searches", { method: "POST", body: { partner_id: state.partnerId, name, search_scope: "candidate_pool", filters: state.candidateFilters } });
+    await load(state.partnerId);
+    openPanel("ready-pool", state.lastFocus);
+    alert("Aday araması kaydedildi.", "success");
+  }
+
   async function initialize() {
     state.session = App.auth?.getSession ? await App.auth.getSession() : null;
     if (!state.session?.access_token) {
@@ -682,7 +973,11 @@
       location.replace(`/pages/partner/partner.html?returnTo=${returnTo}`);
       return;
     }
-    try { await load(""); }
+    try {
+      await load("");
+      applyRouteState();
+      if (!history.state?.maripartner) setRoute(new URLSearchParams(location.search).get("view") || "operations", new URLSearchParams(location.search).get("tab"), true);
+    }
     catch (error) {
       if (error.status === 403 || error.status === 401) alert(error.message);
       else alert("MariPartner şu anda yüklenemedi. Lütfen tekrar deneyin.");
@@ -690,6 +985,20 @@
   }
 
   document.addEventListener("click", async (event) => {
+    const mobileMenu = event.target.closest("[data-mp-mobile-menu]");
+    if (mobileMenu) {
+      const sidebar = $("[data-mp-sidebar]");
+      const open = !sidebar.classList.contains("is-open");
+      sidebar.classList.toggle("is-open", open);
+      mobileMenu.setAttribute("aria-expanded", String(open));
+      return;
+    }
+    const operationView = event.target.closest('[data-mp-view="operations"]');
+    if (operationView) {
+      closePanel();
+      $("[data-mp-sidebar]")?.classList.remove("is-open");
+      return;
+    }
     const verificationBadge = event.target.closest("[data-mp-verification-badge]");
     if (verificationBadge) {
       event.preventDefault();
@@ -709,6 +1018,7 @@
         return;
       }
       openPanel(workspaceButton.dataset.mpOpen, workspaceButton);
+      $("[data-mp-sidebar]")?.classList.remove("is-open");
       return;
     }
     const vesselLookup = event.target.closest("[data-mp-vessel-lookup]");
@@ -718,13 +1028,60 @@
       return;
     }
     const centerButton = event.target.closest("[data-mp-center]");
-    if (centerButton) openCenter(centerButton);
+    if (centerButton) { openCenter(centerButton); $("[data-mp-sidebar]")?.classList.remove("is-open"); }
     const panelButton = event.target.closest("[data-mp-panel]");
     if (panelButton) openPanel(panelButton.dataset.mpPanel, panelButton);
     const centerTab = event.target.closest("[data-mp-center-tab]");
     if (centerTab) selectCenterTab(centerTab);
+    const candidateTab = event.target.closest("[data-mp-candidate-tab]");
+    if (candidateTab) {
+      const detail = candidateTab.closest(".mp-candidate-detail");
+      $$('[data-mp-candidate-tab]', detail).forEach((item) => item.setAttribute("aria-selected", String(item === candidateTab)));
+      $$('[data-mp-candidate-pane]', detail).forEach((pane) => { pane.hidden = pane.dataset.mpCandidatePane !== candidateTab.dataset.mpCandidateTab; });
+      return;
+    }
     if (event.target.closest("[data-mp-back]")) openCenter();
     if (event.target.closest("[data-mp-close]")) closePanel();
+    const inspectCandidate = event.target.closest("[data-mp-candidate-inspect]");
+    if (inspectCandidate) {
+      state.selectedRoomId = inspectCandidate.dataset.mpCandidateInspect;
+      openPanel("candidate-detail", inspectCandidate);
+      return;
+    }
+    const invite = event.target.closest("[data-mp-candidate-invite]");
+    if (invite) {
+      try { await inviteCandidate(invite); }
+      catch (error) { alert(error.message || "Aday daveti gönderilemedi."); }
+      return;
+    }
+    const favorite = event.target.closest("[data-mp-candidate-favorite]");
+    if (favorite) {
+      try { await favoriteCandidate(favorite); }
+      catch (error) { alert(error.message || "Aday favorilere eklenemedi."); }
+      return;
+    }
+    const markAllRead = event.target.closest("[data-mp-mark-all-read]");
+    if (markAllRead) {
+      const ids = (state.data.partner_notifications || []).map((item) => item.id);
+      if (!ids.length) { alert("Okunmamış bildirim bulunmuyor."); return; }
+      try {
+        await api("/v1/maritime/partner-center/notifications/read", { method: "PATCH", body: { partner_id: state.partnerId, notification_ids: ids } });
+        await load(state.partnerId); openPanel("notifications", state.lastFocus); alert("Bildirimler okundu olarak işaretlendi.", "success");
+      } catch (error) { alert(error.message || "Bildirimler güncellenemedi."); }
+      return;
+    }
+    const clearPoolFilters = event.target.closest("[data-mp-filter-clear]");
+    if (clearPoolFilters) {
+      state.candidateFilters = {};
+      openPanel("ready-pool", state.lastFocus);
+      return;
+    }
+    const savePoolFilters = event.target.closest("[data-mp-filter-save]");
+    if (savePoolFilters) {
+      try { await savePoolSearch(savePoolFilters.closest("form")); }
+      catch (error) { alert(error.message || "Aday araması kaydedilemedi."); }
+      return;
+    }
     const add = event.target.closest("[data-mp-add-requirement]");
     if (add) addRequirement($("[data-mp-drawer-body]"));
     const remove = event.target.closest("[data-mp-remove-requirement]");
@@ -764,7 +1121,14 @@
 
   document.addEventListener("submit", async (event) => {
     const form = event.target;
-    const handler = form.matches("[data-mp-job-form]") ? submitJob : form.matches("[data-mp-vessel-form]") ? submitVessel : form.matches("[data-mp-profile-form]") ? submitProfile : form.matches("[data-mp-refresh-form]") ? submitRefresh : form.matches("[data-mp-evidence-template-form]") ? submitEvidenceTemplate : form.matches("[data-mp-evidence-request-form]") ? submitEvidenceRequest : form.matches("[data-mp-sla-form]") ? submitSla : form.matches("[data-mp-sla-start-form]") ? submitSlaStart : form.matches("[data-mp-sla-extend-form]") ? submitSlaExtend : form.matches("[data-mp-handover-form]") ? submitHandover : form.matches("[data-mp-review-form]") ? submitReview : form.matches("[data-mp-reference-form]") ? submitEmployerReference : null;
+    if (form.matches("[data-mp-pool-filter]")) {
+      event.preventDefault();
+      state.candidateFilters = poolFiltersFromForm(form);
+      renderPersonnelData($("[data-mp-drawer-body]"), "ready-pool");
+      renderPoolFilter($("[data-mp-drawer-body]"));
+      return;
+    }
+    const handler = form.matches("[data-mp-job-form]") ? submitJob : form.matches("[data-mp-vessel-form]") ? submitVessel : form.matches("[data-mp-profile-form]") ? submitProfile : form.matches("[data-mp-refresh-form]") ? submitRefresh : form.matches("[data-mp-evidence-template-form]") ? submitEvidenceTemplate : form.matches("[data-mp-evidence-request-form]") ? submitEvidenceRequest : form.matches("[data-mp-sla-form]") ? submitSla : form.matches("[data-mp-sla-start-form]") ? submitSlaStart : form.matches("[data-mp-sla-extend-form]") ? submitSlaExtend : form.matches("[data-mp-handover-form]") ? submitHandover : form.matches("[data-mp-review-form]") ? submitReview : form.matches("[data-mp-reference-form]") ? submitEmployerReference : form.matches("[data-mp-urgent-form]") ? submitUrgent : form.matches("[data-mp-notification-preferences-form]") ? submitNotificationPreferences : null;
     if (!handler) return;
     event.preventDefault();
     try { await submitWithButton(form, () => handler(form)); }
@@ -772,6 +1136,14 @@
   });
 
   document.addEventListener("change", (event) => {
+    if (event.target.matches("[data-mp-saved-search]")) {
+      const selected = (state.data.saved_searches || []).find((item) => item.id === event.target.value);
+      if (selected) {
+        state.candidateFilters = { ...(selected.filters || {}) };
+        openPanel("ready-pool", state.lastFocus);
+      }
+      return;
+    }
     if (event.target.matches("[data-mp-logo-input]")) {
       const file = event.target.files?.[0];
       if (file) uploadLogo(file).catch((error) => alert(error.message || "Şirket görseli yüklenemedi."));
@@ -792,6 +1164,16 @@
   $("[data-mp-refresh]").addEventListener("click", () => load(state.partnerId).then(() => alert("Panel verileri yenilendi.", "success")).catch((error) => alert(error.message)));
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && !$("[data-mp-drawer-wrap]").hidden) closePanel();
+    if (event.key === "Tab" && !$("[data-mp-drawer-wrap]").hidden) {
+      const drawer = $("[data-mp-drawer]");
+      const focusable = $$('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])', drawer).filter((item) => !item.hidden && item.offsetParent !== null);
+      if (focusable.length) {
+        const first = focusable[0];
+        const last = focusable.at(-1);
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      }
+    }
     if (event.target.matches?.("[data-mp-verification-badge]") && ["Enter", " "].includes(event.key)) {
       event.preventDefault();
       openPanel("verification", event.target);
@@ -805,5 +1187,6 @@
     const next = event.key === "Home" ? tabs[0] : event.key === "End" ? tabs.at(-1) : tabs[(index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length];
     selectCenterTab(next); next.focus();
   });
+  window.addEventListener("popstate", () => { if (state.data) applyRouteState(); });
   window.addEventListener("load", initialize, { once: true });
 })();
