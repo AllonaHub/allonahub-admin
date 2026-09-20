@@ -465,6 +465,7 @@
     const selected = normalizeTheme(theme);
     state.theme = selected;
     localStorage.setItem(THEME_KEY, selected);
+    document.documentElement.setAttribute("data-theme", selected);
     document.body.setAttribute("data-theme", selected);
     document.querySelectorAll("[data-theme-select]").forEach((node) => {
       node.value = selected;

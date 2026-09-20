@@ -5,9 +5,9 @@
   const t = (source) => I18n?.t(source) || source;
   const applyI18n = (root) => { I18n?.apply(root || document.body); };
   const state = { session: null, data: null, partnerId: "", activePanel: "", lastFocus: null, pendingLogoPath: null, finance: null, selectedRoomId: "", routeSync: false, candidateFilters: {} };
-  const titles = { jobs: "Şirket İlanları", "job-create": "Yeni İlan Oluştur", vessels: "Gemilerim", "vessel-create": "Gemi Ekle", candidates: "Yetkili Adaylar", "candidate-detail": "Aday Detayı", applications: "Başvurular ve İşe Alım Dosyaları", notifications: "Şirket Bildirimleri", finance: "Finans ve Faturalandırma", company: "Şirket Hesabı", verification: "Doğrulama Şartları", refresh: "Havuzu Güncelle", evidence: "Kanıt Kontrolü", sla: "Süreç Süreleri", handover: "Dosya Devri", review: "Güvenli İnceleme", references: "Doğrulanmış Referans", governance: "Karar ve Değer Merkezi", "ready-pool": "Hazır Aday Havuzu", matches: "Akıllı Eşleşmeler", urgent: "Acil Personel ve Replacement", pending: "Bekleyen İşlemler", pipeline: "Hiring Pipeline", interviews: "Görüşmeler", offers: "Teklifler ve Kontratlar", "active-crew": "Aktif Mürettebat", relief: "Relief ve Rehire" };
-  const templates = { jobs: "mpJobsTemplate", "job-create": "mpJobCreateTemplate", vessels: "mpVesselsTemplate", "vessel-create": "mpVesselCreateTemplate", candidates: "mpCandidatesTemplate", "candidate-detail": "mpPersonnelDataTemplate", applications: "mpApplicationsTemplate", notifications: "mpNotificationsTemplate", finance: "mpFinanceTemplate", company: "mpCompanyTemplate", verification: "mpVerificationTemplate", refresh: "mpRefreshTemplate", evidence: "mpEvidenceTemplate", sla: "mpSlaTemplate", handover: "mpHandoverTemplate", review: "mpReviewTemplate", references: "mpReferencesTemplate", governance: "mpGovernanceTemplate", "ready-pool": "mpReadyPoolTemplate", matches: "mpPersonnelDataTemplate", pending: "mpPersonnelDataTemplate", pipeline: "mpPersonnelDataTemplate", interviews: "mpPersonnelDataTemplate", offers: "mpPersonnelDataTemplate", "active-crew": "mpPersonnelDataTemplate", relief: "mpPersonnelDataTemplate", urgent: "mpUrgentTemplate" };
-  const standalonePanels = new Set(["jobs", "job-create", "vessels", "vessel-create", "candidates", "applications", "notifications", "finance", "company", "verification"]);
+  const titles = { jobs: "Şirket İlanları", "job-create": "Yeni İlan Oluştur", "job-bulk-create": "Toplu İlan Oluştur", vessels: "Gemilerim", "vessel-create": "Gemi Ekle", candidates: "Yetkili Adaylar", "candidate-detail": "Aday Detayı", applications: "Başvurular ve İşe Alım Dosyaları", notifications: "Şirket Bildirimleri", finance: "Finans ve Faturalandırma", company: "Şirket Hesabı", verification: "Doğrulama Şartları", refresh: "Havuzu Güncelle", evidence: "Kanıt Kontrolü", sla: "Süreç Süreleri", handover: "Dosya Devri", review: "Güvenli İnceleme", references: "Doğrulanmış Referans", governance: "Karar ve Değer Merkezi", "ready-pool": "Hazır Aday Havuzu", matches: "Akıllı Eşleşmeler", urgent: "Acil Personel ve Replacement", pending: "Bekleyen İşlemler", pipeline: "Hiring Pipeline", interviews: "Görüşmeler", offers: "Teklifler ve Kontratlar", "active-crew": "Aktif Mürettebat", relief: "Relief ve Rehire" };
+  const templates = { jobs: "mpJobsTemplate", "job-create": "mpJobCreateTemplate", "job-bulk-create": "mpJobBulkTemplate", vessels: "mpVesselsTemplate", "vessel-create": "mpVesselCreateTemplate", candidates: "mpCandidatesTemplate", "candidate-detail": "mpPersonnelDataTemplate", applications: "mpApplicationsTemplate", notifications: "mpNotificationsTemplate", finance: "mpFinanceTemplate", company: "mpCompanyTemplate", verification: "mpVerificationTemplate", refresh: "mpRefreshTemplate", evidence: "mpEvidenceTemplate", sla: "mpSlaTemplate", handover: "mpHandoverTemplate", review: "mpReviewTemplate", references: "mpReferencesTemplate", governance: "mpGovernanceTemplate", "ready-pool": "mpReadyPoolTemplate", matches: "mpPersonnelDataTemplate", pending: "mpPersonnelDataTemplate", pipeline: "mpPersonnelDataTemplate", interviews: "mpPersonnelDataTemplate", offers: "mpPersonnelDataTemplate", "active-crew": "mpPersonnelDataTemplate", relief: "mpPersonnelDataTemplate", urgent: "mpUrgentTemplate" };
+  const standalonePanels = new Set(["jobs", "job-create", "job-bulk-create", "vessels", "vessel-create", "candidates", "applications", "notifications", "finance", "company", "verification"]);
   const legacyViewAliases = Object.freeze({ hiring: "pipeline", "smart-matches": "matches", candidates: "ready-pool", "urgent-crew": "urgent", "crew-matrix": "active-crew", "crew-pool": "ready-pool", interviews: "interviews", "offers-contracts": "offers", "active-crew": "active-crew", "relief-rehire": "relief", references: "references", verification: "verification", team: "company", analytics: "governance" });
   const referenceCategories = [
     ["professional_competence", "Mesleki yeterlilik"], ["safety_awareness", "Emniyet farkındalığı"], ["rule_compliance", "Kural uyumu"],
@@ -49,6 +49,11 @@
     engine_cadet: [], engine_bosun: ["III/5", "VI/2-1"], able_engine_rating: ["III/5", "VI/2-1"], motorman: ["III/4"], oiler: ["III/4"], wiper: [], fitter: ["III/4"], welder: [],
     eto: ["III/6", "VI/2-1", "VI/3", "VI/4-1"], electro_technical_rating: ["III/7"], pumpman: ["II/4"], chief_cook: ["SHIP-COOK"], cook: ["SHIP-COOK"], steward: [], electrician: ["III/6", "VI/2-1", "VI/3", "VI/4-1"]
   });
+  const contractOptions = Object.freeze([
+    ["relief_1_month", "1 aylık değiştirmeci"], ["relief_2_months", "2 aylık değiştirmeci"], ["relief_3_months", "3 aylık değiştirmeci"],
+    ["two_months", "2 ay"], ["three_months", "3 ay"], ["four_months", "4 ay"], ["four_plus_one", "4+1 ay"], ["five_months", "5 ay"], ["five_plus_one", "5+1 ay"],
+    ["six_months", "6 ay"], ["six_plus_one", "6+1 ay"], ["seven_months", "7 ay"], ["seven_plus_one", "7+1 ay"], ["eight_months", "8 ay"], ["eight_plus_one", "8+1 ay"], ["nine_months", "9 ay"], ["nine_plus_one", "9+1 ay"]
+  ]);
   const optionalCertificates = Object.freeze(Object.entries(certificateCatalog));
   const $ = (selector, root) => (root || document).querySelector(selector);
   const $$ = (selector, root) => Array.from((root || document).querySelectorAll(selector));
@@ -111,6 +116,22 @@
     item.value = value;
     item.textContent = t(label);
     return item;
+  }
+
+  function groupedRankOptions() {
+    const groups = [
+      ["Güverte zabitleri", ["master", "chief_officer", "second_officer", "third_officer", "deck_cadet"]],
+      ["Güverte tayfası", ["bosun", "able_seaman", "ordinary_seaman", "deck_boy", "pumpman"]],
+      ["Makine zabitleri", ["chief_engineer", "second_engineer", "third_engineer", "fourth_engineer", "engine_cadet"]],
+      ["Makine tayfası", ["engine_bosun", "able_engine_rating", "motorman", "oiler", "wiper", "fitter", "welder"]],
+      ["Elektrik ve elektronik", ["eto", "electro_technical_rating"]],
+      ["Mutfak ve servis", ["chief_cook", "cook", "steward"]]
+    ];
+    return '<option value="">Rütbe seçin</option>' + groups.map(([label, codes]) => `<optgroup label="${escape(t(label))}">${codes.map((code) => `<option value="${escape(code)}">${escape(t(jobRankLabels[code]))}</option>`).join("")}</optgroup>`).join("");
+  }
+
+  function contractOptionsHtml() {
+    return '<option value="">Kontrat seçin</option>' + contractOptions.map(([value, label]) => `<option value="${escape(value)}">${escape(t(label))}</option>`).join("");
   }
 
   function initials(value) {
@@ -301,8 +322,9 @@
       const area = tradingAreaLabels[$('[name="trading_area"]', form)?.value] || "çalışma bölgesi";
       const vesselType = vessel?.vessel_type || "gemi türü";
       const contract = $('[name="contract_code"] option:checked', form)?.textContent?.trim() || "kontrat süresi seçilecek";
+      const openings = Math.max(1, Number($('[name="openings_count"]', form)?.value || 1));
       const experience = months ? `en az ${months} ay deniz hizmeti bulunan` : "başlangıç seviyesinde değerlendirilebilecek";
-      summary.textContent = `${vesselType} tipi, ${area} sefer bölgesinde çalışan gemimizde görev yapmak üzere ${experience} ${rank} arıyoruz. Ücret ${salary && currency ? `${salary} ${currency}` : "ilan koşullarında belirtilecek"}, kontrat ${contract}; katılım tarihi ve limanı ilan bilgilerinde paylaşılacaktır.`;
+      summary.textContent = `${vesselType} tipi, ${area} sefer bölgesinde çalışan gemimizde görev yapmak üzere ${experience} ${openings > 1 ? `${openings} ${rank}` : rank} arıyoruz. Ücret ${salary && currency ? `${salary} ${currency}` : "ilan koşullarında belirtilecek"}, ${contract}; katılım tarihi ve limanı ilan bilgilerinde paylaşılacaktır.`;
     }
     renderJobCertificates(form);
     applyI18n(form);
@@ -485,7 +507,9 @@
       const jobs = state.data.jobs || [];
       target.innerHTML = `<h3>İlan kayıtları</h3>${jobs.length ? jobs.map((item) => {
         const title = item.title || item.job_title;
-        const detail = [item.location_label || item.structured_requirements?.location_label, item.detail_label || item.structured_requirements?.contract_label, item.rank_code].filter(Boolean).join(" · ");
+        const openings = Number(item.structured_requirements?.openings_count || 1);
+        const rankLabel = jobRankLabels[item.rank_code] || title;
+        const detail = [item.location_label || item.structured_requirements?.location_label, item.detail_label || item.structured_requirements?.contract_label, openings > 1 ? `${openings} kişi` : null, rankLabel !== title ? rankLabel : null].filter(Boolean).join(" · ");
         return `<article><div class="mp-history-card-head"><strong>${escape(title)}</strong><span class="mp-status-pill is-${escape(item.status)}">${escape(statusLabel(item.status))}</span></div><span>${escape(detail || "Denizcilik pozisyonu")}</span><small>${escape(item.summary || item.source_free_text || item.job_reference || "")} · ${escape(dateTime(item.created_at || item.submitted_at))}</small></article>`;
       }).join("") : '<div class="mp-empty">Henüz ilan oluşturulmadı. İlk doğrulanmış ilanınızı oluşturabilirsiniz.</div>'}`;
     }
@@ -671,7 +695,7 @@
   function setActiveNavigation(view) {
     const group = view === "center" || ["ready-pool", "matches", "urgent", "pending", "pipeline", "interviews", "offers", "active-crew", "relief", "candidates", "applications", "refresh", "evidence", "sla", "handover", "review", "references", "governance", "candidate-detail"].includes(view)
       ? "personnel"
-      : view === "job-create" ? "jobs" : view === "vessel-create" ? "vessels" : view;
+      : ["job-create", "job-bulk-create"].includes(view) ? "jobs" : view === "vessel-create" ? "vessels" : view;
     $$(".mp-primary-nav > *").forEach((item) => {
       const itemGroup = item.hasAttribute("data-mp-center") ? "personnel" : item.dataset.mpView || item.dataset.mpOpen || "";
       const active = itemGroup === (group || "operations");
@@ -747,6 +771,7 @@
       }
       refreshJobForm($("[data-mp-job-form]", body));
     }
+    if (panel === "job-bulk-create") addBulkVessel($("[data-mp-job-bulk-form]", body));
     if (panel === "evidence") addRequirement(body);
     renderWorkspacePanel(body, panel);
     renderHistory(body, panel);
@@ -835,7 +860,7 @@
       notificationSignal.textContent = counts.notifications > 99 ? "99+" : String(counts.notifications);
     }
     const canCreateJob = !state.data.restricted && verification.ready_for_hiring;
-    $$('[data-mp-open="job-create"]').forEach((button) => {
+    $$('[data-mp-open="job-create"], [data-mp-open="job-bulk-create"]').forEach((button) => {
       button.dataset.mpBlocked = canCreateJob ? "false" : "true";
       button.setAttribute("aria-disabled", String(!canCreateJob));
       button.title = canCreateJob ? "Yeni denizcilik ilanı oluştur" : "İlan oluşturmak için şirket ve temsilci doğrulaması tamamlanmalıdır.";
@@ -917,6 +942,167 @@
     alert("Şirket profili güncellendi.", "success");
   }
 
+  function renderBulkCertificates(position) {
+    const target = $("[data-mp-bulk-certificates]", position);
+    if (!target) return;
+    const group = position.closest("[data-mp-bulk-vessel]");
+    const vessel = vesselForJob(group);
+    const rankCode = $('[name="rank_code"]', position)?.value || "";
+    const previous = new Set(selectedValues(position, "certificates"));
+    const rankCertificateCodes = rankCertificates[rankCode] || [];
+    const recommendedByVessel = vesselCertificateRecommendations(vessel?.vessel_type || "", rankCode);
+    const locked = new Set([...coreCertificates.map(([code]) => code), ...rankCertificateCodes]);
+    const recommended = new Set([...previous, ...recommendedByVessel]);
+    const visibleOptional = new Set([...optionalCertificateCodesForRank(rankCode), ...recommendedByVessel]);
+    target.innerHTML = [
+      ...coreCertificates.map(([code, label]) => certificateCheck(code, label, true, true)),
+      ...rankCertificateCodes.map((code) => certificateCheck(code, certificateCatalog[code] || code, true, true)),
+      ...optionalCertificates.filter(([code]) => visibleOptional.has(code) && !locked.has(code)).map(([code, label]) => certificateCheck(code, label, recommended.has(code), false))
+    ].join("");
+  }
+
+  function updateBulkSummary(form) {
+    const groups = $$('[data-mp-bulk-vessel]', form);
+    const positions = $$('[data-mp-bulk-position]', form);
+    const seats = positions.reduce((total, position) => total + Math.max(1, Number($('[name="openings_count"]', position)?.value || 1)), 0);
+    const target = $("[data-mp-bulk-summary]", form);
+    if (target) target.textContent = `${groups.length} gemi · ${positions.length} bağımsız ilan · toplam ${seats} açık pozisyon`;
+  }
+
+  function refreshBulkPosition(position) {
+    renderBulkCertificates(position);
+    updateBulkSummary(position.closest("form"));
+    applyI18n(position);
+  }
+
+  function bulkPositionMarkup() {
+    return `<article class="mp-bulk-position" data-mp-bulk-position>
+      <div class="mp-bulk-position__head"><strong>Rütbe ilanı</strong><button type="button" class="mp-icon-button" data-mp-bulk-remove-position aria-label="Bu rütbeyi kaldır">×</button></div>
+      <div class="mp-bulk-position__grid">
+        <label><span>Aranan rütbe</span><select name="rank_code" required>${groupedRankOptions()}</select></label>
+        <label><span>Kişi sayısı</span><input type="number" name="openings_count" min="1" max="50" value="1" required inputmode="numeric"></label>
+        <label><span>En az deniz hizmeti (ay)</span><input type="number" name="minimum_sea_service_months" min="0" max="600" value="6" required inputmode="numeric"></label>
+        <label><span>Ücret</span><input type="number" name="salary_amount" min="1" max="1000000" step="0.01" required inputmode="decimal" placeholder="3500"></label>
+        <label><span>Para birimi</span><select name="salary_currency" required><option value="">Seçin</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="GBP">GBP</option><option value="TRY">TRY</option><option value="AZN">AZN</option></select></label>
+        <label><span>Kontrat</span><select name="contract_code" required>${contractOptionsHtml()}</select></label>
+      </div>
+      <label class="mp-check"><input type="checkbox" name="available_now_required"> Hemen katılabilir aday zorunlu</label>
+      <details class="mp-bulk-certificates"><summary>Zorunlu ve önerilen sertifikalar</summary><div class="mp-certificate-grid" data-mp-bulk-certificates></div></details>
+    </article>`;
+  }
+
+  function addBulkPosition(group) {
+    const target = $("[data-mp-bulk-positions]", group);
+    if (!target || target.children.length >= 20) return;
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = bulkPositionMarkup();
+    const position = wrapper.firstElementChild;
+    position.dataset.clientListingId = clientId();
+    target.append(position);
+    refreshBulkPosition(position);
+  }
+
+  function refreshBulkGroup(group) {
+    const form = group.closest("form");
+    const vessel = vesselForJob(group);
+    const metadata = vessel?.metadata || {};
+    const preview = $("[data-mp-bulk-vessel-preview]", group);
+    if (preview) {
+      const facts = vessel ? [vessel.vessel_name, `IMO ${vessel.imo_number}`, vessel.vessel_type, vessel.flag_state, metadata.deadweight ? `${metadata.deadweight} DWT` : null, metadata.gross_tonnage ? `${metadata.gross_tonnage} GT` : null].filter(Boolean) : [];
+      preview.innerHTML = facts.length ? `<strong>${escape(facts.slice(0, 2).join(" · "))}</strong><span>${escape(facts.slice(2).join(" · "))}</span>` : "Gemi seçildiğinde doğrulanmış teknik bilgiler burada gösterilir.";
+    }
+    const currentPort = $('[name="current_port"]', group);
+    const nextPort = $('[name="next_port"]', group);
+    if (currentPort && !currentPort.value) currentPort.value = metadata.current_port || metadata.last_port || "";
+    if (nextPort && !nextPort.value) nextPort.value = metadata.destination || metadata.next_port || "";
+    const joining = $('[name="joining_date"]', group);
+    const expiry = $('[name="expires_at"]', group);
+    if (joining?.value && expiry) {
+      expiry.min = new Date().toISOString().slice(0, 10);
+      expiry.max = addDays(joining.value, 3);
+      if (!expiry.value || expiry.value > expiry.max || expiry.value < expiry.min) expiry.value = expiry.max;
+    }
+    const language = $('[name="language"]', group);
+    const level = $('[name="language_level"]', group);
+    if (level) level.disabled = !language?.value;
+    const risk = $('[name="war_risk_status"]', group)?.value;
+    const riskNote = $("[data-mp-bulk-war-note]", group);
+    if (riskNote) {
+      riskNote.hidden = !risk || risk === "no_known_listed_area";
+      const input = $("input", riskNote);
+      if (input) input.required = Boolean(risk && risk !== "no_known_listed_area");
+    }
+    $$('[data-mp-bulk-position]', group).forEach(renderBulkCertificates);
+    updateBulkSummary(form);
+    applyI18n(group);
+  }
+
+  function addBulkVessel(form) {
+    const target = $("[data-mp-bulk-vessels]", form);
+    if (!target || target.children.length >= 8) return;
+    const group = document.createElement("section");
+    group.className = "mp-bulk-vessel";
+    group.dataset.mpBulkVessel = "";
+    const joining = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+    group.innerHTML = `<div class="mp-bulk-vessel__head"><div><span>Gemi grubu</span><strong>Gemi ve ortak sefer koşulları</strong></div><button type="button" class="mp-icon-button" data-mp-bulk-remove-vessel aria-label="Bu gemi grubunu kaldır">×</button></div>
+      <div class="mp-bulk-common-grid">
+        <label class="mp-full"><span>İlan verilecek gemi</span><select name="vessel_profile_id" data-mp-vessel-options required><option value="">Gemi adı · IMO ile seçin</option></select></label>
+        <div class="mp-job-vessel-preview mp-full" data-mp-bulk-vessel-preview>Gemi seçildiğinde doğrulanmış teknik bilgiler burada gösterilir.</div>
+        <label><span>Katılım tarihi</span><input type="date" name="joining_date" required value="${joining}"></label>
+        <label><span>İlan bitiş tarihi</span><input type="date" name="expires_at" required value="${addDays(joining, 3)}"><small>Katılım tarihinden en fazla 3 gün sonrası.</small></label>
+        <label><span>Katılım limanı</span><input name="joining_port" required minlength="2" maxlength="120"></label>
+        <label><span>Mevcut liman / konum</span><input name="current_port" required minlength="2" maxlength="120"><small data-mp-position-status>Şirket doğrulaması gerekir.</small></label>
+        <label><span>Bir sonraki liman</span><input name="next_port" required minlength="2" maxlength="120"></label>
+        <label><span>Çalışma bölgesi</span><select name="trading_area" required><option value="">Seçin</option>${Object.entries(tradingAreaLabels).map(([value, label]) => `<option value="${escape(value)}">${escape(t(label))}</option>`).join("")}</select></label>
+        <label><span>Savaş / yüksek risk bölgesi</span><select name="war_risk_status" required><option value="">Seçin</option><option value="no_known_listed_area">Bilinen listelenmiş risk bölgesi yok</option><option value="listed_area_planned">Riskli bölge geçişi planlanıyor</option><option value="route_under_review">Rota ve risk değerlendirmesi kesinleşmedi</option></select></label>
+        <label data-mp-bulk-war-note hidden><span>Rota risk açıklaması</span><input name="war_risk_note" maxlength="240"></label>
+        <label><span>Gerekli dil</span><select name="language"><option value="">Dil şartı yok</option><option value="English">İngilizce</option><option value="Turkish">Türkçe</option><option value="Azerbaijani">Azerbaycanca</option><option value="Russian">Rusça</option></select></label>
+        <label><span>Dil seviyesi</span><select name="language_level"><option value="B1">B1</option><option value="B2">B2</option><option value="C1">C1</option><option value="C2">C2</option><option value="fluent">Akıcı</option><option value="native">Ana dil</option></select></label>
+        <label class="mp-full"><span>Ortak tercih notu</span><textarea name="preferred_conditions" maxlength="500" placeholder="Yalnız zorunlu olmayan ek tercihler"></textarea></label>
+        <label class="mp-check mp-full"><input type="checkbox" name="current_position_confirmed" required> Gemi konumu ve rota bilgilerini şirket adına doğruluyorum</label>
+      </div>
+      <div class="mp-bulk-positions" data-mp-bulk-positions></div>
+      <button class="mp-secondary" type="button" data-mp-bulk-add-position>+ Rütbe ekle</button>`;
+    target.append(group);
+    fillVessels(group);
+    addBulkPosition(group);
+    refreshBulkGroup(group);
+  }
+
+  async function submitBulkJobs(form) {
+    const jobs = [];
+    const combinations = new Set();
+    $$('[data-mp-bulk-vessel]', form).forEach((group) => {
+      const value = (name) => String($(`[name="${name}"]`, group)?.value || "").trim();
+      const language = value("language");
+      $$('[data-mp-bulk-position]', group).forEach((position) => {
+        const field = (name) => String($(`[name="${name}"]`, position)?.value || "").trim();
+        const rankCode = field("rank_code");
+        const combination = `${value("vessel_profile_id")}:${rankCode}`;
+        if (combinations.has(combination)) throw new Error("Aynı gemi ve rütbe iki kez eklenemez. Kişi sayısını artırın.");
+        combinations.add(combination);
+        const certificates = selectedValues(position, "certificates");
+        if (!certificates.length) throw new Error("Her rütbe için zorunlu sertifikaları tamamlayın.");
+        if (!position.dataset.clientListingId) position.dataset.clientListingId = clientId();
+        jobs.push({
+          client_listing_id: position.dataset.clientListingId,
+          vessel_profile_id: value("vessel_profile_id"), joining_date: value("joining_date"), joining_port: value("joining_port"), current_port: value("current_port"), next_port: value("next_port"),
+          trading_area: value("trading_area"), war_risk_status: value("war_risk_status"), war_risk_note: value("war_risk_note"), preferred_conditions: value("preferred_conditions"),
+          rank_code: rankCode, openings_count: Number(field("openings_count") || 1), minimum_sea_service_months: Number(field("minimum_sea_service_months") || 0), salary_amount: Number(field("salary_amount")), salary_currency: field("salary_currency"), contract_code: field("contract_code"),
+          required_certificate_codes: certificates, required_languages: language ? [{ language, level: value("language_level") || "B1" }] : [], available_now_required: $('[name="available_now_required"]', position)?.checked === true,
+          current_position_confirmed: $('[name="current_position_confirmed"]', group)?.checked === true, expires_at: new Date(`${value("expires_at")}T23:59:59`).toISOString()
+        });
+      });
+    });
+    if (jobs.length < 2) throw new Error("Toplu ilan için en az iki bağımsız rütbe ilanı ekleyin.");
+    if (!form.dataset.clientBatchId) form.dataset.clientBatchId = clientId();
+    const result = await api("/v1/maritime/partner-center/jobs/bulk", { method: "POST", body: { partner_id: state.partnerId, client_batch_id: form.dataset.clientBatchId, jobs } });
+    delete form.dataset.clientBatchId;
+    await load(state.partnerId);
+    openPanel("jobs", state.lastFocus);
+    alert(`${result.created_count} ilan oluşturuldu. ${result.auto_published_count} ilan otomatik doğrulanıp yayımlandı.`, "success");
+  }
+
   async function submitJob(form) {
     const data = new FormData(form);
     const certificates = selectedValues(form, "certificates");
@@ -944,13 +1130,15 @@
       minimum_sea_service_months: Number(data.get("minimum_sea_service_months") || 0),
       required_languages: language ? [{ language, level: data.get("language_level") || "B1" }] : [],
       available_now_required: data.get("available_now_required") === "on",
+      current_position_confirmed: data.get("current_position_confirmed") === "on",
+      openings_count: Number(data.get("openings_count") || 1),
       expires_at: expiry.toISOString()
     };
-    await api("/v1/maritime/partner-center/jobs", { method: "POST", body: payload });
+    const result = await api("/v1/maritime/partner-center/jobs", { method: "POST", body: payload });
     delete form.dataset.clientListingId;
     await load(state.partnerId);
     openPanel("jobs", state.lastFocus);
-    alert("İlanınız doğrulama ve yayın incelemesine gönderildi.", "success");
+    alert(result.review?.approved ? "İlanınız otomatik doğrulandı ve yayımlandı." : "İlanınız güvenli doğrulama incelemesine gönderildi.", "success");
   }
 
   function vesselNumber(value) {
@@ -1290,6 +1478,32 @@
       catch (error) { alert(error.message || "Aday araması kaydedilemedi."); }
       return;
     }
+    const addBulkVesselButton = event.target.closest("[data-mp-bulk-add-vessel]");
+    if (addBulkVesselButton) {
+      addBulkVessel(addBulkVesselButton.closest("form"));
+      return;
+    }
+    const addBulkPositionButton = event.target.closest("[data-mp-bulk-add-position]");
+    if (addBulkPositionButton) {
+      addBulkPosition(addBulkPositionButton.closest("[data-mp-bulk-vessel]"));
+      return;
+    }
+    const removeBulkPositionButton = event.target.closest("[data-mp-bulk-remove-position]");
+    if (removeBulkPositionButton) {
+      const group = removeBulkPositionButton.closest("[data-mp-bulk-vessel]");
+      if ($$('[data-mp-bulk-position]', group).length <= 1) { alert("Her gemi için en az bir rütbe ilanı kalmalıdır."); return; }
+      removeBulkPositionButton.closest("[data-mp-bulk-position]")?.remove();
+      updateBulkSummary(group.closest("form"));
+      return;
+    }
+    const removeBulkVesselButton = event.target.closest("[data-mp-bulk-remove-vessel]");
+    if (removeBulkVesselButton) {
+      const form = removeBulkVesselButton.closest("form");
+      if ($$('[data-mp-bulk-vessel]', form).length <= 1) { alert("Toplu ilanda en az bir gemi kalmalıdır."); return; }
+      removeBulkVesselButton.closest("[data-mp-bulk-vessel]")?.remove();
+      updateBulkSummary(form);
+      return;
+    }
     const add = event.target.closest("[data-mp-add-requirement]");
     if (add) addRequirement($("[data-mp-drawer-body]"));
     const remove = event.target.closest("[data-mp-remove-requirement]");
@@ -1336,7 +1550,7 @@
       renderPoolFilter($("[data-mp-drawer-body]"));
       return;
     }
-    const handler = form.matches("[data-mp-job-form]") ? submitJob : form.matches("[data-mp-vessel-form]") ? submitVessel : form.matches("[data-mp-profile-form]") ? submitProfile : form.matches("[data-mp-refresh-form]") ? submitRefresh : form.matches("[data-mp-evidence-template-form]") ? submitEvidenceTemplate : form.matches("[data-mp-evidence-request-form]") ? submitEvidenceRequest : form.matches("[data-mp-sla-form]") ? submitSla : form.matches("[data-mp-sla-start-form]") ? submitSlaStart : form.matches("[data-mp-sla-extend-form]") ? submitSlaExtend : form.matches("[data-mp-handover-form]") ? submitHandover : form.matches("[data-mp-review-form]") ? submitReview : form.matches("[data-mp-reference-form]") ? submitEmployerReference : form.matches("[data-mp-urgent-form]") ? submitUrgent : form.matches("[data-mp-notification-preferences-form]") ? submitNotificationPreferences : null;
+    const handler = form.matches("[data-mp-job-form]") ? submitJob : form.matches("[data-mp-job-bulk-form]") ? submitBulkJobs : form.matches("[data-mp-vessel-form]") ? submitVessel : form.matches("[data-mp-profile-form]") ? submitProfile : form.matches("[data-mp-refresh-form]") ? submitRefresh : form.matches("[data-mp-evidence-template-form]") ? submitEvidenceTemplate : form.matches("[data-mp-evidence-request-form]") ? submitEvidenceRequest : form.matches("[data-mp-sla-form]") ? submitSla : form.matches("[data-mp-sla-start-form]") ? submitSlaStart : form.matches("[data-mp-sla-extend-form]") ? submitSlaExtend : form.matches("[data-mp-handover-form]") ? submitHandover : form.matches("[data-mp-review-form]") ? submitReview : form.matches("[data-mp-reference-form]") ? submitEmployerReference : form.matches("[data-mp-urgent-form]") ? submitUrgent : form.matches("[data-mp-notification-preferences-form]") ? submitNotificationPreferences : null;
     if (!handler) return;
     event.preventDefault();
     try { await submitWithButton(form, () => handler(form)); }
@@ -1344,6 +1558,21 @@
   });
 
   document.addEventListener("change", async (event) => {
+    const bulkPosition = event.target.closest("[data-mp-bulk-position]");
+    if (bulkPosition && event.target.matches('[name="rank_code"]')) {
+      refreshBulkPosition(bulkPosition);
+      return;
+    }
+    const bulkGroup = event.target.closest("[data-mp-bulk-vessel]");
+    if (bulkGroup && event.target.matches('[name="vessel_profile_id"]')) {
+      await refreshJobVesselPosition(bulkGroup);
+      refreshBulkGroup(bulkGroup);
+      return;
+    }
+    if (bulkGroup && event.target.matches('[name="joining_date"], [name="trading_area"], [name="war_risk_status"], [name="language"]')) {
+      refreshBulkGroup(bulkGroup);
+      return;
+    }
     const jobForm = event.target.closest("[data-mp-job-form]");
     if (jobForm && event.target.matches('[name="vessel_profile_id"]')) {
       await refreshJobVesselPosition(jobForm);
@@ -1371,8 +1600,13 @@
     $$('.mp-stars input[type="radio"]', row).forEach((input) => { input.disabled = event.target.checked; input.required = !event.target.checked; if (event.target.checked) input.checked = false; });
   });
   document.addEventListener("input", (event) => {
+    const bulkForm = event.target.closest("[data-mp-job-bulk-form]");
+    if (bulkForm && event.target.matches('[name="openings_count"]')) {
+      updateBulkSummary(bulkForm);
+      return;
+    }
     const jobForm = event.target.closest("[data-mp-job-form]");
-    if (jobForm && event.target.matches('[name="minimum_sea_service_months"], [name="salary_amount"]')) {
+    if (jobForm && event.target.matches('[name="minimum_sea_service_months"], [name="salary_amount"], [name="openings_count"]')) {
       refreshJobForm(jobForm);
       return;
     }

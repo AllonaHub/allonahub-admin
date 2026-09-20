@@ -243,13 +243,17 @@ export function buildMariPartnerJobPresentation(input, vessel) {
     ? new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${input.joining_date}T00:00:00Z`))
     : compactJobText(input?.joining_date, 20);
   const contractLabel = MARIPARTNER_CONTRACT_OPTIONS[input?.contract_code] || compactJobText(input?.contract_label, 120) || "kontrat süresi şirketle netleştirilecek";
-  const summary = `${vesselType} tipi, ${tradingAreaLabel} sefer bölgesinde çalışan gemimizde görev yapmak üzere ${experience} ${rankLabel} arıyoruz. Ücret ${salary || "görüşmede paylaşılacak"}, kontrat ${contractLabel}; katılım ${joiningDate || "belirtilen tarihte"} tarihinde ${compactJobText(input?.joining_port, 120)} limanından planlanmaktadır.`;
+  const openings = Math.max(1, Math.trunc(Number(input?.openings_count) || 1));
+  const hiringPhrase = openings > 1
+    ? `${openings} ${rankLabel}`
+    : rankLabel;
+  const summary = `${vesselType} tipi, ${tradingAreaLabel} sefer bölgesinde çalışan gemimizde görev yapmak üzere ${experience} ${hiringPhrase} arıyoruz. Ücret ${salary || "görüşmede paylaşılacak"}, ${contractLabel}; katılım ${joiningDate || "belirtilen tarihte"} tarihinde ${compactJobText(input?.joining_port, 120)} limanından planlanmaktadır.`;
   const metadata = vessel?.metadata && typeof vessel.metadata === "object" ? vessel.metadata : {};
   return {
     title: rankLabel,
     summary: compactJobText(summary, 360),
     location_label: compactJobText(route, 120),
-    detail_label: compactJobText([contractLabel, salary].filter(Boolean).join(" · "), 120),
+    detail_label: compactJobText([openings > 1 ? `${openings} kişi` : null, contractLabel, salary].filter(Boolean).join(" · "), 120),
     minimum_sea_service_days: months * 30,
     public_vessel: {
       vessel_type: vesselType,
@@ -271,6 +275,23 @@ export function buildMariPartnerJobPresentation(input, vessel) {
       contract_code: input?.contract_code || null,
       contract_label: contractLabel
     }
+  };
+}
+
+function hasReviewableListingText(value) {
+  return String(value || "").normalize("NFKC").replace(/[\u200B-\u200D\uFEFF]/g, " ").replace(/\s+/g, " ").trim().length > 0;
+}
+
+export function reviewMariPartnerJobForAutomaticPublication(input, vessel) {
+  const reasons = [];
+  if (vessel?.status !== "verified" || vessel?.verification_status !== "verified" || vessel?.reapproval_required === true) reasons.push("VESSEL_VERIFICATION_REQUIRED");
+  if (input?.current_position_confirmed !== true) reasons.push("CURRENT_POSITION_CONFIRMATION_REQUIRED");
+  if (input?.war_risk_status !== "no_known_listed_area") reasons.push("ROUTE_RISK_REVIEW_REQUIRED");
+  if (hasReviewableListingText(input?.preferred_conditions) || hasReviewableListingText(input?.war_risk_note)) reasons.push("FREE_TEXT_REVIEW_REQUIRED");
+  return {
+    approved: reasons.length === 0,
+    rule_version: "maripartner-auto-review-v1",
+    reason_codes: reasons.length ? reasons : ["STRUCTURED_REQUIREMENTS_COMPLETE"]
   };
 }
 

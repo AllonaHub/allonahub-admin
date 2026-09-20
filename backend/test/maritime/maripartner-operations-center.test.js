@@ -7,7 +7,8 @@ import {
   MARIPARTNER_CONTRACT_OPTIONS,
   buildMariPartnerJobPresentation,
   canReadMariPartnerFinance,
-  recommendedVesselCertificateCodes
+  recommendedVesselCertificateCodes,
+  reviewMariPartnerJobForAutomaticPublication
 } from "../../src/lib/maritime-partner-center.js";
 
 const root = new URL("../../../", import.meta.url);
@@ -77,10 +78,13 @@ test("operations control migration is server-only and idempotency-backed", () =>
 test("MariPartner keeps URL state, theme controls and responsive safeguards", () => {
   const html = read("pages/partner/maripartner.html");
   const script = read("js/maripartner.js");
+  const platform = read("js/platform.js");
   const css = read("css/maripartner.css");
   assert.match(html, /data-platform-controls-slot="home"/);
   assert.match(html, /js\/platform\.js/);
-  assert.match(html, /js\/maripartner-i18n\.js\?v=20260920-maripartner-job4/);
+  assert.match(html, /css\/maripartner\.css\?v=20260920-maripartner-job6/);
+  assert.match(html, /js\/platform\.js\?v=20260920-maripartner6/);
+  assert.match(html, /js\/maripartner-i18n\.js\?v=20260920-maripartner-job5/);
   assert.match(script, /searchParams\.set\("view"/);
   assert.match(script, /searchParams\.set\("tab"/);
   assert.match(css, /@media \(max-width: 1100px\)/);
@@ -91,16 +95,24 @@ test("MariPartner keeps URL state, theme controls and responsive safeguards", ()
   assert.match(script, /popstate/);
   assert.match(script, /focusable/);
   assert.match(script, /legacyViewAliases/);
+  assert.match(platform, /document\.documentElement\.setAttribute\("data-theme", selected\)/);
 });
 
 test("MariPartner uses one theme-aware page plane instead of detached header and sidebar surfaces", () => {
   const css = read("css/maripartner.css");
-  for (const token of ["--mp-canvas", "--mp-panel", "--mp-panel-soft", "--mp-header-surface"]) assert.match(css, new RegExp(token));
+  for (const token of ["--mp-canvas", "--mp-panel", "--mp-panel-soft", "--mp-input", "--mp-raised", "--mp-header-surface"]) assert.match(css, new RegExp(token));
   assert.match(css, /\.mp-app-shell[^}]*background:\s*var\(--mp-canvas\)/s);
   assert.match(css, /\.mp-sidebar[^}]*background:\s*var\(--mp-canvas\)/s);
   assert.match(css, /\.mp-hero[^}]*background:\s*transparent[^}]*border-bottom:\s*1px solid var\(--mp-line\)[^}]*box-shadow:\s*none/s);
-  assert.match(css, /data-theme="sunset"[^}]*--mp-panel:/);
-  assert.match(css, /data-theme="turquoise"[^}]*--mp-panel:/);
+  for (const theme of ["ocean", "white", "sunset", "turquoise"]) {
+    assert.match(css, new RegExp(`data-theme="${theme}"[^}]*--mp-canvas:[^}]*--mp-panel:[^}]*--mp-input:`));
+  }
+  assert.match(css, /data-theme="ocean"[^}]*--mp-canvas:\s*#020b18/);
+  assert.match(css, /data-theme="white"[^}]*--mp-canvas:\s*#edf7fc/);
+  assert.match(css, /data-theme="sunset"[^}]*--mp-canvas:\s*#170812/);
+  assert.match(css, /data-theme="turquoise"[^}]*--mp-canvas:\s*#021718/);
+  assert.match(css, /\.mp-drawer[^}]*background:\s*var\(--mp-paper\)/);
+  assert.doesNotMatch(css, /body\.mp-body\[data-theme\] \.mp-drawer[^}]*background:\s*#f5f8fb/);
 });
 
 test("MariPartner translates authored and dynamic UI in all nine platform languages", () => {
@@ -113,6 +125,7 @@ test("MariPartner translates authored and dynamic UI in all nine platform langua
   assert.match(client, /MutationObserver/);
   assert.match(client, /ui-translations/);
   assert.match(client, /\[data-mp-company-name\]/);
+  for (const phrase of ["Toplu İlan Oluştur", "Tek işlem, bağımsız ilanlar", "Gemi ve ortak sefer koşulları", "Rütbe ilanı", "Kişi sayısı"]) assert.match(client, new RegExp(phrase));
   assert.match(panel, /MariPartnerI18n/);
   assert.match(panel, /applyI18n\(body\)/);
   assert.match(route, /partnerUiTranslationSchema/);
@@ -120,11 +133,11 @@ test("MariPartner translates authored and dynamic UI in all nine platform langua
   assert.match(route, /translateMarsohTextDetailed/);
 });
 
-test("job creation records operational requirements and invites only against open jobs", () => {
+test("single and bulk job creation record independent matching requirements", () => {
   const html = read("pages/partner/maripartner.html");
   const script = read("js/maripartner.js");
   const route = read("backend/src/routes/maritime-partner-center.js");
-  for (const field of ["vessel_profile_id", "joining_date", "joining_port", "current_port", "next_port", "trading_area", "war_risk_status", "contract_code", "salary_amount", "salary_currency", "minimum_sea_service_months"]) {
+  for (const field of ["vessel_profile_id", "joining_date", "joining_port", "current_port", "next_port", "trading_area", "war_risk_status", "contract_code", "salary_amount", "salary_currency", "minimum_sea_service_months", "openings_count", "current_position_confirmed"]) {
     assert.match(html, new RegExp(`name="${field}"[^>]*required`));
     assert.match(script, new RegExp(`${field}:`));
   }
@@ -140,6 +153,16 @@ test("job creation records operational requirements and invites only against ope
   assert.match(route, /job\.status !== "open"/);
   assert.match(route, /contract_start: body\.joining_date/);
   assert.match(route, /preferred_conditions: body\.preferred_conditions/);
+  assert.match(html, /Toplu İlan Oluştur/);
+  assert.match(html, /id="mpJobBulkTemplate"/);
+  assert.match(script, /\/v1\/maritime\/partner-center\/jobs\/bulk/);
+  assert.match(script, /Aynı gemi ve rütbe iki kez eklenemez/);
+  assert.match(route, /app\.post\("\/v1\/maritime\/partner-center\/jobs\/bulk"/);
+  assert.match(route, /client_batch_id/);
+  assert.match(route, /Aynı gemi ve rütbe için kişi sayısını artırın/);
+  assert.match(route, /openings_count: body\.openings_count/);
+  assert.match(route, /maripartner\.job_batch_submitted/);
+  assert.match(route, /maritime_jobs"\)\.delete\(\)\.in\("id"/);
 });
 
 test("smart job presentation never exposes vessel identity and converts experience months for matching", () => {
@@ -154,7 +177,8 @@ test("smart job presentation never exposes vessel identity and converts experien
     next_port: "Valensiya",
     trading_area: "mediterranean",
     war_risk_status: "no_known_listed_area",
-    contract_code: "four_plus_one"
+    contract_code: "four_plus_one",
+    openings_count: 3
   }, {
     vessel_name: "Gizli Gemi",
     imo_number: "9389370",
@@ -166,8 +190,39 @@ test("smart job presentation never exposes vessel identity and converts experien
   assert.equal(result.minimum_sea_service_days, 180);
   assert.equal(result.public_vessel.deadweight, 8200);
   assert.equal(result.route.contract_label, "4+1 aylık kontrat");
-  assert.match(result.summary, /en az 6 ay deniz hizmeti bulunan Usta Yağcı \/ Usta Makine Tayfası \(STCW III\/5\)/);
+  assert.match(result.summary, /en az 6 ay deniz hizmeti bulunan 3 Usta Yağcı \/ Usta Makine Tayfası \(STCW III\/5\)/);
+  assert.match(result.detail_label, /^3 kişi · 4\+1 aylık kontrat/);
+  assert.doesNotMatch(result.summary, /kontrat 4\+1 aylık kontrat/);
   assert.doesNotMatch(JSON.stringify(result), /Gizli Gemi|9389370/);
+});
+
+test("automatic publication is deny-by-default unless vessel, route and company confirmation are safe", () => {
+  const input = {
+    current_position_confirmed: true,
+    war_risk_status: "no_known_listed_area",
+    preferred_conditions: "",
+    war_risk_note: ""
+  };
+  const vessel = { status: "verified", verification_status: "verified", reapproval_required: false };
+  assert.deepEqual(reviewMariPartnerJobForAutomaticPublication(input, vessel), {
+    approved: true,
+    rule_version: "maripartner-auto-review-v1",
+    reason_codes: ["STRUCTURED_REQUIREMENTS_COMPLETE"]
+  });
+  const unsafe = reviewMariPartnerJobForAutomaticPublication({
+    ...input,
+    preferred_conditions: "Ek tercih yönetici tarafından değerlendirilmelidir.",
+    war_risk_status: "route_under_review"
+  }, { ...vessel, verification_status: "pending" });
+  assert.equal(unsafe.approved, false);
+  assert.deepEqual(unsafe.reason_codes, ["VESSEL_VERIFICATION_REQUIRED", "ROUTE_RISK_REVIEW_REQUIRED", "FREE_TEXT_REVIEW_REQUIRED"]);
+});
+
+test("job cards localize rank codes and keep headcount separate from matching identity", () => {
+  const script = read("js/maripartner.js");
+  assert.match(script, /const rankLabel = jobRankLabels\[item\.rank_code\] \|\| title/);
+  assert.match(script, /openings > 1 \? `\$\{openings\} kişi` : null/);
+  assert.doesNotMatch(script, /textContent\s*=\s*item\.rank_code/);
 });
 
 test("contract choices include reliever work and cap standard contracts at 9+1 months", () => {
