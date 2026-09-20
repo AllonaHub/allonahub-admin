@@ -956,7 +956,10 @@
         profileClient = profileClient || sync.createClient();
         accountProfile = await sync.save(profileClient, nextProfile);
       } else if (App.supabase && App.supabase.auth) {
-        const result = await App.supabase.auth.updateUser({ data: { avatar_url: avatarUrl } });
+        const saved = await App.supabase.from("profiles").update({ avatar_url: avatarUrl })
+          .eq("id", userId()).select("id").maybeSingle();
+        if (saved.error || !saved.data) throw saved.error || new Error("profile_unavailable");
+        const result = await App.supabase.auth.updateUser({ data: { avatar_url: null, avatar: null } });
         if (result.error) throw result.error;
         accountProfile = nextProfile;
       } else {

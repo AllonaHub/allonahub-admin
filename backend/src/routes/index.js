@@ -4,6 +4,7 @@ import net from "node:net";
 import { z } from "zod";
 import { config } from "../config.js";
 import { autoDefenseStatus } from "../lib/auto-defense.js";
+import { preparePasswordLoginSession } from "../lib/auth-session-profile.js";
 import {
   mukellefInfoLookupUrl,
   nilveraLookupUrl,
@@ -11087,6 +11088,16 @@ export function registerRoutes(app) {
       });
     }
 
+    let preparedLogin;
+    try {
+      preparedLogin = await preparePasswordLoginSession({
+        admin: supabaseAdmin, auth: supabasePublic.auth, data, email, password: payload.password
+      });
+    } catch (error) {
+      await recordAuthFailure({ request, action: "auth.login_failed", email, stage: "session_preparation", error, statusCode: 503, provider: "allonahub" });
+      throw error;
+    }
+
     await auditEvent({
       request,
       actorId: data.user.id,
@@ -11102,8 +11113,8 @@ export function registerRoutes(app) {
 
     return {
       ok: true,
-      user: publicAuthUser(data.user),
-      session: data.session
+      user: publicAuthUser(preparedLogin.user),
+      session: preparedLogin.session
     };
   });
 

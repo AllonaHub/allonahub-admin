@@ -347,6 +347,7 @@
   }
 
   function metadataPayload(profile) {
+    const avatar = safeAvatarUrl(profile.avatar_url || profile.avatar || "");
     return {
       full_name: profile.full_name || "",
       phone: profile.phone || "",
@@ -363,7 +364,8 @@
       experience_year: profile.experience_year || "",
       profile_visible: profile.profile_visible !== false,
       contact_locked: profile.contact_locked !== false,
-      avatar_url: safeAvatarUrl(profile.avatar_url || profile.avatar || ""),
+      avatar_url: /^https?:\/\//i.test(avatar) && avatar.length <= 2048 ? avatar : null,
+      avatar: null,
       hp: asNumber(profile.hp, 0),
       xp: asNumber(profile.xp, 0),
       streak: asNumber(profile.streak, 0),
@@ -389,24 +391,25 @@
     merged.next_level_name = levelInfo.next ? levelInfo.next.name : "Legend Zirvesi";
     merged.cv_target = cvTarget(merged);
 
-    setStoredProfile(merged);
-
-    const { error: authError } = await client.auth.updateUser({ data: metadataPayload(merged) });
-    if (authError) throw authError;
-
     const richPayload = richProfilePayload(session.user, merged);
-    const { error: richError } = await client.from("profiles").upsert(richPayload).select("id").maybeSingle();
-    if (richError) {
-      console.warn("Geniş profil payload kaydedilemedi, temel profil payload deneniyor:", richError.message || richError);
+    const { data: richSaved, error: richError } = await client.from("profiles").upsert(richPayload).select("id").maybeSingle();
+    if (richError || !richSaved) {
+      console.warn("Geniş profil payload kaydedilemedi, temel profil payload deneniyor:", richError?.message || "profile_missing");
       const minimalPayload = {
         id: session.user.id,
         full_name: merged.full_name || "",
         phone: merged.phone || "",
+        avatar_url: safeAvatarUrl(merged.avatar_url || merged.avatar || ""),
         updated_at: new Date().toISOString()
       };
-      const { error: minimalError } = await client.from("profiles").upsert(minimalPayload).select("id").maybeSingle();
-      if (minimalError) console.warn("Temel profil payload kaydedilemedi:", minimalError.message || minimalError);
+      const { data: minimalSaved, error: minimalError } = await client.from("profiles").upsert(minimalPayload).select("id").maybeSingle();
+      if (minimalError) throw minimalError;
+      if (!minimalSaved) throw new Error("Profil kaydedilemedi. Lütfen yeniden deneyin.");
     }
+
+    // Never remove a legacy inline avatar from Auth until its profile copy exists.
+    const { error: authError } = await client.auth.updateUser({ data: metadataPayload(merged) });
+    if (authError) throw authError;
 
     setStoredProfile(merged);
     notifyProfileChange(merged);

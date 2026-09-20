@@ -1,4 +1,4 @@
-const ALLONAHUB_CACHE = "allonahub-pwa-20260920-auth-session1";
+const ALLONAHUB_CACHE = "allonahub-pwa-20260920-auth-session1-avatar2";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -80,7 +80,8 @@ self.addEventListener("fetch", event => {
     requestUrl.pathname === "/js/partner-os.js" ||
     requestUrl.pathname === "/js/partner-products.js" ||
     requestUrl.pathname === "/js/supabase-client.js" ||
-    requestUrl.pathname === "/js/user-profile-sync.js"
+    requestUrl.pathname === "/js/user-profile-sync.js" ||
+    requestUrl.pathname === "/js/allona-maritime-portal.js"
   );
 
   if(partnerAuthPath){
