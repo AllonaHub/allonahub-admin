@@ -66,8 +66,13 @@ begin
     raise exception 'Direct client execution detected on MariPartner handover function';
   end if;
 
-  if pg_get_functiondef('public.maritime_transfer_hiring_case(uuid,uuid,uuid,uuid,text,jsonb,uuid)'::regprocedure)
-      not ilike '%security definer%set search_path = public, pg_temp%' then
+  if not exists (
+    select 1
+    from pg_proc procedure
+    where procedure.oid = 'public.maritime_transfer_hiring_case(uuid,uuid,uuid,uuid,text,jsonb,uuid)'::regprocedure
+      and procedure.prosecdef
+      and coalesce(procedure.proconfig, array[]::text[]) @> array['search_path=public, pg_temp']::text[]
+  ) then
     raise exception 'MariPartner handover function is missing hardened SECURITY DEFINER settings';
   end if;
 
@@ -80,8 +85,13 @@ begin
     raise exception 'Direct client execution detected on MariPartner reviewer decision function';
   end if;
 
-  if pg_get_functiondef('public.maritime_record_reviewer_decision(uuid,text,text)'::regprocedure)
-      not ilike '%security definer%set search_path = public, pg_temp%' then
+  if not exists (
+    select 1
+    from pg_proc procedure
+    where procedure.oid = 'public.maritime_record_reviewer_decision(uuid,text,text)'::regprocedure
+      and procedure.prosecdef
+      and coalesce(procedure.proconfig, array[]::text[]) @> array['search_path=public, pg_temp']::text[]
+  ) then
     raise exception 'MariPartner reviewer decision function is missing hardened SECURITY DEFINER settings';
   end if;
 
@@ -91,7 +101,7 @@ begin
     where exists (
       select 1 from information_schema.columns
       where table_schema = 'public'
-        and table_name = 'maritime_reviewer_passes'
+        and information_schema.columns.table_name = 'maritime_reviewer_passes'
         and information_schema.columns.column_name = forbidden.column_name
     )
   ) then
@@ -101,7 +111,7 @@ begin
   if not exists (
     select 1 from information_schema.columns
     where table_schema = 'public'
-      and table_name = 'maritime_evidence_requests'
+      and information_schema.columns.table_name = 'maritime_evidence_requests'
       and column_name = 'candidate_consent_status'
   ) then
     raise exception 'MariPartner candidate consent state is missing';
@@ -112,8 +122,13 @@ begin
     raise exception 'Direct client execution detected on employer reference approval guard';
   end if;
 
-  if pg_get_functiondef('public.maritime_guard_reference_approval()'::regprocedure)
-      not ilike '%security definer%set search_path = public, pg_temp%' then
+  if not exists (
+    select 1
+    from pg_proc procedure
+    where procedure.oid = 'public.maritime_guard_reference_approval()'::regprocedure
+      and procedure.prosecdef
+      and coalesce(procedure.proconfig, array[]::text[]) @> array['search_path=public, pg_temp']::text[]
+  ) then
     raise exception 'Employer reference guard is missing hardened SECURITY DEFINER settings';
   end if;
 end

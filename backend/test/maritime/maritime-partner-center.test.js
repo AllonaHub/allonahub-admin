@@ -101,6 +101,9 @@ test("migration is deny-by-default and stores no raw reviewer secret", () => {
   assert.match(applyScript, /20260920153000_create_maripartner_personnel_center\.sql/);
   assert.match(applyScript, /check-maripartner-schema\.sh/);
   assert.match(checkScript, /Direct client privilege detected on MariPartner table/);
+  assert.match(checkScript, /procedure\.prosecdef/);
+  assert.match(checkScript, /procedure\.proconfig/);
+  assert.doesNotMatch(checkScript, /pg_get_functiondef/);
 });
 
 test("API resolves tenant membership server-side and audits privileged operations", () => {
