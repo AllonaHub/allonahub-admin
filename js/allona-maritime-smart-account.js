@@ -270,6 +270,7 @@
   function localizedRank(value, canonical) {
     if (canonical && rankLabels[canonical]) return rowText(rankLabels[canonical]);
     const target = folded(value);
+    if (!target) return String(value || "").trim();
     const aliases = {
       captain: "master", kaptan: "master", master: "master",
       "chief officer": "chief_officer", "chief mate": "chief_officer", "birinci zabit": "chief_officer",
@@ -419,7 +420,7 @@
     let resolved = value;
     if (settings.date && value) resolved = dateLabel(value);
     if (resolved === null || resolved === undefined || resolved === "") return "";
-    return `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(resolved)}</dd></div>`;
+    return `<div${settings.wide ? ' class="maritime-cv-fact--wide"' : ""}><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(resolved)}</dd></div>`;
   }
 
   function cvFacts(rows, className) {
@@ -491,10 +492,10 @@
       cvFact(rowText(missingLabels.medical), medicalValue(cv.medical_fitness))
     ]);
     const contactFacts = cvFacts([
-      cvFact(text("email"), contact.email),
+      cvFact(text("email"), contact.email, { wide: true }),
       cvFact(text("phone"), contact.phone),
       cvFact(text("secondPhone"), contact.secondary_phone),
-      cvFact(text("address"), contact.permanent_address),
+      cvFact(text("address"), contact.permanent_address, { wide: true }),
       cvFact(text("airport"), contact.nearest_airport),
       cvFact(text("desiredSalary"), salary),
       cvFact(text("availability"), cv.availability_text)
@@ -627,6 +628,7 @@
     return `<dialog class="maritime-cv-dialog" data-cv-dialog aria-labelledby="maritime-cv-title" tabindex="-1">
       <div class="maritime-cv-sheet">
         <div class="maritime-cv-toolbar"><strong>${escapeHtml(text(run.status === "user_confirmed" ? "profileConfirmed" : "profileDraft"))}</strong><button type="button" data-close-cv aria-label="${escapeHtml(text("close"))}" title="${escapeHtml(text("close"))}"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div>
+        <div class="maritime-cv-scroll" data-cv-scroll tabindex="0" role="region" aria-labelledby="maritime-cv-title">
         <div class="maritime-cv-layout maritime-cv-layout--v4">
           <span class="maritime-cv-neon-rail" aria-hidden="true"></span>
           <div class="maritime-cv-body">
@@ -664,6 +666,7 @@
             <div class="maritime-cv-v4-notes"><p class="maritime-cv-source"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i>${escapeHtml(text("sourceNote"))}</p><p><i class="fa-solid fa-lock" aria-hidden="true"></i>${escapeHtml(text("employerCvPrivacy"))}</p></div>
           </div>
           <span class="maritime-cv-neon-rail" aria-hidden="true"></span>
+        </div>
         </div>
         <div class="maritime-cv-actions">
           <button class="maritime-button maritime-button--primary" type="button" data-print-cv><i class="fa-solid fa-file-pdf" aria-hidden="true"></i>${escapeHtml(text("savePdf"))}</button>
@@ -763,16 +766,18 @@
   function render() {
     const target = root();
     if (!target) return;
+    const cvScrollTop = target.querySelector("[data-cv-scroll]")?.scrollTop || 0;
     const payload = state.payload || {};
     if (!payload.run) {
-      state.cvOpen = false;
+      closeCv();
       target.innerHTML = `<section class="maritime-smart-onboarding"><div><span class="maritime-document-kicker">${escapeHtml(text("smartKicker"))}</span><h2>${escapeHtml(text("prepareTitle"))}</h2><p>${escapeHtml(text("prepareLead"))}</p><button class="maritime-button maritime-button--primary" type="button" data-prepare-smart><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>${escapeHtml(text("prepareButton"))}</button><small><i class="fa-solid fa-lock" aria-hidden="true"></i>${escapeHtml(text("privacy"))}</small></div></section><div class="maritime-notice" role="status" aria-live="polite" data-smart-notice></div>`;
       return;
     }
     const matches = Array.isArray(payload.matches) ? payload.matches : [];
     const drafts = Array.isArray(payload.application_drafts) ? payload.application_drafts : [];
     target.innerHTML = `${readinessMarkup(payload.run)}<div class="maritime-notice" role="status" aria-live="polite" data-smart-notice></div>${smartActionsMarkup(payload.run, matches, drafts)}${matchesMarkup(payload.run, matches, drafts)}${draftsMarkup(drafts)}${cvPreviewMarkup(payload.run)}`;
-    if (state.cvOpen) openCv();
+    if (state.cvOpen) openCv(cvScrollTop);
+    setBusy(state.busy);
   }
 
   function setBusy(busy) {
@@ -881,24 +886,26 @@
     await prepareDrafts();
   }
 
-  function openCv() {
-    state.cvOpen = true;
+  function openCv(scrollTop = 0) {
     const dialog = document.querySelector("[data-cv-dialog]");
-    if (dialog && typeof dialog.showModal === "function" && !dialog.open) dialog.showModal();
-    if (dialog) {
-      dialog.scrollTop = 0;
-      dialog.focus({ preventScroll: true });
-    }
+    if (!dialog || dialog.open) return;
+    state.cvOpen = true;
+    document.documentElement.classList.add("maritime-cv-open");
+    dialog.showModal();
+    dialog.querySelector("[data-cv-scroll]").scrollTop = scrollTop;
+    dialog.querySelector("[data-close-cv]").focus({ preventScroll: true });
   }
 
   function closeCv() {
     state.cvOpen = false;
+    document.documentElement.classList.remove("maritime-cv-open");
     const dialog = document.querySelector("[data-cv-dialog]");
     if (dialog && typeof dialog.close === "function" && dialog.open) dialog.close();
   }
 
   async function waitForPdfAssets(root) {
-    if (document.fonts?.ready) await document.fonts.ready.catch(() => undefined);
+    const fonts = root.ownerDocument.fonts;
+    if (fonts?.ready) await fonts.ready.catch(() => undefined);
     const images = Array.from(root.querySelectorAll("img"));
     await Promise.all(images.map(function (image) {
       if (image.complete) return Promise.resolve();
@@ -911,9 +918,8 @@
     }));
   }
 
-  function globalCvBreakpoints(layout, canvas) {
+  function globalCvBreakpoints(layout, scale) {
     const layoutRect = layout.getBoundingClientRect();
-    const scale = canvas.width / Math.max(1, layoutRect.width);
     const candidates = Array.from(layout.querySelectorAll([
       ".maritime-cv-profile-head",
       ".maritime-cv-v4-section",
@@ -925,7 +931,7 @@
       const rect = element.getBoundingClientRect();
       return Math.round((rect.bottom - layoutRect.top) * scale);
     }).filter(function (value) {
-      return value > 0 && value < canvas.height;
+      return value > 0 && value < layoutRect.height * scale;
     });
     return Array.from(new Set(candidates)).sort(function (first, second) { return first - second; });
   }
@@ -980,16 +986,24 @@
       openCv();
       const layout = document.querySelector(".maritime-cv-layout");
       if (!layout) throw new Error("GLOBAL_CV_PREVIEW_MISSING");
-      document.body.classList.add("maritime-pdf-capture");
-      await new Promise(function (resolve) { window.requestAnimationFrame(resolve); });
       await waitForPdfAssets(layout);
+      const captureScale = 2.25;
+      let breakpoints = [];
       const canvas = await html2canvas(layout, {
-        scale: 2.25,
+        scale: captureScale,
         useCORS: true,
         backgroundColor: "#ffffff",
         imageTimeout: 15000,
         logging: false,
-        windowWidth: 1180
+        windowWidth: 1040,
+        onclone: async function (clonedDocument, clonedLayout) {
+          // PDF-only dimensions must never resize or scroll the visible preview.
+          clonedDocument.body.classList.add("maritime-pdf-capture");
+          const scroller = clonedDocument.querySelector("[data-cv-scroll]");
+          if (scroller) scroller.scrollTop = 0;
+          await waitForPdfAssets(clonedLayout);
+          breakpoints = globalCvBreakpoints(clonedLayout, captureScale);
+        }
       });
       const pdf = new JsPdf("p", "mm", "a4", true);
       pdf.setProperties({
@@ -997,7 +1011,7 @@
         subject: "AllonaHub Global CV",
         author: "AllonaHub"
       });
-      addGlobalCvPages(pdf, canvas, globalCvBreakpoints(layout, canvas));
+      addGlobalCvPages(pdf, canvas, breakpoints);
       if (!window.AllonaMaritimeCommerce || typeof window.AllonaMaritimeCommerce.authorizeOrCheckout !== "function") {
         const error = new Error("MARITIME_COMMERCE_UNAVAILABLE");
         error.code = "MARITIME_COMMERCE_UNAVAILABLE";
@@ -1014,13 +1028,12 @@
         ? "pdfPaymentFailed"
         : "pdfGenerationFailed";
       setNotice(text(key), "error");
-      if (pdfNotice) {
-        pdfNotice.textContent = text(key);
-        pdfNotice.className = "maritime-notice is-visible is-error";
-        pdfNotice.scrollIntoView({ block: "nearest" });
+      const currentPdfNotice = document.querySelector("[data-pdf-notice]");
+      if (currentPdfNotice) {
+        currentPdfNotice.textContent = text(key);
+        currentPdfNotice.className = "maritime-notice is-visible is-error";
       }
     } finally {
-      document.body.classList.remove("maritime-pdf-capture");
       setBusy(false);
     }
   }
@@ -1040,6 +1053,14 @@
   }
 
   function bind() {
+    document.addEventListener("cancel", function (event) {
+      if (!event.target.matches("[data-cv-dialog]")) return;
+      event.preventDefault();
+      closeCv();
+    }, true);
+    document.addEventListener("close", function (event) {
+      if (event.target.matches("[data-cv-dialog]") && event.target.isConnected && !event.target.open) closeCv();
+    }, true);
     document.addEventListener("click", function (event) {
       if (event.target.closest("[data-prepare-smart]")) return prepare();
       if (event.target.closest("[data-confirm-smart]")) return confirmSmart();
