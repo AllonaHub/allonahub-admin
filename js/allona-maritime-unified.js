@@ -256,20 +256,60 @@
     applyFooterLanguage(copy);
   }
 
-  async function updateAccountLink() {
-    if (!mobileOnly()) return;
+  let accountRevision = 0;
+  let accountTimer = null;
+  let accountSubscription = null;
+  let signInHref = "";
+
+  function renderAccountState(user) {
+    const authenticated = Boolean(user && user.id);
+    const navigation = document.querySelector("[data-maritime-auth-nav]");
+    if (navigation) navigation.hidden = !authenticated;
     const link = document.querySelector("[data-maritime-mobile-account]");
-    if (!link) return;
-    try {
-      const user = window.Allona && window.Allona.auth ? await window.Allona.auth.getUser() : null;
-      if (user) {
-        link.href = "../account/user-panel.html";
-        link.dataset.maritimeAuthenticated = "true";
-      }
-      applyMaritimeLanguage();
-    } catch (error) {
-      // Giriş bağlantısı ağ sorunu halinde kullanılabilir kalır.
+    if (link) {
+      if (!signInHref) signInHref = link.getAttribute("href");
+      link.href = authenticated ? "../account/user-panel.html" : signInHref;
+      link.dataset.maritimeAuthenticated = String(authenticated);
     }
+    applyMaritimeLanguage();
+  }
+
+  function resetAccountState() {
+    accountRevision += 1;
+    window.clearTimeout(accountTimer);
+    renderAccountState(null);
+  }
+
+  async function updateAccountLink() {
+    const revision = ++accountRevision;
+    try {
+      const auth = window.Allona && window.Allona.supabase && window.Allona.supabase.auth;
+      // A cached profile alone must not reveal the signed-in navigation.
+      const result = auth ? await auth.getUser() : null;
+      if (revision !== accountRevision) return;
+      renderAccountState(result && !result.error && result.data ? result.data.user : null);
+    } catch (error) {
+      if (revision === accountRevision) renderAccountState(null);
+    }
+  }
+
+  function watchAccountState() {
+    if (!signInHref) renderAccountState(null);
+    const auth = window.Allona && window.Allona.supabase && window.Allona.supabase.auth;
+    if (!accountSubscription && auth && auth.onAuthStateChange) {
+      const listener = auth.onAuthStateChange(function (event, session) {
+        if (event === "SIGNED_OUT" || event === "USER_DELETED" || !session || !session.user) {
+          resetAccountState();
+          return;
+        }
+        accountRevision += 1;
+        window.clearTimeout(accountTimer);
+        // Run outside the Supabase auth callback to avoid its session lock.
+        accountTimer = window.setTimeout(updateAccountLink, 0);
+      });
+      accountSubscription = listener.data.subscription;
+    }
+    updateAccountLink();
   }
 
   function setupSearch() {
@@ -327,8 +367,19 @@
   document.addEventListener("DOMContentLoaded", function () {
     setupSearch();
     applyMaritimeLanguage();
-    updateAccountLink();
+    watchAccountState();
     watchMountedUi();
+  });
+  window.addEventListener("pagehide", function () {
+    resetAccountState();
+    if (accountSubscription) accountSubscription.unsubscribe();
+    accountSubscription = null;
+  });
+  window.addEventListener("pageshow", function (event) {
+    if (event.persisted) watchAccountState();
+  });
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible") updateAccountLink();
   });
   document.addEventListener("allona:language-changed", applyMaritimeLanguage);
   document.addEventListener("allona:layout-ready", applyMaritimeLanguage);

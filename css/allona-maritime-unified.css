@@ -4,6 +4,10 @@ body.maritime-page {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+body.maritime-page .mobile-maritime__nav[data-maritime-auth-nav][hidden] {
+  display: none !important;
+}
+
 .marsoh-entry-band {
   width: min(100%, 1180px);
   margin: 18px auto 26px;
