@@ -6,6 +6,7 @@ const origin = process.env.PARTNER_TEST_ORIGIN || "http://127.0.0.1:4201";
 const baseline = process.env.PARTNER_BASELINE === "1";
 const out = process.env.PARTNER_SCREENSHOT_DIR || "/private/tmp/allonahub-partner-footer-qa";
 const languages = ["tr", "az", "kk", "uz", "ky", "en", "de", "ru", "ar"];
+const germanyLabels = { tr: "Almanya", az: "Almaniya", kk: "Германия", uz: "Germaniya", ky: "Германия", en: "Germany", de: "Deutschland", ru: "Германия", ar: "ألمانيا" };
 const passwordLabels = {
   tr: ["Şifreyi göster", "Şifreyi gizle"], az: ["Şifrəni göstər", "Şifrəni gizlət"],
   en: ["Show password", "Hide password"], de: ["Passwort anzeigen", "Passwort ausblenden"],
@@ -84,6 +85,8 @@ try {
       }
       results.push({ width, language, expected, actual, tabs });
       if (!baseline) {
+        assert.equal(await partner.page.locator('#country option[value="DE"]').textContent(), germanyLabels[language]);
+        assert.equal(await partner.page.locator('#countryCode option[value="+49"]').textContent(), `🇩🇪 ${germanyLabels[language]} +49`);
         assert.ok(actual.images.every((image) => image.loaded), "payment and brand images must load");
         assert.ok(tabs.apply.text.includes("Aydın") && tabs.apply.text.includes("Denizli"), "city names must not be partially translated");
         assert.ok(!tabs.apply.text.includes("Monthdın") && !tabs.apply.text.includes("Oceanli"));
