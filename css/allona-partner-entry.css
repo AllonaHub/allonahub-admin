@@ -522,6 +522,15 @@ body.partner-entry-page #apply .partner-apply-message textarea {
     align-items: stretch;
   }
 
+  body.partner-entry-page #apply.form.active.company-lookup-disabled {
+    grid-template-areas:
+      "contact email phone phone"
+      "country country tax tax"
+      "company office type city"
+      "website category message message"
+      "applyChallenge applyChallenge actions actions";
+  }
+
   body.partner-entry-page #apply > .partner-apply-contact { grid-area: contact; }
   body.partner-entry-page #apply > .partner-apply-email { grid-area: email; }
   body.partner-entry-page #apply > .partner-apply-phone { grid-area: phone; }
@@ -633,6 +642,20 @@ body.partner-entry-page #apply .partner-apply-message textarea {
     align-items: stretch;
   }
 
+  body.partner-entry-page #apply.form.active.company-lookup-disabled {
+    grid-template-areas:
+      "contact email"
+      "phone phone"
+      "country country"
+      "tax tax"
+      "company office"
+      "type city"
+      "website category"
+      "message message"
+      "applyChallenge applyChallenge"
+      "actions actions";
+  }
+
   body.partner-entry-page #apply > .partner-apply-contact { grid-area: contact; }
   body.partner-entry-page #apply > .partner-apply-email { grid-area: email; }
   body.partner-entry-page #apply > .partner-apply-phone { grid-area: phone; }
@@ -694,6 +717,22 @@ body.partner-entry-page #apply .partner-apply-message textarea {
 }
 
 @media (max-width: 360px) {
+  body.partner-entry-page #apply.form.active.company-lookup-disabled {
+    grid-template-areas:
+      "contact contact"
+      "email email"
+      "phone phone"
+      "country country"
+      "tax tax"
+      "company company"
+      "office office"
+      "type city"
+      "website category"
+      "message message"
+      "applyChallenge applyChallenge"
+      "actions actions";
+  }
+
   body.partner-entry-page #login.form.active {
     grid-template-areas:
       "email email"
@@ -719,4 +758,7 @@ body.partner-entry-page #apply .partner-apply-message textarea {
       "applyChallenge applyChallenge"
       "actions actions";
   }
+}
+body.partner-entry-page :is(#companyLookupBtn, #companyLookupChallenge)[hidden] {
+  display: none !important;
 }

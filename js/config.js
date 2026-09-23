@@ -27,6 +27,8 @@
     cvPrice: 149.99,
     translationEndpoint: "",
     partnerAdsEnabled: false,
+    // Enable only after the official company lookup provider is configured.
+    partnerCompanyLookupEnabled: false,
     storageKeys: {
       cart: "allona_cart_v2",
       favorites: "allona_favorites_v2"

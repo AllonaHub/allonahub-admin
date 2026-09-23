@@ -30,6 +30,7 @@
     footerLocation: ["İstanbul / Türkiye", "İstanbul / Türkiyə", "Ыстамбұл / Түркия", "Istanbul / Turkiya", "Стамбул / Түркия", "Istanbul / Türkiye", "Istanbul / Türkei", "Стамбул / Турция", "إسطنبول / تركيا"],
     shopping: ["Alışveriş", "Alış-veriş", "Сауда", "Xaridlar", "Соода", "Shopping", "Einkaufen", "Покупки", "التسوق"],
     products: ["Ürünler", "Məhsullar", "Өнімдер", "Mahsulotlar", "Товарлар", "Products", "Produkte", "Товары", "المنتجات"],
+    experienceLabel: ["Allona Denizcilik", "Allona Dənizçilik", "Allona Теңіз ісі", "Allona Dengizchilik", "Allona Деңизчилик", "Allona Maritime", "Allona Seefahrt", "Allona Морское дело", "Allona للملاحة البحرية"],
     allonaFood: ["Allona Yemek", "Allona Yemək", "Allona Тағам", "Allona Taom", "Allona Тамак", "Allona Food", "Allona Food", "Allona Еда", "Allona الطعام"],
     coupons: ["Kuponlar", "Kuponlar", "Купондар", "Kuponlar", "Купондор", "Coupons", "Gutscheine", "Купоны", "القسائم"],
     favorites: ["Favorilerim", "Sevimlilərim", "Таңдаулыларым", "Sevimlilarim", "Тандалмаларым", "Favorites", "Favoriten", "Избранное", "المفضلة"],
@@ -77,7 +78,7 @@
     setText(introParagraphs[2], copy.footerLocation);
     const mappings = [
       null,
-      { title: "shopping", links: ["products", null, "allonaFood", null, "coupons", "favorites", "orders"] },
+      { title: "shopping", links: ["products", null, "experienceLabel", "allonaFood", null, "coupons", "favorites", "orders"] },
       { title: "customer", links: ["aboutUs", "contact", "supportCenter", "academy", "myDocuments", "notifications", "delivery", "returns"] },
       { title: "ecosystem", links: ["allModules", "partnerApplication", "coupon", null, "career", "partnerMembership"] },
       { title: "legal", links: ["distanceSales", "preliminaryInfo", "privacyPolicy", "kvkkNotice", "cookiePolicy", "terms", "securityPolicy"] }

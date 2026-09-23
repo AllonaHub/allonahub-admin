@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.108.2"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-<script src="../../js/config.js?v=20260627-config-central"></script>
+<script src="../../js/config.js?v=20260924-partner-manual1"></script>
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
@@ -100,11 +100,6 @@ body.partner-entry-page .actions .platform-control-btn{border-radius:14px!import
 .notice{position:fixed;right:26px;bottom:26px;z-index:99;max-width:430px;padding:17px 20px;border-radius:20px;background:#031326;border:1px solid #00e5ff88;box-shadow:0 0 30px #00e5ff44;display:none;line-height:1.45}
 .notice b{color:#ffd700}
 
-.footer-main{margin-top:38px;padding:30px;border-top:1px solid rgba(255,255,255,.10)}
-.footer-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px}
-.footer-col h3{color:#ffd700;margin-bottom:12px}
-.footer-col a,.footer-col p{display:block;color:rgba(255,255,255,.72);font-size:13px;line-height:1.8}
-.footer-bottom{text-align:center;margin-top:30px;padding-top:20px;opacity:.85;line-height:1.8}
 .social-icons{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:24px;margin-top:25px}
 .social-icons a{width:60px;height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border-radius:50%;background:rgba(255,255,255,.06);box-shadow:0 0 18px rgba(0,229,255,.20);transition:.35s;font-size:22px}
 .social-icons span{font-size:11px;font-weight:600;color:#fff;opacity:.9}
@@ -118,7 +113,7 @@ body[data-theme="white"]:after{display:none!important}
 body[data-theme="corporate"] .glass,
 body[data-theme="white"] .glass{background:#fff!important;border-color:rgba(0,0,0,.12)!important;box-shadow:0 12px 34px rgba(16,32,51,.10)!important}
 body[data-theme="corporate"] :where(h1,h2,h3,h4,p,a,b,span,small,label,button,input,textarea,select,option,div),
-body[data-theme="white"] :where(h1,h2,h3,h4,p,a,b,span,small,label,button,input,textarea,select,option,div){color:#050505!important;text-shadow:none!important}
+body[data-theme="white"] .page :where(h1,h2,h3,h4,p,a,b,span,small,label,button,input,textarea,select,option,div){color:#050505!important;text-shadow:none!important}
 body[data-theme="corporate"] .brand b,
 body[data-theme="white"] .brand b{color:#050505!important}
 body[data-theme="corporate"] .brand span,
@@ -218,12 +213,12 @@ body.partner-entry-page .actions .platform-theme-btn{min-width:112px!important}
 </style>
   <link rel="stylesheet" href="../../css/platform.css?v=20260828-corporate4">
   <link rel="stylesheet" href="../../css/password-visibility.css?v=20260920-auth2">
-  <link rel="stylesheet" href="../../css/allona-partner-entry.css?v=20260914-entry2">
-  <link rel="stylesheet" href="../../css/allona-entry-footer.css?v=20260914-entry6">
+  <link rel="stylesheet" href="../../css/allona-partner-entry.css?v=20260924-partner-manual1">
+  <link rel="stylesheet" href="../../css/allona-partner-footer.css?v=20260924-partner-footer1">
 </head>
 
 <body class="partner-entry-page" data-theme="white" data-partner-theme-locked="true">
-<div class="page">
+<div class="page" data-no-translate data-partner-i18n>
 
 <div class="header">
 <a class="brand glass" href="https://allonahub.com/">
@@ -279,7 +274,7 @@ body.partner-entry-page .actions .platform-theme-btn{min-width:112px!important}
 <button class="btn secondary-btn partner-forgot-back" type="button" onclick="openPartnerTab('login', event)">Girişe Dön</button>
 </div>
 
-<div id="apply" class="form" role="tabpanel" aria-labelledby="partnerApplyTab" hidden>
+<div id="apply" class="form company-lookup-disabled" role="tabpanel" aria-labelledby="partnerApplyTab" hidden>
 <div class="input partner-apply-contact"><input id="contact_name" type="text" autocomplete="name" aria-label="Yetkili ad soyad" placeholder="Yetkili Ad Soyad"></div>
 <div class="input partner-apply-email"><input id="email" type="email" inputmode="email" autocomplete="email" spellcheck="false" aria-label="Başvuru e-posta adresi" placeholder="E-posta"></div>
 
@@ -326,9 +321,9 @@ body.partner-entry-page .actions .platform-theme-btn{min-width:112px!important}
 </div>
 
 <div class="input partner-apply-country"><select id="country" aria-label="Şirketin kayıtlı olduğu ülke"></select></div>
-<div class="input has-action partner-apply-tax"><input id="tax_number" inputmode="text" autocomplete="off" spellcheck="false" autocapitalize="characters" aria-label="Vergi veya VAT numarası" placeholder="Vergi / VAT Numarası"><button id="companyLookupBtn" class="lookup-btn" type="button" onclick="lookupCompanyInfo()">Bilgileri Getir</button></div>
+<div class="input partner-apply-tax"><input id="tax_number" inputmode="text" autocomplete="off" spellcheck="false" autocapitalize="characters" aria-label="Vergi veya VAT numarası" placeholder="Vergi / VAT Numarası"><button id="companyLookupBtn" class="lookup-btn" type="button" onclick="lookupCompanyInfo()" hidden disabled>Bilgileri Getir</button></div>
 <div id="companyLookupStatus" class="lookup-status" role="status" aria-live="polite" aria-atomic="true" hidden></div>
-<div class="security-challenge" data-security-challenge="partner_company_lookup"></div>
+<div id="companyLookupChallenge" class="security-challenge" data-company-lookup-challenge="partner_company_lookup" hidden></div>
 <div class="input partner-apply-company"><input id="partner_name" type="text" autocomplete="organization" aria-label="Firma veya işletme adı" placeholder="Firma / İşletme Adı"></div>
 <div class="input partner-apply-tax-office"><input id="tax_office" type="text" autocomplete="off" spellcheck="false" aria-label="Vergi dairesi" placeholder="Vergi Dairesi"></div>
 
@@ -460,6 +455,7 @@ function partnerLoginUrl(){
 
 function showNotice(message){
   const n=document.getElementById("notice");
+  n.dataset.partnerMessage=String(message || "");
   n.textContent=window.AllonaPartnerEntry?.translateText?.(message) || String(message || "");
   n.style.display="block";
   setTimeout(()=>{n.style.display="none"},4500);
@@ -692,6 +688,24 @@ const PARTNER_COUNTRIES=[
 
 let lastCompanyLookup=null;
 
+function companyLookupEnabled(){
+  return window.Allona?.config?.partnerCompanyLookupEnabled === true;
+}
+
+function initPartnerCompanyLookup(){
+  const enabled=companyLookupEnabled();
+  const button=document.getElementById("companyLookupBtn");
+  const challenge=document.getElementById("companyLookupChallenge");
+  button.hidden=!enabled;
+  button.disabled=!enabled;
+  button.closest(".input").classList.toggle("has-action",enabled);
+  document.getElementById("apply").classList.toggle("company-lookup-disabled",!enabled);
+  challenge.hidden=!enabled;
+  // Dormant lookup challenges must not be mounted by the shared CAPTCHA runtime.
+  if(enabled)challenge.setAttribute("data-security-challenge",challenge.dataset.companyLookupChallenge);
+  else challenge.removeAttribute("data-security-challenge");
+}
+
 function selectedCountry(){
   const select=document.getElementById("country");
   const option=select && select.options[select.selectedIndex];
@@ -828,6 +842,7 @@ function lookupStatusDetails(payload,country){
 }
 
 async function lookupCompanyInfo(){
+  if(!companyLookupEnabled())return;
   if(!partnerRateLimit("partner-company-lookup",10,30*60*1000)){
     showLookupStatus("Çok sık sorgu yapıldı. Lütfen biraz bekleyin.","warning");
     return;
@@ -1200,7 +1215,7 @@ function getApplyData(){
     country:country.name,
     category:document.getElementById("category").value.trim(),
     message:document.getElementById("message").value.trim(),
-    company_lookup:lastCompanyLookup || {},
+    company_lookup:companyLookupEnabled() ? lastCompanyLookup || {} : {},
     date:new Date().toLocaleString("tr-TR"),
     status:"pending"
   };
@@ -1369,6 +1384,11 @@ const partnerPageTranslations={
 };
 
 function translatePartnerPage(language){
+  // The complete nine-language entry pack owns this page; avoid competing translators.
+  if(window.AllonaPartnerEntry){
+    window.AllonaPartnerEntry.translatePage(language);
+    return;
+  }
   const selected=partnerPageTranslations[language] ? language : "tr";
   const dictionary=partnerPageTranslations[selected] || {};
   document.querySelectorAll("body *").forEach(node=>{
@@ -1395,6 +1415,7 @@ document.addEventListener("allona:language-changed",event=>{
   translatePartnerPage(event.detail && event.detail.language);
 });
 document.addEventListener("DOMContentLoaded",()=>{
+  initPartnerCompanyLookup();
   initPartnerApplicationAutomation();
   initPartnerTabKeyboard();
   translatePartnerPage(localStorage.getItem("allona.language") || "tr");
@@ -1408,8 +1429,8 @@ initPartnerGoogleCallback();
   <script src="../../js/layout.v3.js?v=20260919-footer-trust1" defer></script>
   <script src="../../js/platform.js?v=20260920-partner-light1" defer></script>
   <script src="../../js/password-visibility.js?v=20260920-auth2" defer></script>
-  <script src="../../js/allona-entry-footer.js?v=20260913-entry1" defer></script>
-  <script src="../../js/allona-partner-entry.js?v=20260913-entry1" defer></script>
+  <script src="../../js/allona-entry-footer.js?v=20260924-partner-footer1" defer></script>
+  <script src="../../js/allona-partner-entry.js?v=20260924-partner-footer1" defer></script>
   <script src="../../js/privacy-consent.js?v=20260712-theme-overflow1" defer></script>
 </body>
 </html>

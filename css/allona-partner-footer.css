@@ -1,0 +1,260 @@
+/* Maritime footer layout, scoped to partner entry. Parity is tested against allonadenizcilik.html. */
+@media (min-width: 0) {
+ body.partner-entry-page .site-footer .social-icons::-webkit-scrollbar, body.partner-entry-page .site-footer .footer-payment-strip::-webkit-scrollbar {
+  display: none;
+}
+
+ html[dir="rtl"] body.partner-entry-page .site-footer {
+  text-align: right;
+}
+
+ html[dir="rtl"] body.partner-entry-page .site-footer .footer-brand {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+ html[dir="rtl"] body.partner-entry-page .site-footer .footer-grid, html[dir="rtl"] body.partner-entry-page .site-footer .social-icons, html[dir="rtl"] body.partner-entry-page .site-footer .footer-payment-strip {
+  direction: rtl;
+}
+
+body.partner-entry-page .site-footer .store-buttons {
+  display: none !important;
+}
+
+body.partner-entry-page .site-footer {
+  line-height: normal;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+body.partner-entry-page .site-footer .footer-grid {
+  display: grid !important;
+  grid-template-columns: none !important;
+  grid-auto-flow: column !important;
+  grid-auto-columns: min(72vw, 270px) !important;
+  align-items: start !important;
+  width: calc(100% - 18px) !important;
+  max-width: none !important;
+  gap: 0px !important;
+  margin-inline: 9px !important;
+  padding: 0px !important;
+  overflow-x: auto !important;
+  overscroll-behavior-inline: contain !important;
+  scroll-snap-type: none !important;
+  scrollbar-width: none !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 8px !important;
+  background: rgba(255, 255, 255, 0.043) !important;
+}
+
+body.partner-entry-page .site-footer .footer-grid::-webkit-scrollbar {
+  display: none !important;
+}
+
+body.partner-entry-page .site-footer .footer-col {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0px !important;
+  height: auto !important;
+  padding: 16px !important;
+  border: 0px !important;
+  border-inline-end: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 0px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  scroll-snap-align: none !important;
+}
+
+body.partner-entry-page .site-footer .footer-col:first-child {
+  max-width: none !important;
+  flex-basis: auto !important;
+}
+
+body.partner-entry-page .site-footer .footer-col:last-child {
+  border-inline-end: 0px !important;
+}
+
+body.partner-entry-page .site-footer .social-icons, body.partner-entry-page .site-footer .footer-payment-strip, body.partner-entry-page .site-footer .footer-bottom {
+  width: calc(100% - 18px) !important;
+  max-width: none !important;
+  margin-inline: 9px !important;
+}
+
+body.partner-entry-page .site-footer .social-icons {
+  display: grid !important;
+  grid-auto-flow: column !important;
+  grid-auto-columns: 48px !important;
+  justify-content: start !important;
+  gap: 8px !important;
+  max-width: 100% !important;
+  padding-block: 10px !important;
+  overflow-x: auto !important;
+  scrollbar-width: none !important;
+}
+
+body.partner-entry-page .site-footer .social-icons a {
+  position: relative;
+  display: inline-flex !important;
+  width: 48px !important;
+  min-width: 48px !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0px !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  color: rgb(255, 255, 255) !important;
+  box-shadow: rgba(0, 0, 0, 0.2) 0px 8px 18px !important;
+}
+
+body.partner-entry-page .site-footer .social-icons a.wa {
+  background: rgb(37, 211, 102) !important;
+}
+
+body.partner-entry-page .site-footer .social-icons a.ig {
+  background: radial-gradient(circle at 30% 104%, rgb(255, 214, 0) 0px, rgb(255, 214, 0) 20%, rgb(255, 122, 0) 34%, rgb(255, 1, 105) 58%, rgb(211, 0, 197) 76%, rgb(118, 56, 250) 100%) !important;
+}
+
+body.partner-entry-page .site-footer .social-icons a.x {
+  background: rgb(0, 0, 0) !important;
+}
+
+body.partner-entry-page .site-footer .social-icons a.fb {
+  background: rgb(24, 119, 242) !important;
+}
+
+body.partner-entry-page .site-footer .social-icons a.yt {
+  background: rgb(255, 0, 0) !important;
+}
+
+body.partner-entry-page .site-footer .social-icons a.li {
+  background: rgb(10, 102, 194) !important;
+}
+
+body.partner-entry-page .site-footer .social-icons a.tg {
+  background: rgb(34, 158, 217) !important;
+}
+
+body.partner-entry-page .site-footer .social-icons a.tk {
+  background: rgb(1, 1, 1) !important;
+  box-shadow: rgb(37, 244, 238) 2px 0px 0px inset, rgb(254, 44, 85) -2px 0px 0px inset, rgba(0, 0, 0, 0.2) 0px 8px 18px !important;
+}
+
+body.partner-entry-page .site-footer .social-icons a.mail {
+  background: rgb(0, 103, 177) !important;
+}
+
+body.partner-entry-page .site-footer .social-icons a span {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0px !important;
+  overflow: hidden !important;
+  border: 0px !important;
+  clip: rect(0px, 0px, 0px, 0px) !important;
+  white-space: nowrap !important;
+}
+
+body.partner-entry-page .site-footer .social-icons .social-icon, body.partner-entry-page .site-footer .social-icons b, body.partner-entry-page .site-footer .social-icons svg {
+  width: 24px !important;
+  height: 24px !important;
+}
+
+body.partner-entry-page .site-footer .social-icons svg {
+  display: block !important;
+  color: #fff !important;
+  fill: #fff !important;
+}
+
+body.partner-entry-page .site-footer .social-icons svg path {
+  fill: #fff !important;
+}
+
+body.partner-entry-page .site-footer .footer-payment-strip {
+  display: grid !important;
+  grid-auto-flow: column !important;
+  grid-auto-columns: 76px !important;
+  align-items: center !important;
+  justify-content: start !important;
+  gap: 8px !important;
+  max-width: 100% !important;
+  padding-block: 10px !important;
+  overflow-x: auto !important;
+  scrollbar-width: none !important;
+}
+
+body.partner-entry-page .site-footer .footer-payment-strip .mobile-payment-logo {
+  display: grid !important;
+  width: 76px !important;
+  min-width: 76px !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  place-items: center !important;
+  padding: 7px !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 8px !important;
+  background: rgb(255, 255, 255) !important;
+}
+
+body.partner-entry-page .site-footer .footer-payment-strip .mobile-payment-logo img {
+  display: block !important;
+  width: 60px !important;
+  max-width: 60px !important;
+  height: 26px !important;
+  max-height: 26px !important;
+  object-fit: contain !important;
+}
+}
+
+@media (min-width: 761px) {
+body.partner-entry-page .site-footer .footer-grid {
+  grid-template-columns: repeat(2, minmax(0px, 1fr)) !important;
+  grid-auto-flow: row !important;
+  grid-auto-columns: initial !important;
+  width: calc(100% - 48px) !important;
+  max-width: none !important;
+  gap: clamp(18px, 2.4vw, 38px) !important;
+  margin-inline: 24px !important;
+  padding: 36px 0px 28px !important;
+  overflow: visible !important;
+  scroll-snap-type: none !important;
+  border: 0px !important;
+  border-radius: 0px !important;
+  background: transparent !important;
+}
+
+body.partner-entry-page .site-footer .footer-col {
+  padding: 0px !important;
+  border: 0px !important;
+  border-inline-end: 0px !important;
+  background: transparent !important;
+}
+
+body.partner-entry-page .site-footer .social-icons, body.partner-entry-page .site-footer .footer-payment-strip, body.partner-entry-page .site-footer .footer-bottom {
+  width: calc(100% - 48px) !important;
+  max-width: none !important;
+  margin-inline: 24px !important;
+}
+
+body.partner-entry-page .site-footer .social-icons, body.partner-entry-page .site-footer .footer-payment-strip {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  overflow: visible !important;
+}
+}
+
+@media (min-width: 1000px) {
+body.partner-entry-page .site-footer .footer-grid {
+  grid-template-columns: repeat(3, minmax(0px, 1fr)) !important;
+}
+}
+
+@media (min-width: 1280px) {
+body.partner-entry-page .site-footer .footer-grid {
+  grid-template-columns: minmax(240px, 1.35fr) repeat(4, minmax(130px, 1fr)) !important;
+}
+}
