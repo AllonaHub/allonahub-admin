@@ -1,0 +1,113 @@
+/* Homepage-only mobile navigation; the desktop header remains unchanged. */
+#home-services-toggle,
+#home-services-menu {
+  display: none !important;
+}
+
+@media (max-width: 760px) {
+  html body.allonahub-home-page > .top-mini-nav,
+  html body.allonahub-home-page > header > .logo,
+  html body.allonahub-home-page > header > nav {
+    display: none !important;
+  }
+
+  html body.allonahub-home-page > header {
+    grid-template-columns: 48px minmax(0, 1fr) !important;
+    grid-template-areas: "services controls" "search search" !important;
+    align-items: center !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  html body.allonahub-home-page > header > .platform-controls-slot {
+    grid-area: controls !important;
+    justify-self: end !important;
+  }
+
+  html body.allonahub-home-page > header > .nav-search {
+    grid-area: search !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  body.allonahub-home-page #home-services-toggle {
+    grid-area: services;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border: 1px solid var(--ah-line);
+    border-radius: 8px;
+    color: var(--ah-ink) !important;
+    background: var(--ah-surface) !important;
+    font-size: 28px;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  body.allonahub-home-page #home-services-toggle span {
+    color: inherit !important;
+  }
+
+  body.allonahub-home-page #home-services-toggle[aria-expanded="true"] {
+    border-color: var(--ah-primary-strong);
+  }
+
+  body.allonahub-home-page #home-services-menu:not([hidden]) {
+    display: flex !important;
+    flex-direction: column;
+    position: absolute;
+    inset-inline: 12px;
+    top: 70px;
+    z-index: 70;
+    box-sizing: border-box;
+    max-height: calc(100dvh - 100px);
+    overflow-y: auto;
+    padding: 12px;
+    border: 1px solid var(--ah-line);
+    border-radius: 8px;
+    background: var(--ah-surface) !important;
+    color: var(--ah-ink) !important;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.24);
+    text-align: start;
+  }
+
+  body.allonahub-home-page #home-services-menu h2 {
+    margin: 0;
+    padding: 8px 12px 12px;
+    color: var(--ah-ink) !important;
+    font-size: 16px;
+    line-height: 1.4;
+  }
+
+  body.allonahub-home-page #home-services-menu a {
+    display: flex !important;
+    align-items: center;
+    box-sizing: border-box;
+    min-height: 48px;
+    margin: 0;
+    padding: 12px;
+    border: 0;
+    border-top: 1px solid var(--ah-line);
+    border-radius: 0;
+    color: var(--ah-ink) !important;
+    background: transparent !important;
+    font-size: 15px;
+    line-height: 1.5;
+    text-decoration: none;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  body.allonahub-home-page #home-services-menu a:hover {
+    background: var(--ah-soft) !important;
+  }
+
+  body.allonahub-home-page :is(#home-services-toggle, #home-services-menu a):focus-visible {
+    outline: 3px solid var(--ah-primary-strong) !important;
+    outline-offset: 2px;
+  }
+}

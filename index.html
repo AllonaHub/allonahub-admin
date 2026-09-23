@@ -16,6 +16,7 @@
   <link rel="stylesheet" href="css/allonahub-home.css?v=20260920-pending-release1">
 <link rel="stylesheet" href="css/platform.css?v=20260911-maritime-cache1">
 <link rel="stylesheet" href="css/home-module-labels.std32.css?v=20260826-active-modules1">
+<link rel="stylesheet" href="css/home-mobile-services.css?v=20260924-menu1">
 <script src="js/subdomain-router.js?v=20260629-subdomains1"></script>
 </head>
 
@@ -29,6 +30,7 @@
 </div>
 
 <header>
+<button id="home-services-toggle" type="button" aria-label="Hizmetler menüsünü aç" aria-expanded="false" aria-controls="home-services-menu" data-no-translate><span aria-hidden="true">&#9776;</span></button>
 <a class="logo" href="index.html">
 <img src="images/brand/allona.logo.png" alt="AllonaHub Logo">
 <div class="logo-title"><span class="gold">Allona</span><span class="blue">Hub</span></div>
@@ -46,6 +48,12 @@
 <a class="login" href="pages/account/user.html" data-account-link>Giriş Yap</a>
 <span class="platform-controls-slot" data-platform-controls-slot="home"></span>
 </nav>
+<div id="home-services-menu" role="navigation" aria-labelledby="home-services-title" data-no-translate hidden>
+<h2 id="home-services-title">Hizmetlerimiz</h2>
+<a href="pages/ecosystem/allonadenizcilik.html" data-home-service="maritime">Allona Denizcilik</a>
+<a href="pages/ecosystem/yakında.html?module=shop">Allona Shop</a>
+<a href="pages/account/user.html" data-account-link>Giriş Yap</a>
+</div>
 </header>
 
 <section class="pwa-install-card" data-pwa-install-card hidden>
@@ -118,6 +126,7 @@
 <script src="js/auth.js?v=20260920-auth-session1" defer></script>
 <script src="js/layout.v3.js?v=20260920-footer-unified1" defer></script>
 <script src="js/platform.js?v=20260920-home-i18n1" defer></script>
+<script src="js/home-mobile-services.js?v=20260924-menu1" defer></script>
   <script src="js/privacy-consent.js?v=20260911-maritime-cache1" defer></script>
 <script src="js/sw-refresh.heading2.js?v=20260911-maritime-cache1" defer></script>
 <script src="js/allonahub-home.js?v=20260920-pending-release1" defer></script>
