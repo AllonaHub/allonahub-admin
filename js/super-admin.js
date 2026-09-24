@@ -1052,6 +1052,7 @@
     "auth-failures": ["Giriş Hataları", "Son 90 gündeki giriş, kayıt ve e-posta teslim sorunları"],
     "maritime-trust": ["Maritime Trust", "Denizcilik metadata, risk, şikayet ve audit kontrolü"],
     "maripartner-management": ["MariPartner Yönetimi", "Denizcilik şirketleri, aday havuzu, kanıt, SLA, devir ve güvenli inceleme kontrolü"],
+    "maritime-pending-jobs": ["Onay Bekleyen İş İlanları", "Denizcilik ilanlarını inceleyin ve yayın kararını verin"],
     "marsoh-moderation": ["MarSoh Yönetimi", "Odalar, günlük konu, mesajlar, bildirimler ve güvenlik kararları"],
     audit: ["Audit Log", "Append-only kritik işlem kayıtları"]
   };
@@ -1241,6 +1242,7 @@
       ownerLine("Güvenlik uyarısı", `${formatNumber(summary.security_alerts_24h)} / son 24 saat`, "<button type=\"button\" data-view-jump=\"security\">İncele</button>", summary.security_alerts_24h ? "high" : "low"),
       ownerLine("Maritime Trust", "Denizcilik şikayet, fraud sinyali, erişim olayı ve audit akışı", "<button type=\"button\" data-view-jump=\"maritime-trust\">İzle</button>", "critical"),
       ownerLine("MariPartner Yönetimi", "Denizcilik şirketi personel havuzu, kanıt, SLA, dosya devri ve güvenli inceleme kontrolü", "<button type=\"button\" data-view-jump=\"maripartner-management\">Yönet</button>", "critical"),
+      ownerLine("OBE", "Onay bekleyen denizcilik iş ilanları", "<button type=\"button\" data-view-jump=\"maritime-pending-jobs\">Kuyruğu Aç</button>", "high"),
       ownerLine("MarSoh moderasyonu", "Karantinaya alınan sohbet mesajlarını yayınla, reddet veya kullanıcı yaptırımı uygula.", "<button type=\"button\" data-view-jump=\"marsoh-moderation\">Kuyruğu Aç</button>", "critical"),
       ownerLine("Denizcilik kullanıcıları", "AL kimliğiyle kullanıcı bulma, CV ve belge onayı, düzenleme ve kontrollü temizleme", "<a href=\"./maritime-users.html\">Yönet</a>", "critical"),
       ownerLine("Sistem sağlığı", `API ${escape(system.api || "-")} / DB ${escape(system.database || "-")} / Auto-defense ${formatNumber(system.auto_defense && system.auto_defense.recent_incident_count)} olay`, "<button type=\"button\" data-view-jump=\"alerts\">Risk akışı</button>", system.database === "online" ? "low" : "high"),
@@ -2199,6 +2201,36 @@
     }, { trigger: form.querySelector('button[type="submit"]'), defaultReason: String(data.get("reason") || message), requireReason: true });
   }
 
+  async function loadOwnerPendingJobs(params) {
+    const offset = Math.max(0, Number(params && params.offset) || 0);
+    ownerLoading("Onay bekleyen iş ilanları");
+    const payload = await api(`/v1/ops-console/maritime-listings/pending?offset=${offset}`);
+    const rows = (payload.listings || []).map((item) => ownerLine(
+      item.title || "Denizcilik iş ilanı",
+      `${escape(item.summary || "Özet belirtilmedi.")}<br><small>${escape(item.location_label || "-")} · Gönderim: ${escape(formatDate(item.submitted_at || item.created_at))} · Bitiş: ${escape(formatDate(item.expires_at))}</small>`,
+      `<button type="button" data-obe-review="approve" data-listing-id="${escape(item.id)}">Yayınla</button> <button type="button" data-obe-review="reject" data-listing-id="${escape(item.id)}">Reddet</button>`,
+      "high"
+    ));
+    const next = offset + (payload.listings || []).length;
+    ownerSetOutput([
+      ownerLine("OBE", `${formatNumber(payload.total)} onay bekleyen iş ilanı`, "", payload.total ? "high" : "low"),
+      rows.length ? rows.join("") : ownerEmpty("Şu anda onay bekleyen iş ilanı yok."),
+      next < payload.total ? `<button type="button" data-obe-more="${next}">Sonraki ilanlar</button>` : ""
+    ].join(""));
+  }
+
+  async function reviewOwnerPendingJob(button) {
+    const decision = button.dataset.obeReview;
+    const listingId = button.dataset.listingId;
+    if (!/^[0-9a-f-]{36}$/i.test(listingId || "") || !["approve", "reject"].includes(decision)) return;
+    const message = decision === "approve" ? "Bu iş ilanı herkese açık olarak yayımlanacak." : "Bu iş ilanı reddedilecek ve partnere inceleme notu gösterilecek.";
+    await runConfirmed(message, async (reason) => {
+      await api(`/v1/ops-console/maritime-listings/${encodeURIComponent(listingId)}/review`, {
+        method: "PATCH", body: { decision, review_note: reason || "" }
+      });
+    }, { trigger: button, defaultReason: message, requireReason: decision === "reject" });
+  }
+
   async function loadOwnerView(view, params) {
     setAlert("");
     setCommandHeader(view);
@@ -2217,6 +2249,7 @@
       else if (view === "auth-failures") await loadOwnerAuthFailures();
       else if (view === "maritime-trust") await loadOwnerMaritimeTrust();
       else if (view === "maripartner-management") await loadOwnerMariPartner();
+      else if (view === "maritime-pending-jobs") await loadOwnerPendingJobs(params);
       else if (view === "marsoh-moderation") await loadOwnerMarsohModeration();
       else if (view === "audit") await loadOwnerAudit();
     } catch (error) {
@@ -2468,6 +2501,12 @@
         }
 
         if (eventClosest(event, "[data-action-health-check]")) await runOwnerActionHealthCheck();
+
+        const obeReview = eventClosest(event, "[data-obe-review]");
+        if (obeReview) await reviewOwnerPendingJob(obeReview);
+
+        const obeMore = eventClosest(event, "[data-obe-more]");
+        if (obeMore) await loadOwnerPendingJobs({ offset: Number(obeMore.dataset.obeMore) });
 
         const approvalDetail = eventClosest(event, "[data-approval-detail]");
         if (approvalDetail) showApprovalDetail(approvalDetail.dataset.approvalDetail);

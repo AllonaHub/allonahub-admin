@@ -17602,6 +17602,19 @@ export function registerRoutes(app) {
     return reply.code(200).send({ ok: true, duplicate: false, application: updateResult.data });
   });
 
+  opsGet("/maritime-listings/pending", async (request) => {
+    await requireOpsAdmin(request, "admin.ops.maritime_listing.list");
+    const query = z.object({ offset: z.coerce.number().int().min(0).max(10000).default(0) }).parse(request.query || {});
+    const result = await supabaseAdmin.from("maritime_public_listings")
+      .select("id,listing_type,status,title,summary,location_label,detail_label,partner_user_id,expires_at,submitted_at,created_at", { count: "exact" })
+      .eq("module_key", "maritime")
+      .eq("status", "pending_review")
+      .order("submitted_at", { ascending: true })
+      .range(query.offset, query.offset + 49);
+    if (result.error) throw result.error;
+    return { ok: true, listings: result.data || [], total: result.count || 0, offset: query.offset };
+  });
+
   opsPatch("/maritime-listings/:listingId/review", async (request, reply) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.maritime_listing.review");
     const { listingId } = z.object({ listingId: uuidSchema }).parse(request.params);
