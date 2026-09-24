@@ -154,6 +154,14 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .mp-history article strong, .mp-history article span, .mp-history article small { display: block; }
 .mp-history article span, .mp-history article small { margin-top: 5px; color: var(--mp-muted); }
 .mp-history-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+.mp-cv-review { margin-top: 14px; padding: 14px 0 0; border-top: 1px solid var(--mp-line); overflow-wrap: anywhere; }
+.mp-cv-review h3, .mp-cv-review h4 { margin: 12px 0 7px; color: var(--mp-navy); }
+.mp-cv-review ul { display: grid; gap: 6px; margin: 0; padding-left: 20px; }
+.mp-cv-review li { line-height: 1.45; }
+.mp-cv-review button { min-height: 44px; border: 0; padding: 4px 0; color: #00658e; background: transparent; text-align: left; text-decoration: underline; cursor: pointer; }
+.mp-cv-review button:focus-visible { outline: 2px solid #00658e; outline-offset: 3px; }
+.mp-match button[data-mp-candidate-inspect] { min-height: 44px; margin-top: 8px; border: 0; padding: 4px 0; color: #00658e; background: transparent; font-weight: 700; text-align: left; text-decoration: underline; cursor: pointer; }
+.mp-match button[data-mp-candidate-inspect]:focus-visible { outline: 2px solid #00658e; outline-offset: 3px; }
 .mp-inline-form { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: end; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--mp-line); }
 .mp-inline-form label { display: grid; gap: 5px; color: var(--mp-muted); font-size: 12px; }
 .mp-inline-form input { width: 100%; min-height: 42px; border: 1px solid var(--mp-line); border-radius: 6px; padding: 8px; }

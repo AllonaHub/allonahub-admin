@@ -594,6 +594,23 @@ body.maritime-portal-page textarea {
   min-width: 140px;
 }
 
+.maritime-application-dialog-actions [hidden] {
+  display: none !important;
+}
+
+.maritime-application-dialog-actions .maritime-button:not(.maritime-button--primary) {
+  border-color: rgba(130, 203, 232, 0.48);
+  background: #103c59;
+  color: #ffffff;
+  -webkit-text-fill-color: #ffffff;
+}
+
+body.maritime-portal-page[data-theme="white"] .maritime-application-dialog-actions .maritime-button:not(.maritime-button--primary) {
+  background: #e6f3fa;
+  color: #123d55;
+  -webkit-text-fill-color: #123d55;
+}
+
 .maritime-button {
   display: inline-flex;
   min-height: 44px;

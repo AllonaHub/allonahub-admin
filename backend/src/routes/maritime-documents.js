@@ -18,7 +18,7 @@ import {
 } from "../lib/maritime-document-doctor.js";
 import { ensureMaritimeCustomerProfile } from "../lib/maritime-customer-profile.js";
 import { normalizeMaritimeProfilePhoto } from "../lib/maritime-profile-photo.js";
-import { auditEvent, authContext, hasRole, supabaseAdmin } from "../lib/supabase.js";
+import { auditEvent, authContext, hasMfa, hasRole, supabaseAdmin } from "../lib/supabase.js";
 
 const uploadIntentSchema = z.object({
   files: maritimeDocumentUploadFilesSchema,
@@ -174,30 +174,53 @@ async function seaServiceDocument(intakeId) {
 
 async function activePartnerIdsForUser(userId) {
   const [ownedResult, staffResult] = await Promise.all([
-    supabaseAdmin.from("partner_businesses").select("id").eq("owner_id", userId).eq("status", "active"),
+    supabaseAdmin.from("partner_businesses").select("id").eq("owner_id", userId).eq("status", "active").eq("verification_status", "verified"),
     supabaseAdmin.from("partner_staff").select("partner_id").eq("user_id", userId).eq("status", "active")
   ]);
   const ids = new Set((assertDb(ownedResult, "Şirket yetkisi doğrulanamadı.") || []).map(row => row.id));
   (assertDb(staffResult, "Şirket personel yetkisi doğrulanamadı.") || []).forEach(row => ids.add(row.partner_id));
   if(!ids.size) return [];
-  const activeResult = await supabaseAdmin.from("partner_businesses").select("id").in("id", [...ids]).eq("status", "active");
+  const activeResult = await supabaseAdmin.from("partner_businesses").select("id").in("id", [...ids]).eq("status", "active").eq("verification_status", "verified");
   return (assertDb(activeResult, "Şirket durumu doğrulanamadı.") || []).map(row => row.id);
 }
 
 async function seaServiceDocumentAccess(ctx, document) {
   if(ctx.user.id === document.seafarer_user_id) return "owner";
   if(hasRole(ctx.profile, ["admin", "super_admin"])) return "admin";
-  if(!hasRole(ctx.profile, "partner")) return "";
+  if(!hasRole(ctx.profile, "partner") || !hasMfa(ctx)) return "";
   const partnerIds = await activePartnerIdsForUser(ctx.user.id);
   if(!partnerIds.length) return "";
+  const now = new Date().toISOString();
+  const [authorities, cycles] = await Promise.all([
+    supabaseAdmin.from("maritime_recruiter_authorities").select("partner_id").in("partner_id", partnerIds).eq("user_id", ctx.user.id).eq("status", "active").or(`expires_at.is.null,expires_at.gt.${now}`),
+    supabaseAdmin.from("maritime_company_verification_cycles").select("partner_id").in("partner_id", partnerIds).eq("status", "verified").or(`expires_at.is.null,expires_at.gt.${now}`)
+  ]);
+  const verifiedCycles = new Set((assertDb(cycles, "Şirket doğrulaması okunamadı.") || []).map((row) => row.partner_id));
+  const permittedIds = (assertDb(authorities, "İşe alım yetkisi okunamadı.") || []).map((row) => row.partner_id).filter((id) => verifiedCycles.has(id));
+  if (!permittedIds.length) return "";
   const applicationResult = await supabaseAdmin
     .from("maritime_hiring_applications")
-    .select("id")
+    .select("id,job_id,partner_id,candidate_consent_snapshot")
     .eq("seafarer_user_id", document.seafarer_user_id)
-    .in("partner_id", partnerIds)
+    .in("partner_id", permittedIds)
     .in("status", PARTNER_DOCUMENT_ACCESS_STATUSES)
-    .limit(1);
-  return (assertDb(applicationResult, "Başvuru yetkisi doğrulanamadı.") || []).length ? "partner_application" : "";
+    .limit(100);
+  const applications = (assertDb(applicationResult, "Başvuru yetkisi doğrulanamadı.") || []).filter((row) => row.candidate_consent_snapshot?.final_submission_confirmed === true);
+  if (!applications.length) return "";
+  const profile = assertDb(await supabaseAdmin.from("maritime_cv_profiles").select("profile_payload")
+    .eq("seafarer_user_id", document.seafarer_user_id).maybeSingle(), "CV belge bağı doğrulanamadı.");
+  const linked = (Array.isArray(profile?.profile_payload?.manual_cv?.seaData) ? profile.profile_payload.manual_cv.seaData : [])
+    .some((row) => row.serviceDocumentId === document.id);
+  if (!linked) return "";
+  const rooms = assertDb(await supabaseAdmin.from("maritime_private_candidate_rooms")
+    .select("application_id,job_id,partner_id,expires_at")
+    .in("application_id", applications.map((row) => row.id))
+    .in("partner_id", permittedIds)
+    .eq("seafarer_user_id", document.seafarer_user_id)
+    .eq("candidate_visible", true)
+    .in("status", ["active", "offer", "hired"]), "Aday dosyası doğrulanamadı.") || [];
+  return applications.some((row) => rooms.some((room) => room.application_id === row.id && room.job_id === row.job_id
+    && room.partner_id === row.partner_id && (!room.expires_at || new Date(room.expires_at).getTime() > Date.now()))) ? "partner_application" : "";
 }
 
 async function ownedIntake(userId, intakeId) {

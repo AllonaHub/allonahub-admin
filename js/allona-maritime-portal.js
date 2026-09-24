@@ -115,7 +115,8 @@
     applied: ["Başvuruldu", "Müraciət edildi", "Өтінім берілді", "Ariza berildi", "Арыз берилди", "Applied", "Beworben", "Заявка отправлена", "تم التقديم"],
     applicationBlockedTitle: ["Başvuru şu anda gönderilemiyor", "Müraciət hazırda göndərilə bilmir", "Өтінімді қазір жіберу мүмкін емес", "Arizani hozir yuborib bo‘lmaydi", "Арызды азыр жөнөтүү мүмкүн эмес", "Application cannot be sent yet", "Bewerbung kann noch nicht gesendet werden", "Заявку пока нельзя отправить", "لا يمكن إرسال الطلب الآن"],
     applicationDialogClose: ["Kapat", "Bağla", "Жабу", "Yopish", "Жабуу", "Close", "Schließen", "Закрыть", "إغلاق"],
-    qualificationMismatchTemplate: ["Mevcut yeterliliğiniz {position} pozisyonuyla eşleşmediği için başvuru yapılamaz.", "Mövcud səriştəniz {position} vəzifəsinə uyğun gəlmədiyi üçün müraciət göndərilə bilməz.", "Қазіргі біліктілігіңіз {position} лауазымына сәйкес келмегендіктен өтінім жіберілмейді.", "Hozirgi malakangiz {position} lavozimiga mos kelmagani uchun ariza yuborilmaydi.", "Учурдагы квалификацияңыз {position} кызматына дал келбегендиктен арыз жөнөтүлбөйт.", "Your current qualifications do not match the {position} position, so this application cannot be submitted.", "Ihre aktuelle Qualifikation entspricht nicht der Position {position}; die Bewerbung kann daher nicht gesendet werden.", "Ваша текущая квалификация не соответствует должности {position}, поэтому заявку нельзя отправить.", "لا تتطابق مؤهلاتك الحالية مع وظيفة {position}، لذلك لا يمكن إرسال الطلب."],
+    qualificationMismatchTemplate: ["CV'nizdeki rütbe bu ilan için uygun değil. Size uygun ilanlara göz atabilirsiniz.", "CV-nizdəki rütbə bu elana uyğun deyil. Sizə uyğun elanlara baxa bilərsiniz.", "Түйіндемеңіздегі дәреже бұл орынға сәйкес емес. Өзіңізге сай орындарды қараңыз.", "CV dagi unvoningiz bu eʼlonga mos emas. Oʻzingizga mos ishlarni ko‘ring.", "CVдеги даражаңыз бул орунга туура келбейт. Өзүңүзгө ылайык орундарды караңыз.", "The rank in your CV does not match this role. Please explore positions suited to your rank.", "Ihr Rang im Lebenslauf passt nicht zu dieser Stelle. Sehen Sie sich passende Stellen an.", "Звание в вашем резюме не соответствует этой вакансии. Посмотрите подходящие вакансии.", "رتبتك في سيرتك الذاتية لا تناسب هذه الوظيفة. اطلع على الوظائف المناسبة لك."],
+    requirementsMismatch: ["CV'niz bu ilanın diğer koşullarıyla eşleşmiyor. Size uygun ilanlara göz atabilirsiniz.", "CV-niz bu elanın digər şərtlərinə uyğun gəlmir. Sizə uyğun elanlara baxa bilərsiniz.", "Түйіндемеңіз бұл орынның басқа талаптарына сәйкес емес. Өзіңізге сай орындарды қараңыз.", "CV bu eʼlonning boshqa talablariga mos emas. Oʻzingizga mos ishlarni ko‘ring.", "CVңиз бул орундагы башка шарттарга туура келбейт. Өзүңүзгө ылайык орундарды караңыз.", "Your CV does not meet the other requirements for this role. Please explore suitable positions.", "Ihr Lebenslauf erfüllt die weiteren Anforderungen dieser Stelle nicht. Sehen Sie sich passende Stellen an.", "Ваше резюме не соответствует другим условиям вакансии. Посмотрите подходящие вакансии.", "سيرتك الذاتية لا تستوفي المتطلبات الأخرى لهذه الوظيفة. اطلع على الوظائف المناسبة لك."],
     automaticApplicationSubmitted: ["Otomatik Başvuru Yapıldı", "Avtomatik müraciət edildi", "Автоматты өтінім жіберілді", "Avtomatik ariza yuborildi", "Автоматтык арыз жөнөтүлдү", "Applied Automatically", "Automatisch beworben", "Автоматическая заявка отправлена", "تم التقديم تلقائياً"],
     uploadDocuments: ["Belgelerini Yükle", "Sənədlərini yüklə", "Құжаттарыңды жүкте", "Hujjatlaringizni yuklang", "Документтериңизди жүктөңүз", "Upload Documents", "Dokumente hochladen", "Загрузить документы", "تحميل المستندات"],
     documentsMissingReason: ["Uygun ilanları belirleyebilmemiz için denizcilik belgelerinizi yükleyin.", "Uyğun elanları müəyyən etmək üçün dənizçilik sənədlərinizi yükləyin.", "Сәйкес вакансияларды анықтау үшін теңіз құжаттарыңызды жүктеңіз.", "Mos ishlarni aniqlashimiz uchun dengizchilik hujjatlaringizni yuklang.", "Ылайыктуу жумуштарды аныктоо үчүн деңизчилик документтериңизди жүктөңүз.", "Upload your maritime documents so we can identify matching listings.", "Laden Sie Ihre Seefahrtsdokumente hoch, damit passende Stellen ermittelt werden können.", "Загрузите морские документы, чтобы мы могли определить подходящие вакансии.", "حمّل مستنداتك البحرية لنتمكن من تحديد الوظائف المناسبة."],
@@ -221,15 +222,6 @@
   const translations = Object.fromEntries(languageCodes.map(function (code, index) {
     return [code, Object.fromEntries(Object.entries(copyRows).map(function (entry) { return [entry[0], entry[1][index]]; }))];
   }));
-
-  const seedJobs = [
-    { id: "mar-2e", reference: "AH-MAR-2E", titles: ["2. Mühendis", "2-ci Mühəndis", "2-механик", "2-mexanik", "2-механик", "Second Engineer", "Zweiter Ingenieur", "Второй механик", "المهندس الثاني"], department: "engine", route: "globalRoute" },
-    { id: "mar-ab", reference: "AH-MAR-AB", titles: ["Usta Gemici", "Bacarıqlı dənizçi", "Білікті матрос", "Malakali matros", "Квалификациялуу матрос", "Able Seaman", "Vollmatrose", "Квалифицированный матрос", "بحّار ماهر"], department: "deck", route: "europeRoute" },
-    { id: "mar-co", reference: "AH-MAR-CO", titles: ["Baş Zabit", "Baş zabit", "Аға көмекші", "Bosh ofitser", "Башкы офицер", "Chief Officer", "Erster Offizier", "Старший помощник", "كبير الضباط"], department: "deck", route: "internationalRoute" },
-    { id: "mar-oil", reference: "AH-MAR-OIL", titles: ["Yağcı", "Yağçı", "Моторшы", "Moylovchi", "Моторчу", "Oiler", "Öler", "Моторист", "عامل زيوت"], department: "engine", route: "globalRoute" },
-    { id: "mar-eto", reference: "AH-MAR-ETO", titles: ["Elektro Teknik Zabiti", "Elektrotexniki zabit", "Электротехник офицер", "Elektrotexnik ofitser", "Электротехник офицер", "Electro-Technical Officer", "Elektrotechnischer Offizier", "Электромеханик", "ضابط تقني كهربائي"], department: "electrical", route: "internationalRoute" },
-    { id: "mar-cook", reference: "AH-MAR-CK", titles: ["Gemi Aşçısı", "Gəmi aşpazı", "Кеме аспазы", "Kema oshpazi", "Кеме ашпозчусу", "Ship's Cook", "Schiffskoch", "Судовой повар", "طاهي السفينة"], department: "hotel", route: "globalRoute" }
-  ];
 
   function language() {
     const stored = String(localStorage.getItem("allona.language") || document.documentElement.lang || "tr").toLowerCase();
@@ -368,20 +360,6 @@
     return text({ deck: "filterDeck", engine: "filterEngine", electrical: "filterElectrical", hotel: "filterHotel" }[code] || "filterAll");
   }
 
-  function normalizedSeedJobs() {
-    const index = languageCodes.indexOf(language());
-    return seedJobs.map(function (job) {
-      return {
-        ...job,
-        title: job.titles[index] || job.titles[0],
-        summary: text("jobSafeSummary"),
-        contract: text("sixMonths"),
-        location: text(job.route),
-        verified: true
-      };
-    });
-  }
-
   async function loadPublicJobs() {
     const base = String(App.config && App.config.apiBaseUrl || "").replace(/\/$/, "");
     if (!base) return [];
@@ -473,7 +451,8 @@
       return { blocked: true, disabled: false, applied: false, label: "apply", reason: text("listingRequirementsPendingReason"), tone: "pending" };
     }
     if (match.eligible !== true || match.hard_gate_status !== "passed") {
-      return { blocked: true, disabled: false, applied: false, label: "apply", reason: formatText("qualificationMismatchTemplate", { position: job.title || text("genericPosition") }), tone: "mismatch" };
+      const rankMismatch = Array.isArray(match.missing_requirements) && match.missing_requirements.includes("rank");
+      return { blocked: true, disabled: false, applied: false, label: "apply", reason: text(rankMismatch ? "qualificationMismatchTemplate" : "requirementsMismatch"), tone: "mismatch" };
     }
     return { disabled: false, applied: false, label: "apply", reason: "" };
   }
@@ -565,6 +544,8 @@
     const dialog = document.querySelector("[data-application-dialog]");
     if (!dialog) return;
     const message = dialog.querySelector("[data-application-dialog-message]");
+    const title = dialog.querySelector("#maritimeApplicationDialogTitle");
+    if (title) title.textContent = text("applicationBlockedTitle");
     const action = dialog.querySelector("[data-application-dialog-action]");
     if (message) message.textContent = gate.reason || text("applicationFailed");
     if (action) {
@@ -650,7 +631,7 @@
 
   async function renderJobs() {
     const [liveJobs] = await Promise.all([loadPublicJobs(), loadSmartApplicationState()]);
-    jobs = liveJobs.length ? liveJobs : normalizedSeedJobs();
+    jobs = liveJobs;
     root.innerHTML = `<section class="maritime-toolbar"><div class="maritime-toolbar-copy"><h2>${escapeHtml(text("openJobs"))}</h2><p>${escapeHtml(text("openJobsLead"))}</p></div><strong class="maritime-reference" data-jobs-count></strong></section>
       <div class="maritime-filter-rail" role="toolbar" aria-label="${escapeHtml(text("openJobs"))}">${[["all", "filterAll"], ["deck", "filterDeck"], ["engine", "filterEngine"], ["electrical", "filterElectrical"], ["hotel", "filterHotel"]].map(function (item) { return `<button type="button" data-job-filter="${item[0]}" aria-pressed="${item[0] === activeFilter}">${escapeHtml(text(item[1]))}</button>`; }).join("")}</div>
       <div class="maritime-notice" role="status" aria-live="polite" data-jobs-notice></div><section class="maritime-job-grid" data-jobs-grid></section>${applicationDialogMarkup()}`;

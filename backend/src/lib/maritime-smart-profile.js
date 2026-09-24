@@ -43,6 +43,22 @@ const rankAliases = new Map([
   ["steward", "steward"], ["messman", "steward"]
 ]);
 
+const localizedRankAliases = new Map([
+  ["kapitan", "master"], ["gemi kaptani", "master"], ["gemi kapitani", "master"], ["kaptan", "master"],
+  ["бас капитан", "master"], ["капитан", "master"], ["капитан судна", "master"], ["قبطان", "master"],
+  ["baş zabit", "chief_officer"], ["bas zabit", "chief_officer"], ["ikinci zabit", "second_officer"],
+  ["üçüncü zabit", "third_officer"], ["ucuncu zabit", "third_officer"],
+  ["birinci mexanik", "chief_engineer"], ["baş mühəndis", "chief_engineer"], ["baş mexanik", "chief_engineer"],
+  ["ikinci mühəndis", "second_engineer"], ["ikinci mexanik", "second_engineer"],
+  ["üçüncü mühəndis", "third_engineer"], ["üçüncü mexanik", "third_engineer"],
+  ["gəmiçi", "ordinary_seaman"], ["gemiçi", "ordinary_seaman"], ["matros", "ordinary_seaman"],
+  ["матрос", "ordinary_seaman"], ["матрос 2 класса", "ordinary_seaman"], ["теңізші", "ordinary_seaman"],
+  ["dengizchi", "ordinary_seaman"], ["denizçi", "ordinary_seaman"], ["بحار", "ordinary_seaman"],
+  ["usta gəmiçi", "able_seaman"], ["квалифицированный матрос", "able_seaman"],
+  ["yağçı", "oiler"], ["motorçu", "motorman"], ["моторист", "motorman"],
+  ["baş mühendis", "chief_engineer"], ["ikinci mühendis", "second_engineer"], ["üçüncü mühendis", "third_engineer"]
+]);
+
 const languageLevel = new Map([
   ["a1", 1], ["beginner", 1], ["basic", 1],
   ["a2", 2], ["elementary", 2],
@@ -415,12 +431,12 @@ function firstLocalizedValue(payload, items, key) {
 }
 
 function canonicalRank(value) {
-  const normalized = folded(value);
+  const normalized = text(value).normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "").replace(/[əƏ]/g, "e").replace(/ı/g, "i")
+    .replace(/[^\p{L}\p{N}]+/gu, " ").trim().toLocaleLowerCase("und");
   if (!normalized) return "";
   if (rankAliases.has(normalized)) return rankAliases.get(normalized);
-  for (const [alias, code] of rankAliases.entries()) {
-    if (normalized.includes(alias)) return code;
-  }
+  if (localizedRankAliases.has(normalized)) return localizedRankAliases.get(normalized);
   return token(normalized);
 }
 
@@ -882,8 +898,11 @@ function component(code, weight, ratio, detail = {}) {
 export function matchMaritimeJob(smartProfile, job) {
   const profile = object(smartProfile?.profile);
   const readiness = object(smartProfile?.readiness);
-  const requiredRanks = uniqueText([job.rank_code, ...requirementList(job, ["required_ranks", "rank_codes", "rank"])]).map(canonicalRank).filter(Boolean);
-  const candidateRanks = uniqueText([profile.rank, ...array(profile.suitable_positions)]).map(canonicalRank).filter(Boolean);
+  const requiredRanks = uniqueDisplayText([job.rank_code, ...requirementList(job, ["required_ranks", "rank_codes", "rank"])]).map(canonicalRank).filter(Boolean);
+  const candidateRanks = uniqueDisplayText([
+    profile.rank, ...array(profile.suitable_positions),
+    ...Object.values(object(profile.rank_i18n)).filter((value) => typeof value === "string")
+  ]).map(canonicalRank).filter(Boolean);
   const rankRequired = requiredRanks.length > 0;
   const rankMatched = !rankRequired || requiredRanks.some((rank) => candidateRanks.includes(rank));
 

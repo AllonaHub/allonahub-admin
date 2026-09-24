@@ -102,13 +102,13 @@ test("job gate uses a gentle qualification mismatch only after a confirmed match
   const { window } = await portalGate();
   window.__setSmartApplicationState({
     run: { id: "run", status: "user_confirmed" },
-    matches: [{ job_id: "job", eligible: false, hard_gate_status: "failed" }],
+    matches: [{ job_id: "job", eligible: false, hard_gate_status: "failed", missing_requirements: ["rank"] }],
     application_drafts: [],
     application_readiness: { documents_state: "confirmed", has_saved_maritime_cv: true }
   });
   const gate = window.__jobApplicationGate({ id: "listing", smartJobId: "job", title: "Kaptan" });
   assert.equal(gate.label, "apply");
-  assert.equal(gate.reason, "Mevcut yeterliliğiniz Kaptan pozisyonuyla eşleşmediği için başvuru yapılamaz.");
+  assert.equal(gate.reason, "CV'nizdeki rütbe bu ilan için uygun değil. Size uygun ilanlara göz atabilirsiniz.");
   assert.equal(gate.blocked, true);
   assert.equal(gate.disabled, false);
   assert.equal(gate.href, undefined);
