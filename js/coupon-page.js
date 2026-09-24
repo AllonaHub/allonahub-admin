@@ -201,7 +201,7 @@
     };
     const { error } = await App.db.client()
       .from("user_coupons")
-      .upsert(row, { onConflict: "user_id,code" });
+      .insert(row);
     if (error) throw error;
     return true;
   }
@@ -212,10 +212,20 @@
     target.innerHTML = `<div class="coupon-status coupon-status--${type || "info"}">${core.escapeHTML(message)}</div>`;
   }
 
-  function renderWallet(user) {
+  async function renderWallet(user) {
     const target = document.querySelector("[data-coupon-wallet]");
     if (!target) return;
-    const items = getLocalWallet(user);
+    if (!user || !App.db?.client) {
+      target.innerHTML = "<p>Kuponlarınızı görmek için hesabınıza giriş yapın.</p>";
+      return;
+    }
+    const { data: items, error } = await App.db.client().from("user_coupons")
+      .select("code,title,discount_type,discount_value,status")
+      .eq("user_id", user.id).order("assigned_at", { ascending: false });
+    if (error) {
+      target.innerHTML = "<p>Kuponlar şu anda sunucudan okunamıyor.</p>";
+      return;
+    }
     if (!items.length) {
       target.innerHTML = "<p>Hesabınızda henüz tanımlı kupon yok.</p>";
       return;
@@ -247,7 +257,7 @@
     }
     cards.forEach((card) => {
       const code = String(card.dataset.starterCoupon || "").toUpperCase();
-      const claimed = user && (isStarterCouponClaimed(user, code) || remoteCodes.includes(code));
+      const claimed = user && remoteCodes.includes(code);
       card.hidden = Boolean(claimed);
     });
     const visible = Array.from(cards).some((card) => !card.hidden);
@@ -334,31 +344,19 @@
       return;
     }
 
-    if (isStarterCouponClaimed(user, coupon.code)) {
-      renderStatus("Bu başlangıç kuponu daha önce hesabına tanımlanmış.", "info");
-      await renderStarterCoupons(user);
+    try {
+      if (!await saveRemoteCoupon(user, coupon)) throw new Error("Sunucu bağlantısı kurulamadı.");
+    } catch (error) {
+      console.warn("Kupon Supabase yazımı tamamlanamadı.", error);
+      renderStatus("Kupon sunucuya kaydedilemedi. Lütfen daha sonra yeniden deneyin.", "error");
       return;
     }
-
-    let remoteSaved = false;
-    try {
-      remoteSaved = await saveRemoteCoupon(user, coupon);
-    } catch (error) {
-      const message = security && security.publicErrorMessage
-        ? security.publicErrorMessage(error, "Kupon yerel hesap cüzdanına kaydedildi. Supabase tablosu aktif olunca merkezi hesaba da yazılacak.")
-        : "Kupon yerel hesap cüzdanına kaydedildi.";
-      console.warn("Kupon Supabase yazımı tamamlanamadı.", error);
-      renderStatus(message, "info");
-    }
-
-    saveLocalCoupon(user, coupon);
-    markCouponClaimed(user, coupon.code);
     const profile = await loadProfile();
-    renderWallet(user);
+    await renderWallet(user);
     renderPointShop(profile);
     await renderStarterCoupons(user);
     renderStatus(`${coupon.title} hesabınızda tek seferlik kupon olarak aktif hale getirildi.`, "success");
-    if (core.toast) core.toast(remoteSaved ? "Kupon hesabına tanımlandı." : "Kupon hesabına kaydedildi.");
+    if (core.toast) core.toast("Kupon hesabına tanımlandı.");
   }
 
   async function convertCouponToHp(code) {
@@ -366,6 +364,8 @@
   }
 
   async function convertPointsToCoupon(button) {
+    renderStatus("HP dönüşümü sunucuda güvenli işlem olarak tamamlanana kadar kullanılamaz; puanınız düşülmez.", "info");
+    return;
     const requiredHp = Math.max(0, Number(button?.dataset.requiredHp || 1000));
     const couponValue = Math.max(0, Number(button?.dataset.couponValue || 125));
     const user = await currentUser();
@@ -443,15 +443,15 @@
     activeUser = user;
     if (!user) return;
     try {
-      await saveRemoteCoupon(user, pending);
+      if (!await saveRemoteCoupon(user, pending)) throw new Error("Sunucu bağlantısı kurulamadı.");
     } catch (error) {
       console.warn("Bekleyen kupon merkezi hesaba yazılamadı.", error);
+      renderStatus("Bekleyen kupon sunucuya kaydedilemedi. Bu cihazdaki istek korunmuştur.", "error");
+      return;
     }
-    saveLocalCoupon(user, pending);
-    markCouponClaimed(user, pending.code);
     localStorage.removeItem(storageKeys.pending);
     renderStatus(`${pending.title || pending.code} hesabınızda aktif hale getirildi.`, "success");
-    renderWallet(user);
+    await renderWallet(user);
     renderPointShop(await loadProfile());
   }
 
@@ -476,7 +476,7 @@
     const user = await currentUser();
     activeUser = user;
     await applyPendingCoupon();
-    renderWallet(user);
+    await renderWallet(user);
     renderPointShop(await loadProfile());
     await renderStarterCoupons(user);
   });

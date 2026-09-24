@@ -1,293 +1,196 @@
 (function () {
+  "use strict";
   const App = window.Allona = window.Allona || {};
-  const core = App.core || {};
   const sync = window.AllonaProfileSync;
-  const client = sync && sync.createClient ? sync.createClient() : null;
-  const storageKey = "allonahub_user_documents_v1";
-  const dbName = "allonahub_user_documents_db";
-  const maritimeTypes = [
-    { value: "passport_seafarer", label: "Pasaport / Denizci Belgesi" },
-    { value: "stcw", label: "STCW / Denizcilik Sertifikası" },
-    { value: "medical_maritime", label: "Denizci Sağlık Uygunluk Belgesi" }
-  ];
+  const client = sync?.createClient?.();
+  const bucket = "account-documents";
+  const legacyKey = "allonahub_user_documents_v1";
+  const fileTypes = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp"]);
+  const $ = (selector) => document.querySelector(selector);
 
-  function $(selector) {
-    return document.querySelector(selector);
-  }
-
-  function safeJson(key, fallback) {
-    try {
-      return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback));
-    } catch (error) {
-      return fallback;
-    }
-  }
-
-  function esc(value) {
-    return core.escapeHTML ? core.escapeHTML(value || "") : String(value || "");
-  }
-
-  function userKey(user) {
-    return user && user.id ? `user:${user.id}` : "guest";
-  }
-
-  function setStatus(message, type) {
+  function status(message, type = "info") {
     const target = $("[data-document-status]");
-    if (!target) return;
-    if (core.renderStatus) {
-      core.renderStatus(target, message, type || "info");
-      return;
-    }
-    target.textContent = message || "";
+    if (target && App.core?.renderStatus) App.core.renderStatus(target, message, type);
+    else if (target) target.textContent = message;
   }
 
-  function readDocuments(user) {
-    const store = safeJson(storageKey, {});
-    const list = store[userKey(user)];
-    return Array.isArray(list) ? list : [];
+  function escapeHtml(value) {
+    const span = document.createElement("span");
+    span.textContent = String(value ?? "");
+    return span.innerHTML;
   }
 
-  function writeDocuments(user, docs) {
-    const store = safeJson(storageKey, {});
-    store[userKey(user)] = (Array.isArray(docs) ? docs : []).slice(0, 80);
-    localStorage.setItem(storageKey, JSON.stringify(store));
+  function validate(file) {
+    if (!(file instanceof File) || !file.size) throw new Error("Lütfen belge dosyası seçin.");
+    if (!fileTypes.has(file.type)) throw new Error("Belge PDF, JPEG, PNG veya WebP olmalıdır.");
+    if (file.size > 8388608) throw new Error("Belge en fazla 8 MB olabilir.");
   }
 
-  function openDocumentDb() {
-    return new Promise((resolve, reject) => {
-      if (!window.indexedDB) {
-        reject(new Error("Tarayıcı dosya saklama alanı desteklenmiyor."));
-        return;
-      }
-      const request = indexedDB.open(dbName, 1);
-      request.onupgradeneeded = () => {
-        const db = request.result;
-        if (!db.objectStoreNames.contains("files")) db.createObjectStore("files", { keyPath: "id" });
-      };
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
+  function oldRows(userId) {
+    try {
+      const all = JSON.parse(localStorage.getItem(legacyKey) || "{}");
+      return Array.isArray(all[`user:${userId}`]) ? all[`user:${userId}`] : [];
+    } catch (error) { return []; }
   }
 
-  async function storeDocumentFile(id, file) {
-    const db = await openDocumentDb();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction("files", "readwrite");
-      tx.objectStore("files").put({ id, file, name: file.name, type: file.type, saved_at: new Date().toISOString() });
-      tx.oncomplete = () => {
-        db.close();
-        resolve();
-      };
-      tx.onerror = () => {
-        db.close();
-        reject(tx.error);
-      };
-    });
+  function forgetOldRow(userId, id) {
+    try {
+      const all = JSON.parse(localStorage.getItem(legacyKey) || "{}");
+      all[`user:${userId}`] = oldRows(userId).filter((row) => row.id !== id);
+      localStorage.setItem(legacyKey, JSON.stringify(all));
+    } catch (error) { /* The original browser copy remains intact. */ }
   }
 
-  async function getDocumentFile(id) {
-    const db = await openDocumentDb();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction("files", "readonly");
-      const request = tx.objectStore("files").get(id);
+  function oldFile(id) {
+    return new Promise((resolve) => {
+      if (!window.indexedDB) return resolve(null);
+      const request = indexedDB.open("allonahub_user_documents_db", 1);
+      request.onerror = () => resolve(null);
       request.onsuccess = () => {
-        db.close();
-        resolve(request.result || null);
-      };
-      request.onerror = () => {
-        db.close();
-        reject(request.error);
+        const db = request.result;
+        if (!db.objectStoreNames.contains("files")) { db.close(); return resolve(null); }
+        const read = db.transaction("files", "readonly").objectStore("files").get(id);
+        read.onsuccess = () => { db.close(); resolve(read.result?.file || null); };
+        read.onerror = () => { db.close(); resolve(null); };
       };
     });
   }
 
-  function labelFor(type) {
-    const labels = {
-      certificate: "Sertifika / Yeterlilik",
-      health: "Sağlık / Uygunluk Belgesi",
-      diploma: "Diploma / Eğitim Belgesi",
-      professional: "Mesleki Belge",
-      contract: "Sözleşme / Başvuru Belgesi",
-      passport_seafarer: "Pasaport / Denizci Belgesi",
-      stcw: "STCW / Denizcilik Sertifikası",
-      medical_maritime: "Denizci Sağlık Uygunluk Belgesi"
-    };
-    return labels[type] || "Belge";
+  async function list(userId) {
+    const { data, error } = await client.from("account_documents")
+      .select("id,document_type,title,note,file_name,file_type,file_size_bytes,storage_path,status,created_at,legacy_local_id")
+      .eq("user_id", userId).order("created_at", { ascending: false }).limit(100);
+    if (error) throw error;
+    return data || [];
   }
 
-  function statusLabel(status) {
-    if (status === "approved") return "Onaylandı";
-    if (status === "rejected") return "Reddedildi";
-    return "Onay Bekliyor";
+  async function save(user, entry, legacyId = null) {
+    const file = entry.file;
+    validate(file);
+    const id = crypto.randomUUID();
+    const path = `${user.id}/${id}`;
+    const uploaded = await client.storage.from(bucket).upload(path, file, { contentType: file.type, upsert: false });
+    if (uploaded.error) throw uploaded.error;
+    const { data, error } = await client.from("account_documents").insert({
+      id, user_id: user.id, document_type: entry.type, title: entry.title,
+      note: entry.note || "", file_name: file.name.slice(0, 180),
+      file_type: file.type, file_size_bytes: file.size, storage_path: path,
+      legacy_local_id: legacyId
+    }).select("id,document_type,title,note,file_name,file_type,file_size_bytes,storage_path,status,created_at,legacy_local_id").single();
+    if (error) {
+      await client.storage.from(bucket).remove([path]);
+      throw error;
+    }
+    return data;
   }
 
-  function statusClass(status) {
-    if (status === "approved") return "is-approved";
-    if (status === "rejected") return "is-rejected";
-    return "";
+  async function migrate(user, existing) {
+    const imported = new Set(existing.map((row) => row.legacy_local_id).filter(Boolean));
+    let failed = 0;
+    for (const record of oldRows(user.id)) {
+      if (!record?.id) continue;
+      if (imported.has(record.id)) { forgetOldRow(user.id, record.id); continue; }
+      const file = await oldFile(record.id);
+      if (!file) { failed += 1; continue; }
+      try {
+        await save(user, {
+          file, type: record.type, title: String(record.title || file.name).slice(0, 160),
+          note: String(record.note || "").slice(0, 1000)
+        }, record.id);
+        forgetOldRow(user.id, record.id);
+      } catch (error) { failed += 1; }
+    }
+    if (failed) status(`${failed} eski belge aktarılamadı. Bu cihazdaki kayıtlar korunmuştur; dosyaları yeniden yükleyin.`, "warning");
   }
 
-  function renderDocuments(user) {
+  function render(rows) {
     const target = $("[data-document-list]");
     if (!target) return;
-    const docs = readDocuments(user);
-    if (!docs.length) {
-      target.innerHTML = `<div class="empty-state">Henüz belge yüklenmedi. İlk belgeni yukarıdaki formdan onaya gönderebilirsin.</div>`;
-      return;
-    }
-    target.innerHTML = docs.map((doc) => `
-      <article class="document-row">
-        <i class="fa-solid ${doc.type === "health" || doc.type === "medical_maritime" ? "fa-file-medical" : "fa-file-lines"}"></i>
-        <span>
-          <h3>${esc(doc.title || labelFor(doc.type))}</h3>
-          <p>${esc(labelFor(doc.type))} · ${esc(doc.file_name || "Dosya")} · ${doc.share_with_partners ? "Partner paylaşım izni açık" : "Partner paylaşım izni kapalı"}</p>
-        </span>
-        <small>
-          <span class="document-status ${statusClass(doc.status)}">${statusLabel(doc.status)}</span><br>
-          ${doc.created_at ? new Date(doc.created_at).toLocaleDateString("tr-TR") : ""}<br>
-          <button class="btn btn--light" type="button" data-open-document="${esc(doc.id)}">Aç</button>
-        </small>
-      </article>
-    `).join("");
-  }
-
-  function configureForProfile(profile) {
-    const typeSelect = $("[data-document-type]");
-    if (!typeSelect) return;
-    const isMaritime = sync && sync.isMaritimeProfile ? sync.isMaritimeProfile(profile) : false;
-    maritimeTypes.forEach((item) => {
-      if (!isMaritime) return;
-      if (typeSelect.querySelector(`option[value="${item.value}"]`)) return;
-      const option = document.createElement("option");
-      option.value = item.value;
-      option.textContent = item.label;
-      typeSelect.appendChild(option);
-    });
-    const cvLink = $("[data-cv-center-link]");
-    if (cvLink && sync && sync.cvTarget) cvLink.href = sync.cvTarget(profile);
-  }
-
-  async function createReviewTicket(user, profile, doc) {
-    if (!client || !user) return null;
-    try {
-      const { data, error } = await client
-        .from("support_tickets")
-        .insert({
-          user_id: user.id,
-          title: `Belge onayı: ${doc.title}`,
-          message: `${labelFor(doc.type)} onay incelemesi bekliyor.`,
-          category: "document_review",
-          priority: "normal",
-          status: "open",
-          metadata: {
-            document_id: doc.id,
-            document_type: doc.type,
-            file_name: doc.file_name,
-            sector_key: profile.sector_key || "",
-            profession_key: profile.profession_key || "",
-            share_with_partners: Boolean(doc.share_with_partners)
-          }
-        })
-        .select("id, status, created_at")
-        .maybeSingle();
-      if (error) throw error;
-      return data || null;
-    } catch (error) {
-      console.warn("Belge onay talebi Supabase'e yazılamadı:", error.message || error);
-      return null;
-    }
-  }
-
-  function validateFile(file) {
-    if (!file) throw new Error("Lütfen belge dosyası seçin.");
-    const allowed = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
-    if (!allowed.includes(file.type)) throw new Error("Belge PDF, JPEG, PNG veya WebP formatında olmalıdır.");
-    if (file.size > 8 * 1024 * 1024) throw new Error("Belge dosyası en fazla 8 MB olabilir.");
+    if (!rows.length) { target.innerHTML = '<div class="empty-state">Hesabınızda henüz belge yok.</div>'; return; }
+    target.innerHTML = rows.map((row) => `<article class="document-row">
+      <i class="fa-solid fa-file-shield" aria-hidden="true"></i>
+      <span><h3>${escapeHtml(row.title)}</h3><p>${escapeHtml(row.file_name)} · ${Math.ceil(row.file_size_bytes / 1024)} KB</p></span>
+      <small><span class="document-status is-approved">Hesapta saklandı</span><br>
+      ${new Date(row.created_at).toLocaleDateString("tr-TR")}<br>
+      <button class="btn btn--light" type="button" data-open-document="${row.id}">Aç</button>
+      <button class="btn btn--light" type="button" data-delete-document="${row.id}">Sil</button>
+      </small></article>`).join("");
   }
 
   document.addEventListener("DOMContentLoaded", async () => {
-    if (!document.querySelector("[data-page='documents']")) return;
-    if (!client || !sync) {
-      setStatus("Belge merkezi için profil bağlantısı hazırlanamadı.", "error");
-      return;
-    }
-    const accountAccess = App.auth && App.auth.requireAccountType
-      ? await App.auth.requireAccountType("customer", { redirect: true })
-      : null;
-    if (!accountAccess) return;
+    if (!$("[data-page='documents']")) return;
+    if (!client || !sync) { status("Sunucu bağlantısı kurulamadı. Belge yükleme kapalıdır.", "error"); return; }
+    const access = await App.auth?.requireAccountType?.("customer", { redirect: true });
+    if (!access) return;
     const loaded = await sync.load(client);
-    if (!loaded || !loaded.user) {
-      window.location.href = "user.html";
+    if (!loaded?.user) { location.href = "user.html"; return; }
+    const user = loaded.user;
+    if (sync.isMaritimeProfile(loaded.profile || {})) {
+      location.replace("../ecosystem/maritime-documents.html");
       return;
     }
-    const user = loaded.user;
-    const profile = loaded.profile || {};
-    configureForProfile(profile);
-    renderDocuments(user);
-
     const form = $("[data-document-form]");
-    if (!form) return;
-    form.addEventListener("submit", async (event) => {
+    const submit = form?.querySelector('button[type="submit"]');
+    if (submit) submit.disabled = true;
+    let rows = [];
+    try {
+      rows = await list(user.id);
+      await migrate(user, rows);
+      rows = await list(user.id);
+      render(rows);
+      if (submit) submit.disabled = false;
+    } catch (error) {
+      status("Belgeler sunucudan okunamadı. Bağlantı düzelene kadar belge gönderilemez.", "error");
+      return;
+    }
+
+    form?.addEventListener("submit", async (event) => {
       event.preventDefault();
-      const formData = new FormData(form);
-      const file = formData.get("file");
-      const title = String(formData.get("title") || "").trim();
-      const type = String(formData.get("type") || "").trim();
-      const isMaritime = sync.isMaritimeProfile(profile);
-
+      const fields = new FormData(form);
+      const type = String(fields.get("type") || "");
+      const title = String(fields.get("title") || "").trim();
       try {
-        if (!title) throw new Error("Belge başlığı zorunludur.");
-        validateFile(file);
-        if (/cv|özgeçmiş|resume/i.test(title) || type === "cv") {
-          throw new Error("CV yükleme bu alanda kapalıdır. Lütfen CV merkezini kullanın.");
-        }
-        if (["passport_seafarer", "stcw", "medical_maritime"].includes(type) && !isMaritime) {
-          throw new Error("Bu belge türü yalnızca denizcilik profilleri için açıktır.");
-        }
-
-        const doc = {
-          id: `doc-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-          type,
-          title,
-          note: String(formData.get("note") || "").trim(),
-          file_name: file.name,
-          file_type: file.type,
-          file_size: file.size,
-          status: "pending",
-          share_with_partners: formData.get("share_with_partners") === "on",
-          sector_key: profile.sector_key || "",
-          profession_key: profile.profession_key || "",
-          created_at: new Date().toISOString()
-        };
-        try {
-          await storeDocumentFile(doc.id, file);
-          doc.file_saved_local = true;
-        } catch (fileError) {
-          console.warn("Belge dosyası yerel saklama alanına yazılamadı:", fileError.message || fileError);
-        }
-        const ticket = await createReviewTicket(user, profile, doc);
-        if (ticket && ticket.id) doc.review_ticket_id = ticket.id;
-        writeDocuments(user, [doc, ...readDocuments(user)]);
+        if (!title || title.length > 160) throw new Error("Belge başlığını kontrol edin.");
+        if (/cv|özgeçmiş|resume/i.test(title)) throw new Error("CV için CV merkezini kullanın.");
+        if (["passport_seafarer", "stcw", "medical_maritime"].includes(type)) throw new Error("Denizcilik belgeleri için Denizcilik Belge Merkezi'ni kullanın.");
+        if (rows.length >= 20) throw new Error("Bu alanda en fazla 20 belge saklanabilir. Yeni belge eklemek için eski bir belgeyi silin.");
+        if (submit) submit.disabled = true;
+        await save(user, { type, title, note: String(fields.get("note") || "").trim().slice(0, 1000), file: fields.get("file") });
+        rows = await list(user.id);
+        render(rows);
         form.reset();
-        renderDocuments(user);
-        setStatus("Belge onaya gönderildi. Onaylanmadan partnerlerle paylaşılmaz.", "success");
+        status("Belge güvenli hesabınıza kaydedildi. Başka cihazdan da erişebilirsiniz.", "success");
       } catch (error) {
-        setStatus(error.message || "Belge yüklenemedi.", "error");
-      }
+        status(error.message || "Belge sunucuya kaydedilemedi.", "error");
+      } finally { if (submit) submit.disabled = false; }
     });
 
     document.addEventListener("click", async (event) => {
-      const button = event.target.closest("[data-open-document]");
-      if (!button) return;
+      const open = event.target.closest("[data-open-document]");
+      const remove = event.target.closest("[data-delete-document]");
+      if (!open && !remove) return;
+      const id = open?.dataset.openDocument || remove?.dataset.deleteDocument;
+      const row = rows.find((item) => item.id === id);
+      if (!row) return;
       try {
-        const record = await getDocumentFile(button.dataset.openDocument);
-        if (!record || !record.file) throw new Error("Belge dosyası bu cihazda bulunamadı.");
-        const url = URL.createObjectURL(record.file);
-        window.open(url, "_blank", "noopener");
-        window.setTimeout(() => URL.revokeObjectURL(url), 30000);
-      } catch (error) {
-        setStatus(error.message || "Belge açılamadı.", "error");
-      }
+        if (open) {
+          const { data, error } = await client.storage.from(bucket).createSignedUrl(row.storage_path, 60, { download: row.file_name });
+          if (error || !data?.signedUrl) throw error || new Error("Belge bağlantısı oluşturulamadı.");
+          const link = document.createElement("a");
+          link.href = data.signedUrl;
+          link.download = row.file_name;
+          link.rel = "noopener noreferrer";
+          link.click();
+        } else if (confirm("Bu belgeyi hesabınızdan silmek istiyor musunuz?")) {
+          const removed = await client.storage.from(bucket).remove([row.storage_path]);
+          if (removed.error) throw removed.error;
+          const deleted = await client.from("account_documents").delete().eq("id", id).eq("user_id", user.id);
+          if (deleted.error) throw deleted.error;
+          rows = await list(user.id);
+          render(rows);
+          status("Belge silindi.", "success");
+        }
+      } catch (error) { status(error.message || "İşlem tamamlanamadı.", "error"); }
     });
   });
 })();

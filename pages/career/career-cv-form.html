@@ -983,23 +983,91 @@ function applyData(data){
   renderAllInputs();
   setPhoto(data.photo || "");
 }
-function saveCV(){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(getData()));
-  alert("CV kaydedildi.");
+async function careerAccount(){
+  const user = await window.Allona?.auth?.getUser?.();
+  const client = window.Allona?.db?.client?.();
+  if(!user || !client) throw new Error("CV'yi hesabınıza kaydetmek için giriş yapın.");
+  return { user, client };
+}
+async function persistCareerCV(silent = false){
+  const { user, client } = await careerAccount();
+  const data = getData();
+  const photo = String(data.photo || "");
+  delete data.photo;
+  if(JSON.stringify(data).length > 250000) throw new Error("CV bilgileri sunucu sınırını aşıyor.");
+  const current = await client.from("career_cv_profiles").select("photo_path").eq("user_id", user.id).maybeSingle();
+  if(current.error) throw current.error;
+  let photoPath = current.data?.photo_path || null;
+  if(/^data:image\/(?:jpeg|png|webp);base64,/i.test(photo)){
+    const blob = await (await fetch(photo)).blob();
+    if(blob.size > 4194304) throw new Error("CV fotoğrafı en fazla 4 MB olabilir.");
+    photoPath = `${user.id}/photo`;
+    const uploaded = await client.storage.from("career-cv-photos").upload(photoPath, blob, { contentType: blob.type, upsert: true });
+    if(uploaded.error) throw uploaded.error;
+  }else if(!photo){
+    photoPath = null;
+  }
+  const result = await client.from("career_cv_profiles").upsert({
+    user_id: user.id, payload: data, photo_path: photoPath, updated_at: new Date().toISOString()
+  }, { onConflict: "user_id" });
+  if(result.error) throw result.error;
+  localStorage.removeItem(STORAGE_KEY);
+  if(!silent) alert("CV hesabınıza kaydedildi.");
+}
+async function saveCV(){
+  try{ await persistCareerCV(); }
+  catch(error){ alert(error.message || "CV sunucuya kaydedilemedi. Bilgiler bu cihazda korunuyor."); }
 }
 function autoSaveCV(){
   localStorage.setItem(STORAGE_KEY, JSON.stringify(getData()));
 }
-function loadCV(){
+async function loadCV(){
+  let local = null;
   try{
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
-    applyData(saved);
+    local = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
   }catch(error){
-    console.warn("Kariyer CV yüklenemedi:", error);
+    local = null;
+  }
+  try{
+    const { user, client } = await careerAccount();
+    const result = await client.from("career_cv_profiles").select("payload,photo_path").eq("user_id", user.id).maybeSingle();
+    if(result.error) throw result.error;
+    if(result.data){
+      const data = { ...result.data.payload };
+      if(result.data.photo_path){
+        const signed = await client.storage.from("career-cv-photos").createSignedUrl(result.data.photo_path, 3600);
+        if(signed.error) throw signed.error;
+        data.photo = signed.data.signedUrl;
+      }
+      const unsavedLocal = local && JSON.stringify({ ...local, photo: "" }) !== JSON.stringify({ ...data, photo: "" });
+      applyData(unsavedLocal && confirm("Bu cihazda kaydedilmemiş CV değişiklikleri var. Bu taslağı açmak istiyor musunuz?") ? local : data);
+      syncCV();
+      return;
+    }
+    if(local){
+      applyData(local);
+      syncCV();
+      try{ await persistCareerCV(true); }
+      catch(error){ console.warn("Yerel CV sunucuya aktarılamadı:", error); }
+    }
+  }catch(error){
+    if(local) applyData(local);
+    console.warn("Kariyer CV sunucudan yüklenemedi:", error);
   }
 }
-function resetForm(){
+async function resetForm(){
   if(!confirm("Form temizlensin mi?")) return;
+  try{
+    const { user, client } = await careerAccount();
+    const current = await client.from("career_cv_profiles").select("photo_path").eq("user_id", user.id).maybeSingle();
+    if(current.error) throw current.error;
+    const deleted = await client.from("career_cv_profiles").delete().eq("user_id", user.id);
+    if(deleted.error) throw deleted.error;
+    if(current.data?.photo_path) await client.storage.from("career-cv-photos").remove([current.data.photo_path]);
+  }catch(error){
+    alert(error.message || "CV sunucudan temizlenemedi. Bilgiler korunuyor.");
+    return;
+  }
   localStorage.removeItem(STORAGE_KEY);
   document.querySelectorAll("input, textarea").forEach(item => item.value = "");
   experienceRows = [blankExperience()];
@@ -1019,7 +1087,10 @@ async function downloadPDF(){
   }
   if(window.Allona && window.Allona.cvAccess && window.Allona.cvAccess.claimGeneration){
     const access = await window.Allona.cvAccess.claimGeneration({title:textValue("fullName","Aday")});
-    if(!access || access.allowed === false) return;
+    if(!access || access.allowed === false){
+      if(access?.service_unavailable) alert("CV indirme hakkı sunucudan doğrulanamadı. Bağlantınızı kontrol edip tekrar deneyin; hakkınız değişmedi.");
+      return;
+    }
   }
   const fileName = `AllonaHub_Kariyer_CV_${textValue("fullName","Aday")}.pdf`.replace(/\s+/g,"_");
   const { jsPDF } = window.jspdf;
@@ -1048,8 +1119,8 @@ document.addEventListener("DOMContentLoaded", () => {
   ensureRows();
   renderAllInputs();
   el("photoInput").addEventListener("change", handlePhotoUpload);
-  loadCV();
   syncCV();
+  loadCV();
   if(window.Allona && window.Allona.cvAccess && window.Allona.cvAccess.renderStatus){
     window.Allona.cvAccess.renderStatus("[data-cv-access-status]");
   }
@@ -1061,7 +1132,7 @@ document.addEventListener("DOMContentLoaded", () => {
 <script src="../../js/core.js?v=20260712-premium-page1" defer></script>
 <script src="../../js/supabase-client.js?v=20260920-auth-session1" defer></script>
 <script src="../../js/auth.js?v=20260920-auth-session1" defer></script>
-<script src="../../js/cv-access.js?v=20260619-payform1" defer></script>
+<script src="../../js/cv-access.js?v=20260925-server-quota1" defer></script>
 <script src="../../js/layout.v3.js?v=20260919-footer-trust1" defer></script>
 <script src="../../js/platform.js?v=20260828-corpcontrast4" defer></script>
 <script src="../../js/privacy-consent.js?v=20260712-theme-overflow1" defer></script>

@@ -25,11 +25,6 @@
     updateBadges();
   }
 
-  function backendMissing(error) {
-    const message = `${error && error.message || ""} ${error && error.details || ""} ${error && error.hint || ""}`;
-    return /function|schema cache|could not find|does not exist|not found/i.test(message);
-  }
-
   function normalizeProductSnapshot(value) {
     if (!value) return null;
     try {
@@ -106,15 +101,11 @@
   }
 
   async function syncLocalToRemote() {
-    try {
-      const user = await currentUser();
-      if (!user || !App.db || !App.db.cart) return hydrateLocal();
-      const remote = await migrateLocalCartIfNeeded();
-      return mirrorRemoteCart(remote || await App.db.cart.get());
-    } catch (error) {
-      if (backendMissing(error)) return hydrateLocal();
-      throw error;
-    }
+    const user = await currentUser();
+    if (!user) return hydrateLocal();
+    if (!App.db?.cart) throw new Error("Sepet sunucusu kullanılamıyor.");
+    const remote = await migrateLocalCartIfNeeded();
+    return mirrorRemoteCart(remote || await App.db.cart.get());
   }
 
   function addLocal(productId, qty, productSnapshot) {
@@ -135,19 +126,15 @@
 
   async function add(productId, qty, productSnapshot) {
     const user = await currentUser();
-    if (!user || !App.db || !App.db.cart) {
+    if (!user) {
       addLocal(productId, qty, productSnapshot);
       return;
     }
-    try {
-      await migrateLocalCartIfNeeded();
-      const remote = await App.db.cart.add(String(productId), Math.max(1, Number(qty || 1)));
-      mirrorRemoteCart(remote);
-      core.toast("Ürün sepete eklendi.");
-    } catch (error) {
-      if (!backendMissing(error)) throw error;
-      addLocal(productId, qty, productSnapshot);
-    }
+    if (!App.db?.cart) throw new Error("Sepet sunucusu kullanılamıyor.");
+    await migrateLocalCartIfNeeded();
+    const remote = await App.db.cart.add(String(productId), Math.max(1, Number(qty || 1)));
+    mirrorRemoteCart(remote);
+    core.toast("Ürün sepete eklendi.");
   }
 
   function setQtyLocal(productId, qty) {
@@ -163,17 +150,13 @@
 
   async function setQty(productId, qty) {
     const user = await currentUser();
-    if (!user || !App.db || !App.db.cart) {
+    if (!user) {
       setQtyLocal(productId, qty);
       return;
     }
-    try {
-      const remote = await App.db.cart.setQuantity(String(productId), Number(qty || 0));
-      mirrorRemoteCart(remote);
-    } catch (error) {
-      if (!backendMissing(error)) throw error;
-      setQtyLocal(productId, qty);
-    }
+    if (!App.db?.cart) throw new Error("Sepet sunucusu kullanılamıyor.");
+    const remote = await App.db.cart.setQuantity(String(productId), Number(qty || 0));
+    mirrorRemoteCart(remote);
   }
 
   function removeLocal(productId) {
@@ -183,18 +166,14 @@
 
   async function remove(productId) {
     const user = await currentUser();
-    if (!user || !App.db || !App.db.cart) {
+    if (!user) {
       removeLocal(productId);
       return;
     }
-    try {
-      const remote = await App.db.cart.setQuantity(String(productId), 0);
-      mirrorRemoteCart(remote);
-      core.toast("Ürün sepetten çıkarıldı.");
-    } catch (error) {
-      if (!backendMissing(error)) throw error;
-      removeLocal(productId);
-    }
+    if (!App.db?.cart) throw new Error("Sepet sunucusu kullanılamıyor.");
+    const remote = await App.db.cart.setQuantity(String(productId), 0);
+    mirrorRemoteCart(remote);
+    core.toast("Ürün sepetten çıkarıldı.");
   }
 
   function clearLocal() {
@@ -203,17 +182,13 @@
 
   async function clear() {
     const user = await currentUser();
-    if (!user || !App.db || !App.db.cart) {
+    if (!user) {
       clearLocal();
       return;
     }
-    try {
-      const remote = await App.db.cart.clear();
-      mirrorRemoteCart(remote);
-    } catch (error) {
-      if (!backendMissing(error)) throw error;
-      clearLocal();
-    }
+    if (!App.db?.cart) throw new Error("Sepet sunucusu kullanılamıyor.");
+    const remote = await App.db.cart.clear();
+    mirrorRemoteCart(remote);
   }
 
   function count() {
@@ -242,14 +217,10 @@
 
   async function hydrate() {
     const user = await currentUser();
-    if (!user || !App.db || !App.db.cart) return hydrateLocal();
-    try {
-      const remote = await migrateLocalCartIfNeeded();
-      return mirrorRemoteCart(remote || await App.db.cart.get());
-    } catch (error) {
-      if (backendMissing(error)) return hydrateLocal();
-      throw error;
-    }
+    if (!user) return hydrateLocal();
+    if (!App.db?.cart) throw new Error("Sepet sunucusu kullanılamıyor.");
+    const remote = await migrateLocalCartIfNeeded();
+    return mirrorRemoteCart(remote || await App.db.cart.get());
   }
 
   function totals(lines, coupon, hpToUse) {

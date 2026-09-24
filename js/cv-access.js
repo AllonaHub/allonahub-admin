@@ -2,8 +2,6 @@
   const App = window.Allona = window.Allona || {};
   const DEVICE_STORAGE_KEY = "allona_cv_device_id_v1";
   const DEVICE_COOKIE_KEY = "allona_cv_device_id_v1";
-  const DEVICE_USERS_KEY = "allona_cv_device_users_v1";
-  const LOCAL_USAGE_PREFIX = "allona_cv_local_usage_v1:";
 
   function randomId() {
     if (window.crypto && window.crypto.randomUUID) return window.crypto.randomUUID();
@@ -65,41 +63,12 @@
     return sha256(getRawDeviceId());
   }
 
-  function readDeviceUsers() {
-    try {
-      return JSON.parse(localStorage.getItem(DEVICE_USERS_KEY) || "{}");
-    } catch (error) {
-      return {};
-    }
-  }
-
-  function writeDeviceUsers(value) {
-    localStorage.setItem(DEVICE_USERS_KEY, JSON.stringify(value || {}));
-  }
-
-  function readLocalUsage(userId) {
-    try {
-      return JSON.parse(localStorage.getItem(`${LOCAL_USAGE_PREFIX}${userId}`) || "{}");
-    } catch (error) {
-      return {};
-    }
-  }
-
-  function writeLocalUsage(userId, value) {
-    localStorage.setItem(`${LOCAL_USAGE_PREFIX}${userId}`, JSON.stringify(value || {}));
-  }
-
   function normalizeResult(data) {
     if (!data) return null;
     if (typeof data === "string") {
       try { return JSON.parse(data); } catch (error) { return null; }
     }
     return data;
-  }
-
-  function isMissingBackend(error) {
-    const message = `${error && error.message || ""} ${error && error.details || ""} ${error && error.hint || ""}`;
-    return /function|schema cache|could not find|does not exist|not found/i.test(message);
   }
 
   async function currentUser() {
@@ -116,63 +85,11 @@
     return currentUser();
   }
 
-  async function localEnsureAccess(user) {
-    const deviceKey = await getDeviceKey();
-    const users = readDeviceUsers();
-    const list = Array.isArray(users[deviceKey]) ? users[deviceKey] : [];
-    if (!list.includes(user.id)) list.push(user.id);
-    users[deviceKey] = list;
-    writeDeviceUsers(users);
-
-    const isRisky = list[0] && list[0] !== user.id;
-    const usage = readLocalUsage(user.id);
-    const freeLimit = isRisky ? 0 : 2;
-    const freeUsed = Number(usage.free_used || 0);
-    const paidCredits = Number(usage.paid_credits || 0);
-    return {
-      user_id: user.id,
-      free_limit: freeLimit,
-      free_used: freeUsed,
-      remaining_free: Math.max(freeLimit - freeUsed, 0),
-      paid_credits: paidCredits,
-      is_risky: isRisky,
-      risk_reason: isRisky ? "same_device_multiple_accounts" : null,
-      source: "local_fallback"
-    };
-  }
-
-  async function localClaimGeneration(user) {
-    const access = await localEnsureAccess(user);
-    const usage = readLocalUsage(user.id);
-    if (access.remaining_free > 0) {
-      usage.free_used = Number(usage.free_used || 0) + 1;
-      writeLocalUsage(user.id, usage);
-      return {
-        allowed: true,
-        payment_required: false,
-        generation_type: "free",
-        remaining_free: Math.max(access.free_limit - usage.free_used, 0),
-        paid_credits: access.paid_credits,
-        is_risky: access.is_risky,
-        source: "local_fallback"
-      };
-    }
-    return {
-      allowed: false,
-      payment_required: true,
-      payment_url: "/pages/career/cv-payment.html?reason=limit",
-      remaining_free: 0,
-      paid_credits: access.paid_credits,
-      is_risky: access.is_risky,
-      source: "local_fallback"
-    };
-  }
-
   async function ensureAccess(context) {
     const user = await currentUser();
     if (!user) return null;
     const deviceKey = await getDeviceKey();
-    if (!App.db || !App.db.client) return localEnsureAccess(user);
+    if (!App.db || !App.db.client) return { service_unavailable: true };
 
     try {
       const { data, error } = await App.db.client().rpc("ensure_cv_access", {
@@ -182,8 +99,8 @@
       if (error) throw error;
       return normalizeResult(data);
     } catch (error) {
-      if (!isMissingBackend(error)) console.warn("CV erişim durumu alınamadı:", error);
-      return localEnsureAccess(user);
+      console.warn("CV erişim durumu sunucudan alınamadı:", error);
+      return { service_unavailable: true };
     }
   }
 
@@ -206,17 +123,12 @@
           window.location.href = App.core.url(result.payment_url || "/pages/career/cv-payment.html?reason=limit");
           return result;
         }
-        return result || { allowed: false };
+        return result || { allowed: false, service_unavailable: true };
       } catch (error) {
-        if (!isMissingBackend(error)) console.warn("CV hakkı doğrulanamadı:", error);
+        console.warn("CV hakkı sunucudan doğrulanamadı:", error);
       }
     }
-
-    const fallback = await localClaimGeneration(user);
-    if (fallback.payment_required) {
-      window.location.href = App.core.url(fallback.payment_url || "/pages/career/cv-payment.html?reason=limit");
-    }
-    return fallback;
+    return { allowed: false, service_unavailable: true };
   }
 
   async function reportSignupAttempt(email, context) {
@@ -253,6 +165,7 @@
 
   function messageForAccess(access) {
     if (!access) return "CV/PDF üretmek için giriş yapın. Her hesabın 2 ücretsiz CV üretim hakkı bulunur.";
+    if (access.service_unavailable) return "CV hakkı sunucudan doğrulanamadı. Bağlantınızı kontrol edip tekrar deneyin; hakkınız değişmedi.";
     if (access.is_risky) {
       return "Bu cihazda daha önce CV hakkı kullanılan farklı bir hesap var. Bu hesap riskli profil olarak işaretlendi ve ücretsiz CV hakkı tanımlanmadı.";
     }
@@ -276,7 +189,7 @@
     }
     const access = await ensureAccess("status");
     node.textContent = messageForAccess(access);
-    node.dataset.state = access && access.is_risky ? "risk" : Number(access && access.remaining_free || 0) > 0 ? "free" : "paid";
+    node.dataset.state = access?.service_unavailable ? "unavailable" : access?.is_risky ? "risk" : Number(access?.remaining_free || 0) > 0 ? "free" : "paid";
   }
 
   document.addEventListener("DOMContentLoaded", () => {

@@ -1,7 +1,6 @@
 (function () {
   const sync = window.AllonaProfileSync;
   const client = sync && sync.createClient ? sync.createClient() : null;
-  const walletKey = "allonahub_user_coupons_v1";
   const readKey = "allonahub_user_notification_reads_v1";
 
   function safeJson(key, fallback) {
@@ -34,12 +33,6 @@
 
   function orderNo(order) {
     return order?.order_no || order?.order_number || order?.id || "Sipariş";
-  }
-
-  function localCoupons(user) {
-    const wallet = safeJson(walletKey, {});
-    const list = wallet[userKey(user)];
-    return Array.isArray(list) ? list : [];
   }
 
   function readStore(user) {
@@ -172,7 +165,7 @@
 
   function couponNotifications(user, remoteCoupons) {
     const byCode = new Map();
-    [...(remoteCoupons || []), ...localCoupons(user)].forEach((coupon) => {
+    (remoteCoupons || []).forEach((coupon) => {
       if (!coupon || !coupon.code) return;
       byCode.set(String(coupon.code).toUpperCase(), coupon);
     });

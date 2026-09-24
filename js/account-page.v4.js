@@ -8,12 +8,6 @@
     return `${ADDRESS_STORAGE_PREFIX}${userId}`;
   }
 
-  function isAddressesSchemaError(error) {
-    const message = String(error && error.message || "");
-    const code = String(error && error.code || "");
-    return code === "PGRST205" || (/addresses/i.test(message) && /schema cache|could not find/i.test(message));
-  }
-
   function readLocalAddresses(userId) {
     try {
       return JSON.parse(localStorage.getItem(addressStorageKey(userId)) || "[]");
@@ -32,10 +26,6 @@
     const defaultIndex = list.findIndex((address) => address.is_default);
     const activeIndex = defaultIndex >= 0 ? defaultIndex : 0;
     return list.map((address, index) => ({ ...address, is_default: index === activeIndex }));
-  }
-
-  function addressFallbackMessage() {
-    return "Adres tablosu Supabase'de henüz aktif görünmüyor. Adresler bu cihazda geçici olarak saklanıyor; kalıcı kayıt için docs/reference/DATABASE.md içindeki addresses SQL'i Supabase SQL Editor'da çalıştırılmalı.";
   }
 
   function normalizeAddress(raw) {
@@ -171,16 +161,13 @@
     }
   }
 
-  function renderAddresses(list, addresses, source) {
-    const localMode = source === "local";
-    const warning = localMode ? `<div class="status-box status-box--warning">${core.escapeHTML(addressFallbackMessage())}</div>` : "";
+  function renderAddresses(list, addresses) {
     const normalized = normalizeDefaultAddresses(addresses);
     if (!normalized.length) {
-      list.innerHTML = `${warning}<div class="empty-state">Kayıtlı adres bulunmuyor.</div>`;
+      list.innerHTML = '<div class="empty-state">Kayıtlı adres bulunmuyor.</div>';
       return;
     }
     list.innerHTML = `
-      ${warning}
       ${normalized.map((address) => `
         <article class="data-card">
           <div class="section-header">
@@ -189,8 +176,8 @@
               <p>${core.escapeHTML(address.full_name || "")} ${core.escapeHTML(address.phone || "")}</p>
             </div>
             <div class="form-actions">
-              ${address.is_default ? "" : `<button class="btn btn--light" type="button" data-default-address="${core.escapeHTML(address.id)}" data-address-source="${localMode ? "local" : "remote"}">Varsayılan Yap</button>`}
-              <button class="btn btn--danger" type="button" data-delete-address="${core.escapeHTML(address.id)}" data-address-source="${localMode ? "local" : "remote"}">Sil</button>
+              ${address.is_default ? "" : `<button class="btn btn--light" type="button" data-default-address="${core.escapeHTML(address.id)}">Varsayılan Yap</button>`}
+              <button class="btn btn--danger" type="button" data-delete-address="${core.escapeHTML(address.id)}">Sil</button>
             </div>
           </div>
           <p>${core.escapeHTML(address.address)}</p>
@@ -200,9 +187,35 @@
     `;
   }
 
+  async function migrateLocalAddresses(userId, remote) {
+    const local = readLocalAddresses(userId);
+    if (!Array.isArray(local) || !local.length) return remote;
+    const existing = new Set(remote.map((address) => [address.full_name, address.phone, address.address, address.city, address.zip_code].join("|")));
+    let migrated = 0;
+    for (const address of local) {
+      const fingerprint = [address.full_name, address.phone, address.address, address.city, address.zip_code].join("|");
+      if (existing.has(fingerprint)) { migrated += 1; continue; }
+      try {
+        const payload = remoteAddressPayload(address, userId);
+        payload.is_default = !remote.length && Boolean(address.is_default);
+        const { error } = await App.db.client().from("addresses").insert(payload);
+        if (error) break;
+        existing.add(fingerprint);
+        migrated += 1;
+      } catch (error) { break; }
+    }
+    if (migrated === local.length) writeLocalAddresses(userId, []);
+    if (migrated) {
+      const { data, error } = await App.db.client().from("addresses").select("*").eq("user_id", userId)
+        .order("is_default", { ascending: false }).order("created_at", { ascending: false });
+      if (!error) return data || [];
+    }
+    return remote;
+  }
+
   async function loadAddresses(userId) {
     const list = document.querySelector("[data-address-list]");
-    if (!list) return { source: "remote" };
+    if (!list) return { available: true };
     core.renderStatus(list, "Adresler yükleniyor...");
     try {
       const { data, error } = await App.db.client()
@@ -212,15 +225,12 @@
         .order("is_default", { ascending: false })
         .order("created_at", { ascending: false });
       if (error) throw error;
-      renderAddresses(list, (data || []).map(normalizeAddress), "remote");
-      return { source: "remote" };
+      const addresses = await migrateLocalAddresses(userId, data || []);
+      renderAddresses(list, addresses.map(normalizeAddress));
+      return { available: true };
     } catch (error) {
-      if (isAddressesSchemaError(error)) {
-        renderAddresses(list, readLocalAddresses(userId), "local");
-        return { source: "local" };
-      }
-      core.renderStatus(list, "Adresler şu anda yüklenemedi. Lütfen daha sonra tekrar deneyin.", "error");
-      return { source: "remote" };
+      core.renderStatus(list, "Adresler sunucudan yüklenemedi. Yeni adres kaydı için daha sonra tekrar deneyin.", "error");
+      return { available: false };
     }
   }
 
@@ -230,6 +240,10 @@
     const user = await App.auth.requireAuth();
     if (!user) return;
     const state = await loadAddresses(user.id);
+    if (!state.available) {
+      form.querySelector("button[type='submit']").disabled = true;
+      return;
+    }
 
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -239,37 +253,10 @@
         const limit = security && security.rateLimit(`address:${user.id}`, { limit: 8, windowMs: 10 * 60 * 1000 });
         if (limit && !limit.allowed) throw new Error("Çok sık adres işlemi yapıldı. Lütfen biraz bekleyin.");
         const formPayload = core.parseForm(form);
-        const payload = validateAddress(formPayload);
-        if (state.source === "local") {
-          const current = readLocalAddresses(user.id);
-          const addresses = normalizeDefaultAddresses([
-            { ...payload, is_default: formPayload.is_default === "on" || current.length === 0 },
-            ...current.map((address) => ({ ...address, is_default: formPayload.is_default === "on" ? false : address.is_default }))
-          ]);
-          writeLocalAddresses(user.id, addresses);
-          renderAddresses(document.querySelector("[data-address-list]"), addresses, "local");
-          form.reset();
-          core.toast("Adres geçici olarak bu cihazda kaydedildi.");
-          return;
-        }
+        validateAddress(formPayload);
 
         const { error } = await App.db.client().from("addresses").insert(remoteAddressPayload(formPayload, user.id));
-        if (error) {
-          if (isAddressesSchemaError(error)) {
-            const current = readLocalAddresses(user.id);
-            const addresses = normalizeDefaultAddresses([
-              { ...payload, is_default: formPayload.is_default === "on" || current.length === 0 },
-              ...current.map((address) => ({ ...address, is_default: formPayload.is_default === "on" ? false : address.is_default }))
-            ]);
-            writeLocalAddresses(user.id, addresses);
-            state.source = "local";
-            renderAddresses(document.querySelector("[data-address-list]"), addresses, "local");
-            form.reset();
-            core.toast("Adres geçici olarak bu cihazda kaydedildi.");
-            return;
-          }
-          throw error;
-        }
+        if (error) throw error;
         form.reset();
         await loadAddresses(user.id);
         core.toast("Adres kaydedildi.");
@@ -289,49 +276,20 @@
       if (!button && !defaultButton) return;
       try {
         if (defaultButton) {
-          if (defaultButton.dataset.addressSource === "local") {
-            const addresses = normalizeDefaultAddresses(readLocalAddresses(user.id).map((address) => ({
-              ...address,
-              is_default: address.id === defaultButton.dataset.defaultAddress
-            })));
-            writeLocalAddresses(user.id, addresses);
-            renderAddresses(document.querySelector("[data-address-list]"), addresses, "local");
-            core.toast("Varsayılan adres güncellendi.");
-            return;
-          }
-
           const { error } = await App.db.client()
             .from("addresses")
             .update({ is_default: true })
             .eq("id", defaultButton.dataset.defaultAddress)
             .eq("user_id", user.id);
           if (error) throw error;
-          const nextState = await loadAddresses(user.id);
-          state.source = nextState.source;
+          await loadAddresses(user.id);
           core.toast("Varsayılan adres güncellendi.");
           return;
         }
 
-        if (button.dataset.addressSource === "local") {
-          const addresses = normalizeDefaultAddresses(readLocalAddresses(user.id).filter((address) => address.id !== button.dataset.deleteAddress));
-          writeLocalAddresses(user.id, addresses);
-          renderAddresses(document.querySelector("[data-address-list]"), addresses, "local");
-          core.toast("Adres silindi.");
-          return;
-        }
-
-        const { error } = await App.db.client().from("addresses").delete().eq("id", button.dataset.deleteAddress);
-        if (error) {
-          if (isAddressesSchemaError(error)) {
-            state.source = "local";
-            renderAddresses(document.querySelector("[data-address-list]"), readLocalAddresses(user.id), "local");
-            core.toast("Adres tablosu henüz aktif değil.", "error");
-            return;
-          }
-          throw error;
-        }
-        const nextState = await loadAddresses(user.id);
-        state.source = nextState.source;
+        const { error } = await App.db.client().from("addresses").delete().eq("id", button.dataset.deleteAddress).eq("user_id", user.id);
+        if (error) throw error;
+        await loadAddresses(user.id);
         core.toast("Adres silindi.");
       } catch (error) {
         core.toast("Adres silinemedi. Lütfen tekrar deneyin.", "error");

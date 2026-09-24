@@ -274,23 +274,6 @@
     return `../account/user.html?${params.toString()}`;
   }
 
-  function storageKey(type) {
-    return `allonahub.maritime.${type}.v1.${userId() || "device"}`;
-  }
-
-  function readList(type) {
-    try {
-      const parsed = JSON.parse(localStorage.getItem(storageKey(type)) || "[]");
-      return Array.isArray(parsed) ? parsed : [];
-    } catch (error) {
-      return [];
-    }
-  }
-
-  function writeList(type, rows) {
-    localStorage.setItem(storageKey(type), JSON.stringify(rows.slice(0, 100)));
-  }
-
   function dateLabel(value) {
     const date = new Date(value || Date.now());
     if (!Number.isFinite(date.getTime())) return "";
@@ -449,10 +432,6 @@
     } finally {
       window.clearTimeout(timeout);
     }
-  }
-
-  function applicationRows() {
-    return readList("applications");
   }
 
   function smartMatchFor(job) {
@@ -719,9 +698,7 @@
   async function renderApplications() {
     if (!session) return authGate();
     const remote = await liveApplications();
-    const local = applicationRows();
-    const seen = new Set();
-    const rows = [...remote, ...local].filter(function (item) { const key = item.id || `${item.job_id}-${item.applied_at}`; if (seen.has(key)) return false; seen.add(key); return true; });
+    const rows = remote;
     if (!rows.length) {
       root.innerHTML = `<section class="maritime-empty"><div><i class="fa-solid fa-clipboard-list" aria-hidden="true"></i><h2>${escapeHtml(text("noApplicationsTitle"))}</h2><p>${escapeHtml(text("noApplicationsLead"))}</p><a class="maritime-button maritime-button--primary" href="${escapeHtml(portalUrl("maritime-jobs.html"))}">${escapeHtml(text("browseJobs"))}</a></div></section>`;
       return;
@@ -745,8 +722,7 @@
   async function renderOffers() {
     if (!session) return authGate();
     const remote = await liveOffers();
-    const local = readList("offers");
-    const rows = [...remote, ...local];
+    const rows = remote;
     if (!rows.length) {
       root.innerHTML = `<section class="maritime-section-heading"><h2>${escapeHtml(text("offersTitle"))}</h2><p>${escapeHtml(text("offersPrivacy"))}</p></section><section class="maritime-empty"><div><i class="fa-solid fa-envelope-open" aria-hidden="true"></i><h2>${escapeHtml(text("noOffersTitle"))}</h2><p>${escapeHtml(text("noOffersLead"))}</p><a class="maritime-button" href="${escapeHtml(portalUrl("maritime-applications.html"))}">${escapeHtml(text("applicationsNav"))}</a></div></section>`;
       return;
