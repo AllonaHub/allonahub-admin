@@ -8,7 +8,6 @@
   let checkoutUser = null;
   let checkoutProfile = null;
   const PAYMENT_HANDOFF_KEY = "allona_bank_payment_checkout";
-  const COUPON_WALLET_KEY = "allonahub_user_coupons_v1";
   const FIRST_HP_CONVERSION_KEY = "allonahub_first_hp_conversion_v1";
   const HP_PER_TL = 8;
 
@@ -67,22 +66,6 @@
 
   function userKey(user) {
     return user && user.id ? `user:${user.id}` : "guest";
-  }
-
-  function walletCoupons(user) {
-    const all = safeJson(COUPON_WALLET_KEY, {});
-    const list = all[userKey(user)];
-    return Array.isArray(list) ? list : [];
-  }
-
-  function writeWalletCoupons(user, coupons) {
-    try {
-      const all = safeJson(COUPON_WALLET_KEY, {});
-      all[userKey(user)] = coupons;
-      localStorage.setItem(COUPON_WALLET_KEY, JSON.stringify(all));
-    } catch (error) {
-      // Remote order data remains the source of truth.
-    }
   }
 
   function firstHpUseAvailable(user) {
@@ -152,40 +135,27 @@
 
   async function loadCouponFromUserWallet(code, user) {
     if (!user) return null;
-    if (App.db && App.db.client) {
-      try {
-        const { data, error } = await App.db.client()
-          .from("user_coupons")
-          .select("*")
-          .eq("user_id", user.id)
-          .eq("code", code)
-          .maybeSingle();
-        if (error) throw error;
-        if (data) return normalizeCoupon(data);
-      } catch (error) {
-        // Local wallet fallback follows.
-      }
-    }
-    const local = walletCoupons(user).find((coupon) => String(coupon.code || "").toUpperCase() === code);
-    return normalizeCoupon(local);
+    if (!App.db?.client) throw new Error("Kupon sunucusuna bağlanılamadı.");
+    const { data, error } = await App.db.client()
+      .from("user_coupons")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("code", code)
+      .maybeSingle();
+    if (error) throw error;
+    return normalizeCoupon(data);
   }
 
   async function markCouponUsed(code, user) {
     if (!code || !user) return;
     const now = new Date().toISOString();
-    const local = walletCoupons(user).map((coupon) => (
-      String(coupon.code || "").toUpperCase() === code
-        ? { ...coupon, status: "used", used_at: now }
-        : coupon
-    ));
-    writeWalletCoupons(user, local);
-    if (App.db && App.db.client) {
-      await App.db.client()
-        .from("user_coupons")
-        .update({ status: "used", used_at: now })
-        .eq("user_id", user.id)
-        .eq("code", code);
-    }
+    if (!App.db?.client) throw new Error("Kupon sunucusuna bağlanılamadı.");
+    const { error } = await App.db.client()
+      .from("user_coupons")
+      .update({ status: "used", used_at: now })
+      .eq("user_id", user.id)
+      .eq("code", code);
+    if (error) throw error;
   }
 
   function renderSummary() {
