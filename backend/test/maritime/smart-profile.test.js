@@ -215,6 +215,7 @@ test("builds Global CV from a user-confirmed Maritime CV without treating archiv
   const result = smart({
     cvProfile: {
       profile_status: "user_confirmed",
+      last_user_confirmed_at: "2026-09-20T12:00:00Z",
       profile_payload: {
         ...cvProfile.profile_payload,
         data_origin: "user_entered_maritime_cv"

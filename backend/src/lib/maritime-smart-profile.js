@@ -632,7 +632,9 @@ export function buildMaritimeSmartProfile({ cvProfile, readinessItems = [], work
   }, ["language", "level"], 30);
   const confirmedDocuments = array(documents).filter((document) => ["user_confirmed", "verification_pending", "verified"].includes(document.status));
   const archivedDocuments = array(documents).filter((document) => ["uploaded", "user_confirmed", "verification_pending", "verified"].includes(document.status));
-  const manualCvConfirmed = cvProfile?.profile_status === "user_confirmed" && payload.data_origin === "user_entered_maritime_cv";
+  const manualCvConfirmed = ["user_confirmed", "verification_pending", "verified"].includes(cvProfile?.profile_status)
+    && Boolean(cvProfile?.last_user_confirmed_at)
+    && payload.data_origin === "user_entered_maritime_cv";
   const confirmedProfileSource = manualCvConfirmed || confirmedDocuments.length > 0;
   const expiry = expiryState(items, now);
   const conflicts = identityConflicts(items);

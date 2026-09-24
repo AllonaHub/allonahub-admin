@@ -313,7 +313,7 @@ const manualStcwPresets = Object.freeze({
 });
 
 function manualStcwTitle(row, language) {
-  const preset = manualStcwPresets[cvText(row.presetId).toLowerCase()];
+  const preset = manualStcwPresets[cvText(row.presetId || row.code).toLowerCase()];
   const title = cvText(row.name) || preset?.[language] || preset?.en || "";
   const titleI18n = preset
     ? Object.fromEntries(["tr", "az", "kk", "uz", "ky", "en", "de", "ru", "ar"].map((code) => [code, preset[code] || null]))
@@ -546,6 +546,79 @@ function manualCvCompletion(payload) {
   return Math.min(100, Math.round((checks.filter(Boolean).length / checks.length) * 70 + (detailed.filter(Boolean).length / detailed.length) * 30));
 }
 
+export const maritimeCvEditorMetadata = Object.freeze({
+  fields: [...manualCvFieldKeys].filter((key) => key !== "birth"),
+  presets: manualStcwPresets
+});
+
+export function normalizeManualCv(source) {
+  const record = (value, allowed) => Object.fromEntries(Object.entries(value || {})
+    .filter(([key]) => allowed.has(key)).map(([key, value]) => [key, String(value ?? "")]));
+  const cv = manualCvDraftSchema.parse({
+    lang: source.lang,
+    summaryMode: source.summaryMode,
+    fields: record(source.fields, manualCvFieldKeys),
+    additionalData: (source.additionalData || []).map((row) => record(row, manualCvRowKeys.additional)),
+    stcwData: (source.stcwData || []).map((row) => record(row, manualCvRowKeys.stcw)),
+    seaData: (source.seaData || []).map((row) => record(row, manualCvRowKeys.sea))
+  });
+  cv.fields.birthDate ||= cv.fields.birth?.match(/\d{4}-\d{2}-\d{2}/)?.[0] || "";
+  cv.fields.birthPlace ||= cvText((cv.fields.birth || "").replace(cv.fields.birthDate, "").replace(/^[,\s-]+|[,\s-]+$/g, ""));
+  cv.stcwData = cv.stcwData.map((row) => {
+    const presetId = cvText(row.presetId || row.code).toLowerCase();
+    const preset = manualStcwPresets[presetId];
+    return { ...row, ...(preset ? { presetId, code: preset.code } : {}), number: cvText(row.number || row.cert), cert: "" };
+  });
+  return cv;
+}
+
+export function maritimeAdminCvError(error) {
+  const source = [error?.message, error?.details, error?.hint].filter(Boolean).join(" ");
+  if (/MARITIME_IDENTITY_/.test(source)) return identitySecurityError(source);
+  return httpError("CV kaydı tamamlanamadı. Bilgiler korunuyor; lütfen yeniden deneyin.", 503, "MARITIME_ADMIN_CV_SAVE_UNAVAILABLE");
+}
+
+const adminCvRequiredLabels = Object.freeze({
+  profile_photo: "Profil fotoğrafı", rank: "Pozisyon", given_names: "Ad", family_name: "Soyadı", middle_name: "Baba adı",
+  date_of_birth: "Doğum tarihi", place_of_birth: "Doğum yeri", nationality: "Uyruk", gender: "Cinsiyet", marital_status: "Medeni durum",
+  contact_email: "E-posta", contact_phone: "Telefon", permanent_address: "Adres", nearest_airport: "En yakın havalimanı",
+  passport: "Pasaport", passport_number: "Pasaport numarası", passport_issuing_country: "Pasaportu düzenleyen ülke", passport_issue_date: "Pasaport veriliş tarihi", passport_expiry_date: "Pasaport geçerlilik tarihi",
+  seaman_book: "Gemiadamı cüzdanı", seaman_book_number: "Gemiadamı cüzdan numarası", seaman_book_issue_date: "Cüzdan veriliş tarihi", seaman_book_expiry_date: "Cüzdan geçerlilik tarihi",
+  medical_certificate: "Sağlık belgesi", medical_certificate_number: "Sağlık belgesi numarası", medical_certificate_issue_date: "Sağlık belgesi veriliş tarihi", medical_certificate_expiry_date: "Sağlık belgesi geçerlilik tarihi", medical_fitness: "Sağlık uygunluğu",
+  rowId: "Kayıt kimliği", imo: "IMO", vessel: "Gemi adı", company: "Şirket", type: "Gemi türü", flag: "Bayrak", mmsi: "MMSI", dwt: "DWT", grt: "GRT", signon: "Katılış tarihi", signoff: "Ayrılış tarihi",
+  referenceName: "Referans yetkilisi", referenceCompanyEmail: "Şirket e-postası", referenceCompanyPhone: "Şirket telefonu", referencePhone: "Referans telefonu", serviceDocumentId: "Hizmet belgesi"
+});
+
+function adminCvRequiredLabel(key) {
+  if (adminCvRequiredLabels[key]) return adminCvRequiredLabels[key];
+  const certificate = /^certificate_(sp|sh|si|sl|so)(?:_(number|issue_date|expiry_date))?$/.exec(key);
+  if (certificate) return `${certificate[1].toUpperCase()} ${({ number: "sertifika numarası", issue_date: "veriliş tarihi", expiry_date: "geçerlilik tarihi" })[certificate[2]] || "sertifikası"}`;
+  return key;
+}
+
+// Admin corrections use the same canonical data and ownership checks as a member save.
+export async function prepareMaritimeAdminCv(userId, source, status) {
+  if (!source?.manual_cv?.fields) throw httpError("Önce Maritime CV bilgilerini girin.", 409, "MARITIME_CV_REQUIRED");
+  const cv = normalizeManualCv(source.manual_cv);
+  const confirmed = ["user_confirmed", "verification_pending", "verified"].includes(status);
+  if (confirmed) {
+    const candidate = { ...cv, seaData: cv.seaData.map((row) => ({ ...row, saved: "true" })) };
+    const parsed = manualCvSchema.safeParse(candidate);
+    if (!parsed.success) {
+      const fields = parsed.error.issues.map((issue) => `${Number(issue.path[1]) + 1}. kayıt: ${adminCvRequiredLabel(issue.path.at(-1))}`).join(", ");
+      throw httpError(`Deniz tecrübesi tamamlanmalıdır: ${fields}.`, 409, "MARITIME_CV_EXPERIENCE_INCOMPLETE");
+    }
+    await assertOwnedSeaServiceDocuments(userId, candidate.seaData);
+    cv.seaData = candidate.seaData;
+  }
+  const payload = { ...source, ...manualCvPayload(cv) };
+  const readiness = maritimeGlobalPassportReadiness(payload, { hasPhoto: await hasStoredProfilePhoto(userId) });
+  if (confirmed && !readiness.ready) {
+    throw httpError(`CV onayı için eksik alanlar: ${readiness.missing.map(adminCvRequiredLabel).join(", ")}.`, 409, "MARITIME_CV_REQUIRED_FIELDS_MISSING");
+  }
+  return { payload, completion: manualCvCompletion(payload), readiness };
+}
+
 async function assertOwnedSeaServiceDocuments(userId, seaData) {
   const rows = seaData.filter((row) => String(row.serviceDocumentId || "").trim());
   if (!rows.length) return;
@@ -631,7 +704,7 @@ async function hasStoredProfilePhoto(userId) {
   return !result.error && Array.isArray(result.data) && result.data.some((item) => item?.name === "profile.webp");
 }
 
-async function invalidateMaritimeCvDerivedState(userId, now = new Date().toISOString()) {
+export async function invalidateMaritimeCvDerivedState(userId, now = new Date().toISOString()) {
   assertDb(await supabaseAdmin.from("maritime_smart_account_runs")
     .update({ status: "superseded" })
     .eq("seafarer_user_id", userId)

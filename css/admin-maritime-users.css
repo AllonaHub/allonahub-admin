@@ -229,6 +229,12 @@ input:focus, select:focus, textarea:focus { outline: 2px solid rgba(0, 215, 255,
 .mau-repeat-list { display: grid; gap: 9px; }
 .mau-repeat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); gap: 8px; border-left: 2px solid var(--mau-cyan); padding: 10px; background: #091522; }
 .mau-repeat-row button { align-self: end; }
+.mau-certificate-name { grid-column: span 2; }
+.mau-repeat-row label { min-width: 0; font-size: 12px; }
+.mau-repeat-row textarea { margin-top: 5px; }
+@media (max-width: 620px) {
+  .mau-certificate-name { grid-column: 1 / -1; }
+}
 
 .mau-record-list { display: grid; gap: 9px; }
 .mau-record { border: 1px solid var(--mau-line); border-radius: 6px; background: var(--mau-panel); padding: 12px; }
@@ -273,3 +279,5 @@ input:focus, select:focus, textarea:focus { outline: 2px solid rgba(0, 215, 255,
   .mau-user-head { grid-template-columns: 68px minmax(0, 1fr); }
   .mau-portrait { width: 68px; }
 }
+/* Keep hidden workspaces and empty states out of the layout. */
+[hidden] { display: none !important; }

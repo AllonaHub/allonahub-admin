@@ -89,7 +89,8 @@ try {
     alerts.push(...await page.evaluate(() => window.__cvAlerts));
     assert.equal(draftSaveCount, 1);
     assert.equal(storedCv.fields.firstName, "Deniz");
-    assert.match(alerts.at(-1), /kaydedildi|saved|saxlanıldı|сохранён/i);
+    assert.ok(alerts.some((message) => /kaydedildi|saved|saxlanıldı|сохранён/i.test(message)));
+    assert.ok(alerts.some((message) => /zorunlu|required|vacib|обязательн/i.test(message)));
 
     await page.reload({ waitUntil: "networkidle" });
     await page.waitForFunction(() => document.body.dataset.maritimeCvReady === "true");

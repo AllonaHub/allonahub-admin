@@ -17,11 +17,11 @@
     },
     stcwData: {
       title: "STCW Sertifikaları",
-      fields: ["presetId", "code", "name", "institute", "place", "issue", "rank", "cert", "number", "expiry", "unlimited", "included"]
+      fields: ["code", "name", "institute", "place", "issue", "rank", "number", "expiry", "unlimited", "included"]
     },
     seaData: {
       title: "Deniz Tecrübesi",
-      fields: ["vessel", "company", "type", "flag", "dwt", "grt", "rank", "signon", "signoff"]
+      fields: ["imo", "vessel", "company", "type", "flag", "mmsi", "dwt", "grt", "rank", "signon", "signoff", "referenceName", "referenceCompanyEmail", "referenceCompanyPhone", "referencePhone"]
     }
   };
 
@@ -96,6 +96,7 @@
     competencyExpires: "Yeterlilik Geçerlilik Tarihi",
     competencyLimit: "Yeterlilik Sınırı",
     note: "Mesleki Özet",
+    tradeSpecialty: "Ek Mesleki Yeterlilik",
     name: "Sertifika Adı",
     institute: "Kurum",
     place: "Alındığı Yer",
@@ -105,7 +106,7 @@
     presetId: "Hazır Sertifika Kaydı",
     code: "STCW Kodu",
     rank: "Rütbe",
-    number: "Belge Numarası",
+    number: "Sertifika Numarası",
     unlimited: "Süresiz",
     included: "CV'de Göster",
     vessel: "Gemi",
@@ -115,7 +116,13 @@
     dwt: "DWT",
     grt: "GRT",
     signon: "Katılış Tarihi",
-    signoff: "Ayrılış Tarihi"
+    signoff: "Ayrılış Tarihi",
+    imo: "IMO Numarası",
+    mmsi: "MMSI",
+    referenceName: "Referans Yetkilisi",
+    referenceCompanyEmail: "Şirket E-postası",
+    referenceCompanyPhone: "Şirket Telefonu",
+    referencePhone: "Referans Telefonu"
   };
 
   function qs(selector, root) {
@@ -155,22 +162,38 @@
   }
 
   function inputType(key) {
-    return /(date|issued|issue|valid|expiry|expires|from|to|birth|signon|signoff)/i.test(key) ? "date" : "text";
+    return new Set(["birthDate", "passportIssued", "passportValid", "seamanBookIssued", "seamanBookValid", "seafarerIdIssued", "seafarerIdValid", "schoolFrom", "schoolTo", "medicalIssue", "medicalExpiry", "competencyIssued", "competencyExpires", "issue", "expiry", "signon", "signoff"]).has(key) ? "date" : "text";
   }
 
-  function cvControl(field, value, dataAttribute) {
+  function cvDisplayValue(field, value, language) {
+    const contexts = {
+      position: "rank", rank: "rank", type: "vesselType", nationality: "country", passportCountry: "country", competencyCountry: "country", flag: "country",
+      gender: "gender", marital: "marital", firstName: "name", familyName: "name", fatherName: "name", kinName: "name", referenceName: "name",
+      name: "semantic", birthPlace: "place", address: "place", airport: "place", place: "place", passportPlace: "place", institute: "organization", company: "organization", vessel: "vessel",
+      overall: "semantic", eyes: "semantic", hair: "semantic", schoolGrade: "semantic", tradeSpecialty: "semantic"
+    };
+    const context = contexts[field] || (/^(az|tr|en|ru)(Speak|Read|Write)$/.test(field) || ["windows", "office", "internet"].includes(field) ? "semantic" : "identifier");
+    return window.AllonaMaritimeCvValueLocalizer?.localize(value, language, context) ?? String(value ?? "");
+  }
+
+  function cvControl(field, value, dataAttribute, language, readonly = false) {
     const escapedField = escapeHtml(field);
-    const escapedValue = escapeHtml(value ?? "");
+    const displayValue = cvDisplayValue(field, value ?? "", language);
+    const escapedValue = escapeHtml(displayValue);
+    const source = `data-source-value="${escapeHtml(value ?? "")}" data-display-value="${escapedValue}"`;
     if (field === "note") {
-      return `<textarea rows="4" ${dataAttribute}="${escapedField}">${escapedValue}</textarea>`;
+      return `<textarea rows="4" ${source} ${dataAttribute}="${escapedField}">${escapedValue}</textarea>`;
+    }
+    if (field === "name") {
+      return `<textarea rows="2" ${source} ${dataAttribute}="${escapedField}"${readonly ? " readonly" : ""}>${escapedValue}</textarea>`;
     }
     if (["included", "unlimited"].includes(field)) {
       return `<select ${dataAttribute}="${escapedField}">
-        <option value="true"${String(value) === "true" ? " selected" : ""}>Evet</option>
-        <option value="false"${String(value) !== "true" ? " selected" : ""}>Hayır</option>
+        <option value="true"${String(value) === "true" || (field === "included" && value !== "false") ? " selected" : ""}>Evet</option>
+        <option value="false"${String(value) === "false" || (field === "unlimited" && value !== "true") ? " selected" : ""}>Hayır</option>
       </select>`;
     }
-    return `<input type="${inputType(field)}" ${dataAttribute}="${escapedField}" value="${escapedValue}">`;
+    return `<input type="${inputType(field)}" ${source} ${dataAttribute}="${escapedField}" value="${escapedValue}"${readonly ? " readonly" : ""}>`;
   }
 
   function setAlert(message, error) {
@@ -329,17 +352,15 @@
     };
   }
 
-  function renderCvFields(detail) {
+  function renderCvFields(detail, preserveSettings = false) {
     const manual = currentManualCv(detail);
-    const keys = Object.keys(manual.fields);
-    const preferred = Object.keys(fieldLabels);
-    const orderedKeys = [...new Set([...preferred, ...keys.sort()])];
+    const orderedKeys = detail.cv_editor?.fields || Object.keys(fieldLabels).slice(0, Object.keys(fieldLabels).indexOf("name"));
     qs("[data-cv-fields]").innerHTML = `
       <h4>CV Bilgileri</h4>
       <div class="mau-cv-field-grid">
         ${orderedKeys.length ? orderedKeys.map((key) => `
           <label>${escapeHtml(humanize(key))}
-            ${cvControl(key, manual.fields[key], "data-cv-field")}
+            ${cvControl(key, manual.fields[key], "data-cv-field", manual.lang)}
           </label>
         `).join("") : '<p>Henüz CV alanı bulunmuyor.</p>'}
       </div>
@@ -347,7 +368,7 @@
 
     qs("[data-cv-collections]").innerHTML = Object.entries(collectionDefinitions).map(([key, definition]) => {
       const rows = Array.isArray(manual[key]) ? manual[key] : [];
-      const fields = [...new Set([...definition.fields, ...rows.flatMap((row) => Object.keys(row || {}))])];
+      const fields = definition.fields;
       return `
         <section class="mau-collection" data-collection="${escapeHtml(key)}">
           <div class="mau-collection-head">
@@ -355,16 +376,20 @@
             <button class="mau-btn mau-btn-ghost" type="button" data-add-row="${escapeHtml(key)}">Yeni Kayıt Ekle</button>
           </div>
           <div class="mau-repeat-list">
-            ${rows.length ? rows.map((row, index) => `
+            ${rows.length ? rows.map((row, index) => {
+              const preset = key === "stcwData" && detail.cv_editor?.presets?.[String(row.presetId || row.code || "").toLowerCase()];
+              const stored = detail.cv_profile?.profile_payload?.certificate_records?.find((item) => item.code === row.code);
+              const values = key === "stcwData" ? { ...row, number: row.number || row.cert || "", name: preset?.[manual.lang] || preset?.en || row.name || stored?.title_i18n?.[manual.lang] || stored?.title || "" } : row;
+              return `
               <div class="mau-repeat-row" data-row-index="${index}">
                 ${fields.map((field) => `
-                  <label>${escapeHtml(humanize(field))}
-                    ${cvControl(field, row?.[field], "data-row-field")}
+                  <label${field === "name" ? ' class="mau-certificate-name"' : ""}>${escapeHtml(humanize(field))}
+                    ${cvControl(field, values?.[field], "data-row-field", manual.lang, Boolean(preset && ["name", "code"].includes(field)))}
                   </label>
                 `).join("")}
                 <button class="mau-btn mau-btn-danger" type="button" data-remove-row="${escapeHtml(key)}" data-row-index="${index}">Kaldır</button>
               </div>
-            `).join("") : '<div class="mau-record"><p>Kayıt bulunmuyor.</p></div>'}
+            `; }).join("") : '<div class="mau-record"><p>Kayıt bulunmuyor.</p></div>'}
           </div>
         </section>
       `;
@@ -373,9 +398,11 @@
     const form = qs("[data-cv-form]");
     form.elements.cv_language.value = manual.lang;
     form.elements.summary_mode.value = manual.summaryMode;
-    form.elements.profile_status.value = detail.cv_profile?.profile_status || "draft";
-    form.elements.completion_percent.value = detail.cv_profile?.completion_percent ?? 0;
-    form.elements.reason.value = "";
+    if (!preserveSettings) {
+      form.elements.profile_status.value = detail.cv_profile?.profile_status || "draft";
+      form.elements.completion_percent.value = detail.cv_profile?.completion_percent ?? 0;
+      form.elements.reason.value = "";
+    }
   }
 
   function renderDocuments(detail) {
@@ -477,17 +504,20 @@
     manual.lang = cvForm.elements.cv_language.value;
     manual.summaryMode = cvForm.elements.summary_mode.value;
     manual.fields = {};
+    const sourceValue = (input) => input.dataset.displayValue === input.value ? input.dataset.sourceValue : input.value;
     qsa("[data-cv-field]").forEach((input) => {
-      manual.fields[input.dataset.cvField] = input.value;
+      manual.fields[input.dataset.cvField] = sourceValue(input);
     });
 
     Object.keys(collectionDefinitions).forEach((key) => {
       const section = qs(`[data-collection="${key}"]`);
       manual[key] = qsa(".mau-repeat-row[data-row-index]", section).map((row) => {
-        const item = {};
+        const item = { ...(manual[key][Number(row.dataset.rowIndex)] || {}) };
         qsa("[data-row-field]", row).forEach((input) => {
-          item[input.dataset.rowField] = input.value;
+          if (input.readOnly) return;
+          item[input.dataset.rowField] = sourceValue(input);
         });
+        if (key === "stcwData") item.cert = "";
         return item;
       });
     });
@@ -513,7 +543,7 @@
     const row = Object.fromEntries(collectionDefinitions[key].fields.map((field) => [field, ""]));
     manual[key].push(row);
     state.detail.cv_profile.profile_payload.manual_cv = manual;
-    renderCvFields(state.detail);
+    renderCvFields(state.detail, true);
   }
 
   function removeCollectionRow(key, index) {
@@ -522,7 +552,7 @@
     if (!Array.isArray(manual[key])) return;
     manual[key].splice(index, 1);
     state.detail.cv_profile.profile_payload.manual_cv = manual;
-    renderCvFields(state.detail);
+    renderCvFields(state.detail, true);
   }
 
   async function saveAccount(form, button) {
@@ -638,6 +668,11 @@
   }
 
   function bindEvents() {
+    qs('[name="cv_language"]')?.addEventListener("change", () => {
+      if (!state.detail) return;
+      state.detail.cv_profile.profile_payload = collectCvPayload();
+      renderCvFields(state.detail, true);
+    });
     qs("[data-back]")?.addEventListener("click", () => {
       if (window.history.length > 1) window.history.back();
       else window.location.href = "./super-admin.html";

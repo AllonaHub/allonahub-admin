@@ -3,6 +3,7 @@ import { lookup as dnsLookup } from "node:dns/promises";
 import net from "node:net";
 import { z } from "zod";
 import { config } from "../config.js";
+import { maritimeCvEditorMetadata, prepareMaritimeAdminCv, maritimeAdminCvError, invalidateMaritimeCvDerivedState } from "./maritime-smart-account.js";
 import { autoDefenseStatus } from "../lib/auto-defense.js";
 import { preparePasswordLoginSession } from "../lib/auth-session-profile.js";
 import {
@@ -16356,6 +16357,7 @@ export function registerRoutes(app) {
       profile,
       auth: maritimeAdminAuthUser(authResult.data?.user),
       cv_profile: cvResult.data || null,
+      cv_editor: maritimeCvEditorMetadata,
       workspace: workspaceResult.data || null,
       readiness: readinessResult.data || null,
       readiness_items: readinessItemsResult.data || [],
@@ -16457,35 +16459,21 @@ export function registerRoutes(app) {
     const ctx = await requirePermanentSuperAdmin(request, "super_admin.maritime_users.cv_update");
     const { userRef } = z.object({ userRef: z.string().trim().min(1).max(80) }).parse(request.params || {});
     const body = maritimeAdminCvUpdateSchema.parse(request.body || {});
-    const profilePayload = JSON.parse(JSON.stringify(body.profile_payload));
-    const manualFields = profilePayload?.manual_cv?.fields;
-    if (manualFields && typeof manualFields === "object" && !Array.isArray(manualFields)) {
-      profilePayload.given_names = String(manualFields.firstName || "").trim();
-      profilePayload.family_name = String(manualFields.familyName || "").trim();
-      profilePayload.middle_name = String(manualFields.fatherName || "").trim();
-      profilePayload.date_of_birth = String(manualFields.birthDate || "").trim();
-      profilePayload.place_of_birth = String(manualFields.birthPlace || "").trim();
-      profilePayload.nationality = String(manualFields.nationality || "").trim();
-      profilePayload.gender = String(manualFields.gender || "").trim();
-      profilePayload.holder_name = [
-        profilePayload.given_names,
-        profilePayload.middle_name,
-        profilePayload.family_name
-      ].filter(Boolean).join(" ");
-    }
-    if (Buffer.byteLength(JSON.stringify(profilePayload), "utf8") > 500000) {
+    if (Buffer.byteLength(JSON.stringify(body.profile_payload), "utf8") > 500000) {
       throw httpError("CV verisi güvenli boyut sınırını aşıyor.", 413, "MARITIME_ADMIN_CV_TOO_LARGE");
     }
     const profile = await resolveMaritimeAdminUser(userRef);
+    const prepared = await prepareMaritimeAdminCv(profile.id, body.profile_payload, body.profile_status);
+    await invalidateMaritimeCvDerivedState(profile.id);
     const { data, error } = await supabaseAdmin.rpc("super_admin_update_maritime_cv", {
       p_target_user_id: profile.id,
       p_actor_user_id: ctx.user.id,
-      p_profile_payload: profilePayload,
+      p_profile_payload: prepared.payload,
       p_profile_status: body.profile_status,
-      p_completion_percent: body.completion_percent,
+      p_completion_percent: prepared.completion,
       p_reason: body.reason
     });
-    if (error) throw error;
+    if (error) throw maritimeAdminCvError(error);
     await auditEvent({
       request,
       actorId: ctx.user.id,
@@ -16499,7 +16487,7 @@ export function registerRoutes(app) {
       metadata: {
         public_id: profile.public_id,
         profile_status: body.profile_status,
-        completion_percent: body.completion_percent,
+        completion_percent: prepared.completion,
         reason: body.reason
       }
     });
@@ -16511,13 +16499,25 @@ export function registerRoutes(app) {
     const { userRef } = z.object({ userRef: z.string().trim().min(1).max(80) }).parse(request.params || {});
     const body = maritimeAdminDecisionSchema.parse(request.body || {});
     const profile = await resolveMaritimeAdminUser(userRef);
+    if (body.decision === "approve") {
+      const current = await supabaseAdmin.from("maritime_cv_profiles").select("profile_payload").eq("seafarer_user_id", profile.id).maybeSingle();
+      if (current.error) throw maritimeAdminCvError(current.error);
+      const prepared = await prepareMaritimeAdminCv(profile.id, current.data?.profile_payload, "verified");
+      await invalidateMaritimeCvDerivedState(profile.id);
+      const saved = await supabaseAdmin.rpc("super_admin_update_maritime_cv", {
+        p_target_user_id: profile.id, p_actor_user_id: ctx.user.id,
+        p_profile_payload: prepared.payload, p_profile_status: "verified",
+        p_completion_percent: prepared.completion, p_reason: body.reason
+      });
+      if (saved.error) throw maritimeAdminCvError(saved.error);
+    }
     const { data, error } = await supabaseAdmin.rpc("super_admin_decide_maritime_user", {
       p_target_user_id: profile.id,
       p_actor_user_id: ctx.user.id,
       p_decision: body.decision,
       p_reason: body.reason
     });
-    if (error) throw error;
+    if (error) throw maritimeAdminCvError(error);
     await auditEvent({
       request,
       actorId: ctx.user.id,

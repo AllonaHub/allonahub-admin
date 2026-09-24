@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Denizcilik Kullanıcı Yönetimi | AllonaHub</title>
   <link rel="stylesheet" href="../css/platform.css?v=20260626-mobile-std27">
-  <link rel="stylesheet" href="../css/admin-maritime-users.css?v=20260916-admin3">
+  <link rel="stylesheet" href="../css/admin-maritime-users.css?v=20260925-admin-cv1">
 </head>
 <body data-page="super-admin" data-theme="graphite">
   <header class="mau-topbar">
@@ -127,7 +127,7 @@
               <label>CV Dili<select name="cv_language"><option value="tr">Türkçe</option><option value="az">Azərbaycanca</option><option value="en">English</option><option value="ru">Русский</option><option value="de">Deutsch</option><option value="ar">العربية</option><option value="kk">Қазақша</option><option value="uz">O'zbekcha</option><option value="ky">Кыргызча</option></select></label>
               <label>Mesleki Özet<select name="summary_mode"><option value="auto">Otomatik oluştur</option><option value="custom">Kullanıcının metni</option></select></label>
               <label>CV Durumu<select name="profile_status"><option value="draft">Taslak</option><option value="user_confirmed">Kullanıcı onaylı</option><option value="verification_pending">İncelemede</option><option value="verified">Doğrulanmış</option><option value="stale">Güncelleme gerekli</option><option value="restricted">Kısıtlı</option></select></label>
-              <label>Tamamlanma Oranı<input name="completion_percent" type="number" min="0" max="100"></label>
+              <label>Tamamlanma Oranı<input name="completion_percent" type="number" min="0" max="100" readonly></label>
               <label class="mau-span-all">Değişiklik gerekçesi<textarea name="reason" rows="2" minlength="6" maxlength="1200" required></textarea></label>
             </div>
             <div class="mau-cv-editor" data-cv-fields></div>
@@ -176,6 +176,7 @@
   <script src="../js/core.js?v=20260623-mfa2"></script>
   <script src="../js/supabase-client.js?v=20260920-auth-session1"></script>
   <script src="../js/auth.js?v=20260920-auth-session1"></script>
-  <script src="../js/admin-maritime-users.js?v=20260916-admin3"></script>
+  <script src="../js/maritime-cv-value-localizer.js?v=20260925-admin-cv1"></script>
+  <script src="../js/admin-maritime-users.js?v=20260925-admin-cv1"></script>
 </body>
 </html>

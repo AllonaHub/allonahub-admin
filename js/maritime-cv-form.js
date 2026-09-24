@@ -2179,7 +2179,7 @@ function validateSeaExperience(index, options){
   return !missing.length;
 }
 
-async function saveSeaExperience(index){
+async function saveSeaExperience(index, options){
   const rowIndex = Number(index);
   if(!validateSeaExperience(rowIndex)) return;
   const row = seaData[rowIndex];
@@ -2204,11 +2204,13 @@ async function saveSeaExperience(index){
     renderSea();
     syncCV();
     const sent = result?.notification?.status === "sent";
-    alert(t("experienceSavedAlert") + t(sent ? "referenceNotificationSent" : "referenceNotificationQueued"));
+    if(!options?.quiet) alert(t("experienceSavedAlert") + t(sent ? "referenceNotificationSent" : "referenceNotificationQueued"));
+    return true;
   } catch(error){
     row.saved = previousSaved === "true" ? "true" : "false";
     renderSeaInputs();
     renderSea();
+    if(options?.quiet) throw error;
     alert(t("experienceSaveFailed"));
   } finally {
     const nextButton = document.querySelector(`[data-cv-action="save-sea"][data-cv-index="${rowIndex}"]`);
@@ -2473,8 +2475,11 @@ function validateMaritimeCV(options){
   return false;
 }
 
+let cvSaveInProgress = false;
 async function saveCV(){
-  const readyForGlobalCv = validateMaritimeCV({ announce:false });
+  if(cvSaveInProgress) return;
+  cvSaveInProgress = true;
+  try {
   if(autoSaveTimer){
     window.clearTimeout(autoSaveTimer);
     autoSaveTimer = 0;
@@ -2482,8 +2487,15 @@ async function saveCV(){
   const localSaved = persistCV();
   if(window.AllonaMaritimeCvAccount && typeof window.AllonaMaritimeCvAccount.save === "function"){
     try{
+      for(let index = 0; index < seaData.length; index++){
+        if(seaRowHasData(seaData[index]) && seaData[index].saved !== "true" && validateSeaExperience(index, { announce:false })){
+          await saveSeaExperience(index, { quiet:true });
+        }
+      }
+      const readyForGlobalCv = validateMaritimeCV({ announce:false });
       const result = await window.AllonaMaritimeCvAccount.save(getCVData(), { finalize:readyForGlobalCv });
       alert(t(result?.finalized ? "accountSaved" : "accountDraftSaved"));
+      if(!readyForGlobalCv) validateMaritimeCV();
     } catch(error){
       const errorKeys = {
         AUTH_REQUIRED:"accountLoginRequired",
@@ -2505,6 +2517,9 @@ async function saveCV(){
     return;
   }
   alert(localSaved ? t("draftSaved") : t("draftSaveFailed"));
+  } finally {
+    cvSaveInProgress = false;
+  }
 }
 
 function autoSaveCV(){
