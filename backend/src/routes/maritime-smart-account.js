@@ -1615,6 +1615,51 @@ export function registerMaritimeSmartAccountRoutes(app) {
     return { ok: true, ...(await latestSmartState(ctx.user.id, ctx.user)) };
   });
 
+  app.post("/v1/maritime/smart-account/refresh-matches", {
+    config: { rateLimit: { max: 12, timeWindow: "10 minutes" } }
+  }, async (request) => {
+    const ctx = await requireCustomer(request, "maritime.smart_account.refresh_matches");
+    const run = assertDb(await supabaseAdmin.from("maritime_smart_account_runs")
+      .select("id,status,input_snapshot_hash")
+      .eq("seafarer_user_id", ctx.user.id)
+      .eq("status", "user_confirmed")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(), "Onaylı Global CV okunamadı.");
+    if (!run) throw httpError("Önce Global CV'nizi onaylayın.", 409, "GLOBAL_CV_CONFIRMATION_REQUIRED");
+    const input = await smartInputs(ctx.user.id);
+    if (!input.cvProfile || input.cvProfile.profile_payload?.data_origin !== "user_entered_maritime_cv"
+        || ["restricted", "stale"].includes(input.cvProfile.profile_status)) {
+      throw httpError("Maritime CV güncel değil.", 409, "MARITIME_CV_UNAVAILABLE");
+    }
+    const jobs = await verifiedOpenJobs();
+    const snapshot = buildMaritimeSmartProfile(input);
+    const hash = maritimeSmartSnapshotHash({
+      matching_source_version: "maritime-cv-v1",
+      profile: snapshot,
+      jobs: jobs.map((job) => ({ id: job.id, job_version: job.job_version, updated_at: job.updated_at }))
+    });
+    const currentMatches = assertDb(await supabaseAdmin.from("maritime_match_results")
+      .select("job_id,stale_after,hard_gate_status")
+      .eq("smart_account_run_id", run.id)
+      .neq("hard_gate_status", "stale"), "Mevcut eşleşmeler okunamadı.") || [];
+    const jobIds = new Set(jobs.map((job) => job.id));
+    const fresh = currentMatches.length === jobs.length && currentMatches.every((match) =>
+      jobIds.has(match.job_id) && match.hard_gate_status !== "stale" && Date.parse(match.stale_after || "") > Date.now());
+    if (run.input_snapshot_hash !== hash || !fresh) {
+      const matches = matchMaritimeJobs(snapshot, jobs);
+      assertDb(await supabaseAdmin.rpc("refresh_confirmed_maritime_matches", {
+        p_user_id: ctx.user.id,
+        p_run_id: run.id,
+        p_input_snapshot_hash: hash,
+        p_rule_version: MARITIME_SMART_RULE_VERSION,
+        p_smart_snapshot: snapshot,
+        p_matches: matches
+      }), "İlan eşleşmeleri güncellenemedi.");
+    }
+    return { ok: true, ...(await latestSmartState(ctx.user.id, ctx.user)) };
+  });
+
   app.get("/v1/maritime/auto-apply", {
     config: { rateLimit: { max: 30, timeWindow: "1 minute" } }
   }, async (request) => {
@@ -1665,6 +1710,7 @@ export function registerMaritimeSmartAccountRoutes(app) {
     const smartSnapshot = buildMaritimeSmartProfile(input);
     const matches = matchMaritimeJobs(smartSnapshot, jobs);
     const inputHash = maritimeSmartSnapshotHash({
+      matching_source_version: "maritime-cv-v1",
       profile: smartSnapshot,
       jobs: jobs.map((job) => ({ id: job.id, job_version: job.job_version, updated_at: job.updated_at }))
     });

@@ -5,6 +5,7 @@ import {
   maritimeSmartSnapshotHash,
   matchMaritimeJob
 } from "../../src/lib/maritime-smart-profile.js";
+import { MARIPARTNER_JOB_RANKS } from "../../src/lib/maritime-partner-center.js";
 
 const cvProfile = {
   profile_payload: {
@@ -311,6 +312,32 @@ test("blocks a motorman from applying to a second engineer position even when ev
   assert.ok(match.missing_requirements.includes("rank"));
 });
 
+test("saved Maritime CV rank and certificates override conflicting analyzed documents", () => {
+  const profile = { ...cvProfile, profile_payload: {
+    ...cvProfile.profile_payload,
+    data_origin: "user_entered_maritime_cv",
+    rank: "Yağcı",
+    rank_i18n: { tr: "Yağcı" },
+    suitable_positions: ["Yağcı"],
+    certificate_codes: ["SP", "SH", "SI", "SL", "SO"],
+    certificate_records: cvProfile.profile_payload.certificate_records.filter((row) => ["SP", "SH", "SI", "SL", "SO"].includes(row.code))
+  } };
+  const analyzedRank = { id: "other-rank", item_type: "rank", trust_level: "user_confirmed", verification_status: "pending_review", value_payload: {
+    rank: "Chief Engineer", suitable_positions: ["Chief Engineer"], certificate_codes: ["ADVANCED-DP"]
+  } };
+  const candidate = smart({ cvProfile: profile, readinessItems: [...readinessItems, analyzedRank] });
+  assert.equal(candidate.profile.canonical_rank, "oiler");
+  assert.deepEqual(candidate.profile.suitable_positions, ["Yağcı"]);
+  assert.equal(candidate.profile.certificate_codes.includes("ADVANCED-DP"), false);
+  const job = (rank_code, certificate) => ({
+    id: `job-${rank_code}`, partner_id: "30000000-0000-4000-8000-000000000001",
+    job_reference: `MJ-${rank_code}`, job_title: rank_code, rank_code,
+    hard_gates: { required_certificate_codes: [certificate], minimum_sea_service_days: 0, medical_required: true }
+  });
+  assert.equal(matchMaritimeJob(candidate, job("oiler", "SP")).components[0].status, "passed");
+  assert.equal(matchMaritimeJob(candidate, job("chief_engineer", "ADVANCED-DP")).hard_gate_status, "failed");
+});
+
 test("keeps motorman, oiler, III/5 able engine rating, bosun and pumpman as distinct match ranks", () => {
   const cases = [
     ["Motorman", "motorman"],
@@ -333,6 +360,21 @@ test("keeps motorman, oiler, III/5 able engine rating, bosun and pumpman as dist
       hard_gates: { required_certificate_codes: ["SP", "SH", "SI", "SL", "SO"], minimum_sea_service_days: 0, medical_required: true }
     });
     assert.equal(match.components.find((item) => item.code === "rank")?.status, "passed", `${candidateRank} should match ${jobRank}`);
+  }
+});
+
+test("every MariPartner job rank matches the same rank saved in Maritime CV", () => {
+  for (const rankCode of Object.keys(MARIPARTNER_JOB_RANKS)) {
+    const profile = { ...cvProfile, profile_payload: {
+      ...cvProfile.profile_payload, data_origin: "user_entered_maritime_cv",
+      rank: rankCode, rank_i18n: {}, suitable_positions: [rankCode]
+    } };
+    const match = matchMaritimeJob(smart({ cvProfile: profile }), {
+      id: `job-${rankCode}`, partner_id: "30000000-0000-4000-8000-000000000001",
+      job_reference: `MJ-${rankCode}`, job_title: rankCode, rank_code: rankCode,
+      hard_gates: { required_certificate_codes: ["SP", "SH", "SI", "SL", "SO"], minimum_sea_service_days: 0, medical_required: true }
+    });
+    assert.equal(match.components[0].status, "passed", rankCode);
   }
 });
 

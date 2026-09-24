@@ -631,6 +631,26 @@
 
   async function renderJobs() {
     const [liveJobs] = await Promise.all([loadPublicJobs(), loadSmartApplicationState()]);
+    if (session?.access_token && smartApplicationState.run?.status === "user_confirmed") {
+      try {
+        const base = String(App.config && App.config.apiBaseUrl || "https://api.allonahub.com").replace(/\/$/, "");
+        const response = await fetch(`${base}/v1/maritime/smart-account/refresh-matches`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${session.access_token}`, Accept: "application/json" }
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (response.ok && payload.ok === true) {
+          smartApplicationState = {
+            run: payload.run || smartApplicationState.run,
+            matches: Array.isArray(payload.matches) ? payload.matches : [],
+            application_drafts: Array.isArray(payload.application_drafts) ? payload.application_drafts : [],
+            application_readiness: payload.application_readiness || smartApplicationState.application_readiness
+          };
+        }
+      } catch (error) {
+        // The existing eligibility notice remains visible if a refresh is unavailable.
+      }
+    }
     jobs = liveJobs;
     root.innerHTML = `<section class="maritime-toolbar"><div class="maritime-toolbar-copy"><h2>${escapeHtml(text("openJobs"))}</h2><p>${escapeHtml(text("openJobsLead"))}</p></div><strong class="maritime-reference" data-jobs-count></strong></section>
       <div class="maritime-filter-rail" role="toolbar" aria-label="${escapeHtml(text("openJobs"))}">${[["all", "filterAll"], ["deck", "filterDeck"], ["engine", "filterEngine"], ["electrical", "filterElectrical"], ["hotel", "filterHotel"]].map(function (item) { return `<button type="button" data-job-filter="${item[0]}" aria-pressed="${item[0] === activeFilter}">${escapeHtml(text(item[1]))}</button>`; }).join("")}</div>

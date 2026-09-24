@@ -593,9 +593,12 @@ export function buildMaritimeSmartProfile({ cvProfile, readinessItems = [], work
     ["user_confirmed", "employer_confirmed", "registry_confirmed", "reviewer_confirmed"].includes(item.trust_level)
     && !["rejected", "expired", "revoked", "disputed"].includes(item.verification_status)
   ));
-  const sources = [payload, ...items.map((item) => object(item.value_payload))];
-  const positions = uniqueText([...array(payload.suitable_positions), ...nestedValues(items, "suitable_positions")]);
-  const positionsI18n = localizedListsFromSources(payload, items, "suitable_positions");
+  // A saved Maritime CV is authoritative for matching; document analysis cannot add a different rank or certificate.
+  const manualCv = payload.data_origin === "user_entered_maritime_cv";
+  const matchingItems = manualCv ? [] : items;
+  const sources = [payload, ...matchingItems.map((item) => object(item.value_payload))];
+  const positions = uniqueText([...array(payload.suitable_positions), ...nestedValues(matchingItems, "suitable_positions")]);
+  const positionsI18n = localizedListsFromSources(payload, matchingItems, "suitable_positions");
   const certificateRecords = uniqueCertificateRecords(sources);
   const identityDocuments = uniqueRecords(
     sources.flatMap(legacyIdentityDocuments),
@@ -634,7 +637,7 @@ export function buildMaritimeSmartProfile({ cvProfile, readinessItems = [], work
   const physicalProfile = mergedNestedObject(sources, "physical_profile", ["height_cm", "weight_kg", "eye_color", "hair_color", "shoe_size", "overall_size"]);
   const certificates = uniqueText([
     ...array(payload.certificate_codes),
-    ...nestedValues(items, "certificate_codes"),
+    ...nestedValues(matchingItems, "certificate_codes"),
     ...certificateRecords.map((row) => row.code)
   ]);
   const endorsements = uniqueText([...array(payload.endorsements), ...nestedValues(items, "endorsements")]);
@@ -657,7 +660,7 @@ export function buildMaritimeSmartProfile({ cvProfile, readinessItems = [], work
   const conflicts = identityConflicts(items);
   const medical = text(firstSourceText(sources, "medical_fitness") || medicalRecords.find((row) => row.result !== "not_stated")?.result || "not_stated");
   const rank = text(firstSourceText(sources, "rank") || positions[0]);
-  const rankI18n = firstLocalizedValue(payload, items, "rank_i18n");
+  const rankI18n = firstLocalizedValue(payload, matchingItems, "rank_i18n");
   const nationalityI18n = firstLocalizedValue(payload, items, "nationality_i18n");
   const explicitSummary = firstSourceText(sources, "professional_summary");
   const explicitSummaryI18n = firstLocalizedValue(payload, items, "professional_summary_i18n");
