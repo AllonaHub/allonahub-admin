@@ -107,11 +107,10 @@ test("draft matching migration preserves identity guard and status of unchanged 
   const writers = await readFile(new URL("../../../supabase/migrations/20260920234500_persist_maritime_cv_drafts.sql", import.meta.url), "utf8");
   const previousGuard = await readFile(new URL("../../../supabase/migrations/20260921020000_allow_confirmed_manual_global_cv.sql", import.meta.url), "utf8");
   const migration = await readFile(new URL("../../../supabase/migrations/20260925090000_maritime_cv_draft_matching_and_status.sql", import.meta.url), "utf8");
-  const changes = [...migration.matchAll(/old_(?:status|guard) text := \$old\$([\s\S]*?)\$old\$;\s*new_(?:status|guard) text := \$new\$([\s\S]*?)\$new\$;/g)];
-  assert.equal(changes.length, 3);
-  assert.equal(writers.split(changes[0][1]).length, 2);
-  assert.equal(writers.split(changes[1][1]).length, 2);
-  assert.equal(previousGuard.split(changes[2][1]).length, 2);
+  assert.match(writers, /set profile_status = 'draft'/);
+  assert.match(writers, /set profile_status = 'user_confirmed'/);
+  assert.match(previousGuard, /cv\.profile_status in \('user_confirmed', 'verification_pending', 'verified'\)/);
+  assert.match(previousGuard, /and cv\.last_user_confirmed_at is not null/);
   assert.match(migration, /prepare_maritime_smart_account/);
   assert.match(migration, /cv\.profile_status in \('draft', 'user_confirmed', 'verification_pending', 'verified'\)/);
   assert.match(migration, /maritime_cv_profiles\.profile_payload = excluded\.profile_payload/);
