@@ -287,7 +287,8 @@ export function reviewMariPartnerJobForAutomaticPublication(input, vessel) {
   if (vessel?.status !== "verified" || vessel?.verification_status !== "verified" || vessel?.reapproval_required === true) reasons.push("VESSEL_VERIFICATION_REQUIRED");
   if (input?.current_position_confirmed !== true) reasons.push("CURRENT_POSITION_CONFIRMATION_REQUIRED");
   if (input?.war_risk_status !== "no_known_listed_area") reasons.push("ROUTE_RISK_REVIEW_REQUIRED");
-  if (hasReviewableListingText(input?.preferred_conditions) || hasReviewableListingText(input?.war_risk_note)) reasons.push("FREE_TEXT_REVIEW_REQUIRED");
+  // Preferred conditions stay private; only the public-facing route note needs review.
+  if (hasReviewableListingText(input?.war_risk_note)) reasons.push("FREE_TEXT_REVIEW_REQUIRED");
   return {
     approved: reasons.length === 0,
     rule_version: "maripartner-auto-review-v1",

@@ -226,9 +226,14 @@ test("automatic publication is deny-by-default unless vessel, route and company 
     rule_version: "maripartner-auto-review-v1",
     reason_codes: ["STRUCTURED_REQUIREMENTS_COMPLETE"]
   });
+  assert.equal(reviewMariPartnerJobForAutomaticPublication({
+    ...input,
+    preferred_conditions: "İlk çıkan adaylar uygundur"
+  }, vessel).approved, true);
   const unsafe = reviewMariPartnerJobForAutomaticPublication({
     ...input,
     preferred_conditions: "Ek tercih yönetici tarafından değerlendirilmelidir.",
+    war_risk_note: "Rotada ek risk beyanı var.",
     war_risk_status: "route_under_review"
   }, { ...vessel, verification_status: "pending" });
   assert.equal(unsafe.approved, false);
