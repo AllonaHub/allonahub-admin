@@ -52,17 +52,27 @@ test("missing manual CV returns the specific create-CV prompt", async (t) => {
 });
 
 for (const [status, confirmed] of [["draft", null], ["draft", "2026-09-20T12:00:00Z"], ["user_confirmed", null]]) {
-  test(`manual CV with ${status}/${confirmed || "no confirmation"} cannot bypass final confirmation`, async (t) => {
+  test(`manual CV with ${status}/${confirmed || "no confirmation"} must still pass Global CV readiness`, async (t) => {
     const { app, calls } = await harness(t, {
       profile_payload: { data_origin: "user_entered_maritime_cv" },
       profile_status: status, last_user_confirmed_at: confirmed
     });
     const response = await prepare(app);
     assert.equal(response.statusCode, 409);
-    assert.equal(response.json().code, "MARITIME_CV_CONFIRMATION_REQUIRED");
-    assert.ok(!calls.some((path) => path.includes("/rpc/") || path.includes("/storage/")));
+    assert.equal(response.json().code, "GLOBAL_CV_REQUIRED_FIELDS_MISSING");
+    assert.ok(!calls.some((path) => path.includes("/rpc/prepare_maritime_smart_account")));
   });
 }
+
+test("restricted manual CV cannot be used for Global CV preparation", async (t) => {
+  const { app } = await harness(t, {
+    profile_payload: { data_origin: "user_entered_maritime_cv" },
+    profile_status: "restricted", last_user_confirmed_at: null
+  });
+  const response = await prepare(app);
+  assert.equal(response.statusCode, 409);
+  assert.equal(response.json().code, "MARITIME_CV_UNAVAILABLE");
+});
 
 test("confirmed manual CV still enforces essential fields and photo", async (t) => {
   const { app, calls } = await harness(t, {
@@ -90,5 +100,22 @@ test("manual Global CV migration replaces only the obsolete source guard and pre
   assert.match(upgraded, /confirmed maritime CV or documents required/);
   assert.match(migration, /if strpos\(definition, new_guard\) > 0 then return/);
   assert.match(migration, /if strpos\(definition, old_guard\) = 0 then/);
+  assert.doesNotMatch(migration, /grant |disable row level security|drop policy/i);
+});
+
+test("draft matching migration preserves identity guard and status of unchanged approved CVs", async () => {
+  const writers = await readFile(new URL("../../../supabase/migrations/20260920234500_persist_maritime_cv_drafts.sql", import.meta.url), "utf8");
+  const previousGuard = await readFile(new URL("../../../supabase/migrations/20260921020000_allow_confirmed_manual_global_cv.sql", import.meta.url), "utf8");
+  const migration = await readFile(new URL("../../../supabase/migrations/20260925090000_maritime_cv_draft_matching_and_status.sql", import.meta.url), "utf8");
+  const changes = [...migration.matchAll(/old_(?:status|guard) text := \$old\$([\s\S]*?)\$old\$;\s*new_(?:status|guard) text := \$new\$([\s\S]*?)\$new\$;/g)];
+  assert.equal(changes.length, 3);
+  assert.equal(writers.split(changes[0][1]).length, 2);
+  assert.equal(writers.split(changes[1][1]).length, 2);
+  assert.equal(previousGuard.split(changes[2][1]).length, 2);
+  assert.match(migration, /prepare_maritime_smart_account/);
+  assert.match(migration, /cv\.profile_status in \('draft', 'user_confirmed', 'verification_pending', 'verified'\)/);
+  assert.match(migration, /maritime_cv_profiles\.profile_payload = excluded\.profile_payload/);
+  assert.match(migration, /then maritime_cv_profiles\.profile_status/);
+  assert.match(migration, /then 'verified'/);
   assert.doesNotMatch(migration, /grant |disable row level security|drop policy/i);
 });

@@ -635,7 +635,8 @@ export function buildMaritimeSmartProfile({ cvProfile, readinessItems = [], work
   const manualCvConfirmed = ["user_confirmed", "verification_pending", "verified"].includes(cvProfile?.profile_status)
     && Boolean(cvProfile?.last_user_confirmed_at)
     && payload.data_origin === "user_entered_maritime_cv";
-  const confirmedProfileSource = manualCvConfirmed || confirmedDocuments.length > 0;
+  const manualCvDraft = cvProfile?.profile_status === "draft" && payload.data_origin === "user_entered_maritime_cv";
+  const confirmedProfileSource = manualCvConfirmed || manualCvDraft || confirmedDocuments.length > 0;
   const expiry = expiryState(items, now);
   const conflicts = identityConflicts(items);
   const medical = text(firstSourceText(sources, "medical_fitness") || medicalRecords.find((row) => row.result !== "not_stated")?.result || "not_stated");
@@ -694,7 +695,7 @@ export function buildMaritimeSmartProfile({ cvProfile, readinessItems = [], work
         : "evidence_required";
   const seafarerReasonCodes = [
     !confirmedProfileSource && "confirmed_profile_required",
-    manualCvConfirmed && !confirmedDocuments.length && "documents_not_verified",
+    (manualCvConfirmed || manualCvDraft) && !confirmedDocuments.length && "documents_not_verified",
     !hasIdentity && "identity_evidence_required",
     !hasMaritimeEvidence && "maritime_evidence_required",
     conflicts.length > 0 && "identity_conflict",

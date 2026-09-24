@@ -486,6 +486,9 @@
     setAlert("Kullanıcı kaydı açılıyor.");
     const detail = await api(`/v1/control-center/maritime-users/${encodeURIComponent(userId)}`);
     state.detail = detail;
+    const listed = state.users.find((user) => user.id === userId);
+    if (listed && detail.cv_profile) listed.maritime_cv = { ...listed.maritime_cv, profile_status: detail.cv_profile.profile_status };
+    renderUsers();
     renderDetail();
     setAlert("");
   }

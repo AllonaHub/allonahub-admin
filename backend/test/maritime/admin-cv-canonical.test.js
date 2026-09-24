@@ -122,6 +122,7 @@ for (const [role, aal, status] of [["super_admin", "aal2", 200], ["super_admin",
       if (target.pathname === "/rest/v1/profiles") return json(target.searchParams.get("id") === `eq.${admin}` ? { id: admin, role, account_status: "active" } : { id: owner, role: "customer", module: "maritime", public_id: "AL-50001" });
       if (target.pathname.includes("/storage/")) return json([{ name: "profile.webp" }]);
       if (target.pathname === "/rest/v1/maritime_document_intakes") return json([{ id: documentId, status: "user_confirmed", document_type: "sea_service_record", metadata: { source: "maritime_cv_sea_service", experience_id: rowId } }]);
+      if (target.pathname === "/rest/v1/maritime_cv_profiles") return json({ profile_status: "verified" });
       if (["/rest/v1/maritime_smart_account_runs", "/rest/v1/maritime_match_results"].includes(target.pathname)) return json([]);
       if (target.pathname === "/rest/v1/rpc/super_admin_update_maritime_cv") {
         rpcPayload = JSON.parse(init.body);

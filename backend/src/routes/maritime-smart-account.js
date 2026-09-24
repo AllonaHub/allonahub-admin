@@ -1652,8 +1652,8 @@ export function registerMaritimeSmartAccountRoutes(app) {
     if (!input.cvProfile || input.cvProfile.profile_payload?.data_origin !== "user_entered_maritime_cv") {
       throw httpError("Global CV için önce Maritime CV'nizi doldurup kaydedin.", 409, "MARITIME_CV_REQUIRED");
     }
-    if (!input.cvProfile.last_user_confirmed_at || !["user_confirmed", "verification_pending", "verified"].includes(input.cvProfile.profile_status)) {
-      throw httpError("CV taslağınız kayıtlı. Maritime CV sayfasında Kaydet düğmesine basıp cihaz doğrulamasını tamamlayın.", 409, "MARITIME_CV_CONFIRMATION_REQUIRED");
+    if (["restricted", "stale"].includes(input.cvProfile.profile_status)) {
+      throw httpError("Maritime CV'niz kısıtlı veya güncel değil. Destek ekibiyle iletişime geçin.", 409, "MARITIME_CV_UNAVAILABLE");
     }
     const passportReadiness = maritimeGlobalPassportReadiness(input.cvProfile.profile_payload || {}, {
       hasPhoto: await hasStoredProfilePhoto(ctx.user.id)

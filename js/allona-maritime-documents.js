@@ -184,11 +184,6 @@
     return state.remote?.cv_profile?.profile_payload?.data_origin === "user_entered_maritime_cv";
   }
 
-  function hasConfirmedMaritimeCv() {
-    const profile = state.remote?.cv_profile;
-    return Boolean(profile?.last_user_confirmed_at && ["user_confirmed", "verification_pending", "verified"].includes(profile.profile_status));
-  }
-
   function renderCvSource() {
     const status = document.querySelector("[data-maritime-cv-status]");
     const link = document.querySelector("[data-maritime-cv-source] a[href='maritime-cv.html'] span");
@@ -196,12 +191,12 @@
     const cvReady = hasMaritimeCv();
     const photoReady = state.remote?.profile_photo_ready === true;
     const fieldsReady = state.remote?.global_cv_readiness?.ready === true;
-    const confirmed = hasConfirmedMaritimeCv();
-    if (status) status.textContent = text(cvReady ? fieldsReady && !confirmed ? "globalCvNeedsConfirmation" : "maritimeCvReady" : "maritimeCvMissing");
+    const available = !["restricted", "stale"].includes(state.remote?.cv_profile?.profile_status);
+    if (status) status.textContent = text(cvReady ? "maritimeCvReady" : "maritimeCvMissing");
     if (link) link.textContent = text(cvReady ? "editMaritimeCv" : "openMaritimeCv");
     if (create) {
-      create.disabled = state.busy || !cvReady || !photoReady || !fieldsReady || !confirmed;
-      create.title = !cvReady ? text("globalCvNeedsMaritimeCv") : !photoReady ? text("globalCvNeedsPhoto") : !fieldsReady ? text("globalCvNeedsFields") : !confirmed ? text("globalCvNeedsConfirmation") : "";
+      create.disabled = state.busy || !cvReady || !photoReady || !fieldsReady || !available;
+      create.title = !cvReady ? text("globalCvNeedsMaritimeCv") : !photoReady ? text("globalCvNeedsPhoto") : !fieldsReady ? text("globalCvNeedsFields") : !available ? text("globalCvNeedsConfirmation") : "";
     }
   }
 

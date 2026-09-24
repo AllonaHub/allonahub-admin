@@ -16474,6 +16474,13 @@ export function registerRoutes(app) {
       p_reason: body.reason
     });
     if (error) throw maritimeAdminCvError(error);
+    const persisted = await supabaseAdmin.from("maritime_cv_profiles")
+      .select("profile_status")
+      .eq("seafarer_user_id", profile.id).single();
+    if (persisted.error) throw maritimeAdminCvError(persisted.error);
+    if (persisted.data.profile_status !== body.profile_status) {
+      throw httpError("CV durumu kaydedildikten sonra değişti. Sayfayı yenileyip yeniden kontrol edin.", 409, "MARITIME_CV_STATUS_CONFLICT");
+    }
     await auditEvent({
       request,
       actorId: ctx.user.id,
@@ -16518,6 +16525,14 @@ export function registerRoutes(app) {
       p_reason: body.reason
     });
     if (error) throw maritimeAdminCvError(error);
+    const expectedStatus = { approve: "verified", return_to_review: "user_confirmed", restrict: "restricted" }[body.decision];
+    const persisted = await supabaseAdmin.from("maritime_cv_profiles")
+      .select("profile_status")
+      .eq("seafarer_user_id", profile.id).single();
+    if (persisted.error) throw maritimeAdminCvError(persisted.error);
+    if (persisted.data.profile_status !== expectedStatus) {
+      throw httpError("Yönetici kararı CV durumuna yansımadı. Kaydı yeniden açıp kontrol edin.", 409, "MARITIME_CV_STATUS_CONFLICT");
+    }
     await auditEvent({
       request,
       actorId: ctx.user.id,

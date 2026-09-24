@@ -101,6 +101,21 @@ test("builds a complete smart profile only from user-confirmed readiness data", 
   assert.equal(result.cv_draft.experience_overview.record_count, 1);
 });
 
+test("complete draft CV can match without acquiring a verified seafarer badge", () => {
+  const result = smart({
+    cvProfile: {
+      ...cvProfile,
+      profile_status: "draft",
+      last_user_confirmed_at: null,
+      profile_payload: { ...cvProfile.profile_payload, data_origin: "user_entered_maritime_cv" }
+    },
+    documents: []
+  });
+  assert.equal(result.readiness.ready_to_apply, true);
+  assert.notEqual(result.readiness.seafarer_status, "system_approved");
+  assert.equal(result.readiness.seafarer_system_approved, false);
+});
+
 test("carries detailed CV records while keeping emergency contacts out of the employer CV", () => {
   const detailedProfile = {
     ...cvProfile,
