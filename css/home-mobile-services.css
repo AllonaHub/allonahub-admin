@@ -6,17 +6,41 @@
 
 @media (max-width: 760px) {
   html body.allonahub-home-page > .top-mini-nav,
-  html body.allonahub-home-page > header > .logo,
+  html body.allonahub-home-page > header > .logo img,
   html body.allonahub-home-page > header > nav {
     display: none !important;
   }
 
   html body.allonahub-home-page > header {
-    grid-template-columns: 48px minmax(0, 1fr) !important;
-    grid-template-areas: "services controls" "search search" !important;
+    grid-template-columns: 44px minmax(0, 1fr) 96px !important;
+    grid-template-areas: "services brand controls" "search search search" !important;
     align-items: center !important;
     height: auto !important;
     overflow: visible !important;
+  }
+
+  html body.allonahub-home-page > header > .logo {
+    grid-area: brand !important;
+    display: flex !important;
+    align-items: center !important;
+    min-height: 44px;
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: 0 !important;
+  }
+
+  html body.allonahub-home-page > header > .logo .logo-title {
+    font-size: 22px !important;
+    letter-spacing: 0;
+    text-shadow: none !important;
+  }
+
+  html body.allonahub-home-page > header > .logo .gold {
+    color: #ffffff !important;
+  }
+
+  html body.allonahub-home-page > header > .logo .blue {
+    color: #ffd700 !important;
   }
 
   html body.allonahub-home-page > header > .platform-controls-slot {
@@ -36,14 +60,15 @@
     display: inline-flex !important;
     align-items: center;
     justify-content: center;
-    width: 48px;
-    height: 48px;
+    width: 44px;
+    height: 44px;
+    min-height: 44px !important;
     padding: 0;
     border: 1px solid var(--ah-line);
     border-radius: 8px;
     color: var(--ah-ink) !important;
     background: var(--ah-surface) !important;
-    font-size: 28px;
+    font-size: 22px;
     line-height: 1;
     cursor: pointer;
   }
@@ -61,7 +86,7 @@
     flex-direction: column;
     position: absolute;
     inset-inline: 12px;
-    top: 70px;
+    top: 64px;
     z-index: 70;
     box-sizing: border-box;
     max-height: calc(100dvh - 100px);

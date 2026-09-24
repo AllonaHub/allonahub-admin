@@ -39,11 +39,32 @@ try {
       for (const language of ["tr", "az", "en", "de", "ru", "ar", "kk", "uz", "ky"]) {
         await page.evaluate(value => Allona.platform.setLanguage(value), language);
         assert.equal(await page.locator(".top-mini-nav").isVisible(), false);
-        assert.equal(await page.locator("body>header>.logo").isVisible(), false);
+        assert.equal(await page.locator("body>header>.logo").isVisible(), true);
+        assert.equal(await page.locator("body>header>.logo img").isVisible(), false);
+        const brand = await page.locator("body>header>.logo").evaluate(node => {
+          const title = node.querySelector(".logo-title");
+          const rect = title.getBoundingClientRect();
+          const toggle = document.getElementById("home-services-toggle").getBoundingClientRect();
+          const controls = document.querySelector("body>header>.platform-controls-slot").getBoundingClientRect();
+          const separated = (a, b) => a.right <= b.left || b.right <= a.left;
+          return {
+            text: title.textContent,
+            allonaColor: getComputedStyle(title.querySelector(".gold")).color,
+            hubColor: getComputedStyle(title.querySelector(".blue")).color,
+            inside: rect.left >= 0 && rect.right <= innerWidth,
+            noOverlap: separated(rect, toggle) && separated(rect, controls),
+            besideToggle: Math.abs(rect.top + rect.height / 2 - toggle.top - toggle.height / 2) < 2,
+            nearby: Math.min(Math.abs(rect.left - toggle.right), Math.abs(toggle.left - rect.right)) <= 10
+          };
+        });
+        assert.equal(brand.text, "AllonaHub");
+        assert.equal(brand.allonaColor, "rgb(255, 255, 255)");
+        assert.equal(brand.hubColor, "rgb(255, 215, 0)");
+        assert.equal(brand.inside && brand.noOverlap && brand.besideToggle && brand.nearby, true);
         assert.equal(await page.locator("body>header>nav").isVisible(), false);
         assert.equal(await toggle.isVisible(), true);
         const rect = await toggle.boundingBox();
-        assert.ok(rect.width >= 48 && rect.height >= 48);
+        assert.ok(rect.width >= 44 && rect.height >= 44 && rect.width < 48 && rect.height < 48);
         assert.ok(await toggle.getAttribute("aria-label"));
         assert.equal(await menu.isVisible(), false);
         await toggle.click();
