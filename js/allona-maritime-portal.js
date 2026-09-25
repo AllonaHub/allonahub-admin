@@ -444,33 +444,10 @@
     const draft = smartDraftFor(job);
     if (draft && draft.status === "submitted") return { disabled: true, applied: true, label: "applied", reason: "" };
     const readiness = smartApplicationState.application_readiness || {};
-    if (readiness.documents_state === "missing") {
-      return { blocked: true, disabled: false, applied: false, label: "apply", actionLabel: "uploadDocuments", reason: text("documentsMissingReason"), href: portalUrl("maritime-documents.html"), tone: "action" };
-    }
-    if (readiness.documents_state === "processing") {
-      return { blocked: true, disabled: false, applied: false, label: "apply", actionLabel: "reviewDocuments", reason: text("documentsPendingReason"), href: portalUrl("maritime-documents.html"), tone: "action" };
-    }
-    if (readiness.documents_state !== "confirmed") {
-      return { blocked: true, disabled: false, applied: false, label: "apply", reason: text("eligibilityUnavailableReason"), tone: "pending" };
-    }
     if (readiness.has_saved_maritime_cv !== true) {
       return { blocked: true, disabled: false, applied: false, label: "apply", actionLabel: "completeMaritimeCv", reason: text("maritimeCvMissingReason"), href: portalUrl("maritime-cv.html"), tone: "action" };
     }
-    const run = smartApplicationState.run;
-    if (!run) return { blocked: true, disabled: false, applied: false, label: "apply", actionLabel: "completeGlobalCv", reason: text("globalCvMissingReason"), href: portalUrl("maritime-smart-account.html"), tone: "action" };
-    if (run.status !== "user_confirmed") return { blocked: true, disabled: false, applied: false, label: "apply", actionLabel: "confirmGlobalCv", reason: text("confirmGlobalCvReason"), href: portalUrl("maritime-smart-account.html"), tone: "action" };
     if (!job.smartJobId) return { blocked: true, disabled: false, applied: false, label: "apply", reason: text("listingRequirementsPendingReason"), tone: "pending" };
-    const match = smartMatchFor(job);
-    if (!match || match.hard_gate_status === "stale") {
-      return { blocked: true, disabled: false, applied: false, label: "apply", actionLabel: "refreshEligibility", reason: text("refreshEligibilityReason"), href: portalUrl("maritime-smart-account.html"), tone: "action" };
-    }
-    if (match.hard_gate_status === "needs_data") {
-      return { blocked: true, disabled: false, applied: false, label: "apply", reason: text("listingRequirementsPendingReason"), tone: "pending" };
-    }
-    if (match.eligible !== true || match.hard_gate_status !== "passed") {
-      const rankMismatch = Array.isArray(match.missing_requirements) && match.missing_requirements.includes("rank");
-      return { blocked: true, disabled: false, applied: false, label: "apply", reason: text(rankMismatch ? "qualificationMismatchTemplate" : "requirementsMismatch"), tone: "mismatch" };
-    }
     return { disabled: false, applied: false, label: "apply", reason: "" };
   }
 
@@ -514,7 +491,11 @@
       }
     });
     const payload = await response.json().catch(function () { return {}; });
-    if (!response.ok || payload.ok !== true) throw new Error(payload.message || "APPLICATION_FAILED");
+    if (!response.ok || payload.ok !== true) {
+      const error = new Error(payload.message || "APPLICATION_FAILED");
+      error.code = payload.code || payload.error || "";
+      throw error;
+    }
     smartApplicationState = {
       run: payload.run || smartApplicationState.run,
       matches: Array.isArray(payload.matches) ? payload.matches : smartApplicationState.matches,
@@ -627,28 +608,20 @@
     }
     if (notice) { notice.textContent = text("applicationSending"); notice.className = "maritime-notice is-visible"; }
     try {
-      let draft = smartDraftFor(job);
-      if (!draft) {
-        await smartApplicationApi(`/v1/maritime/smart-account/${encodeURIComponent(smartApplicationState.run.id)}/application-drafts`, {
-          method: "POST",
-          body: JSON.stringify({ confirmation: true, job_ids: [job.smartJobId] })
-        });
-        draft = smartDraftFor(job);
-      }
-      if (!draft) throw new Error("APPLICATION_DRAFT_NOT_FOUND");
-      if (draft.status !== "submitted") {
-        await smartApplicationApi(`/v1/maritime/application-drafts/${encodeURIComponent(draft.id)}/submit`, {
-          method: "POST",
-          body: JSON.stringify({ confirmation: true })
-        });
-      }
+      await smartApplicationApi("/v1/maritime/manual-applications", {
+        method: "POST",
+        body: JSON.stringify({ job_id: job.smartJobId, share_documents: true })
+      });
+      await loadSmartApplicationState();
       renderJobResults();
       if (notice) { notice.textContent = text("applicationSaved"); notice.className = "maritime-notice is-visible is-success"; notice.scrollIntoView({ block: "nearest" }); }
     } catch (error) {
       await loadSmartApplicationState();
       renderJobResults();
       const serverMessage = compact(error && error.message, 320);
-      showApplicationDialog({ reason: serverMessage && !/^[A-Z0-9_]+$/.test(serverMessage) ? serverMessage : text("applicationFailed") });
+      showApplicationDialog({ reason: error?.code === "RANK_MISMATCH" ? text("qualificationMismatchTemplate")
+        : error?.code === "MARITIME_CV_REQUIRED" ? text("maritimeCvMissingReason")
+          : serverMessage && !/^[A-Z0-9_]+$/.test(serverMessage) ? serverMessage : text("applicationFailed") });
     }
   }
 

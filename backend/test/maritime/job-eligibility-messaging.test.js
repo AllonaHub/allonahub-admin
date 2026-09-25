@@ -58,7 +58,7 @@ test("published rank codes select the correct department without leaking into ev
   assert.equal(window.__portalCopyRows.applicationBlockedTitle[0], "Bu ilana başvuru yapamazsınız");
 });
 
-test("job gate directs candidates with no documents to document upload", async () => {
+test("manual job gate requires saved Maritime CV, not uploaded documents", async () => {
   const { source, window } = await portalGate();
   for (const key of [
     "uploadDocuments", "documentsMissingReason", "reviewDocuments", "documentsPendingReason",
@@ -79,9 +79,8 @@ test("job gate directs candidates with no documents to document upload", async (
   });
   const gate = window.__jobApplicationGate({ id: "listing", smartJobId: "job" });
   assert.equal(gate.label, "apply");
-  assert.equal(gate.actionLabel, "uploadDocuments");
-  assert.equal(gate.reason, "Uygun ilanları belirleyebilmemiz için denizcilik belgelerinizi yükleyin.");
-  assert.equal(gate.href, "/pages/ecosystem/maritime-documents.html");
+  assert.equal(gate.actionLabel, "completeMaritimeCv");
+  assert.equal(gate.href, "/pages/ecosystem/maritime-cv.html");
   assert.equal(gate.blocked, true);
   assert.equal(gate.disabled, false);
   const action = window.__jobApplicationAction({ id: "listing" }, gate);
@@ -96,7 +95,7 @@ test("job gate directs candidates with no documents to document upload", async (
   assert.doesNotMatch(source, /Uygunluk doğrulanamadı/);
 });
 
-test("job gate distinguishes incomplete documents and Maritime CV", async () => {
+test("manual job gate permits missing documents when Maritime CV is saved", async () => {
   const { window } = await portalGate();
   window.__setSmartApplicationState({
     run: null,
@@ -106,7 +105,7 @@ test("job gate distinguishes incomplete documents and Maritime CV", async () => 
   });
   const documentGate = window.__jobApplicationGate({ id: "listing", smartJobId: "job" });
   assert.equal(documentGate.label, "apply");
-  assert.equal(documentGate.actionLabel, "reviewDocuments");
+  assert.equal(documentGate.actionLabel, "completeMaritimeCv");
 
   window.__setSmartApplicationState({
     run: null,
@@ -118,22 +117,34 @@ test("job gate distinguishes incomplete documents and Maritime CV", async () => 
   assert.equal(cvGate.label, "apply");
   assert.equal(cvGate.actionLabel, "completeMaritimeCv");
   assert.equal(cvGate.href, "/pages/ecosystem/maritime-cv.html");
+  window.__setSmartApplicationState({ run: null, matches: [], application_drafts: [], application_readiness: { documents_state: "missing", has_saved_maritime_cv: true } });
+  assert.equal(window.__jobApplicationGate({ id: "listing", smartJobId: "job" }).blocked, undefined);
 });
 
-test("job gate uses a gentle qualification mismatch only after a confirmed match run", async () => {
-  const { window } = await portalGate();
+test("manual job gate leaves rank decision to the current server-side Maritime CV", async () => {
+  const { window, source } = await portalGate();
   window.__setSmartApplicationState({
     run: { id: "run", status: "user_confirmed" },
-    matches: [{ job_id: "job", eligible: false, hard_gate_status: "failed", missing_requirements: ["rank"] }],
+    matches: [{ job_id: "job", eligible: false, hard_gate_status: "failed", rank_compatible: false, missing_requirements: ["rank"] }],
     application_drafts: [],
     application_readiness: { documents_state: "confirmed", has_saved_maritime_cv: true }
   });
   const gate = window.__jobApplicationGate({ id: "listing", smartJobId: "job", title: "Kaptan" });
   assert.equal(gate.label, "apply");
-  assert.equal(gate.reason, "CV'nizdeki rütbe bu ilan için uygun değil. Size uygun ilanlara göz atabilirsiniz.");
-  assert.equal(gate.blocked, true);
+  assert.equal(gate.blocked, undefined);
   assert.equal(gate.disabled, false);
-  assert.equal(gate.href, undefined);
+  assert.match(source, /error\?\.code === "RANK_MISMATCH" \? text\("qualificationMismatchTemplate"\)/);
+});
+
+test("manual submissions check saved rank and explicit document consent on the server", async () => {
+  const route = await readFile(routeUrl, "utf8");
+  assert.match(route, /app\.post\("\/v1\/maritime\/manual-applications"/);
+  assert.match(route, /requireCustomer\(request, "maritime\.manual_application\.submit"\)/);
+  assert.match(route, /share_documents: z\.literal\(true\)/);
+  assert.match(route, /canonicalRank\(buildMaritimeSmartProfile\(\{ cvProfile: cv \}\)\.profile\.rank\)/);
+  assert.match(route, /candidateRank !== canonicalRank\(job\.rank_code\)/);
+  assert.match(route, /documents_share_confirmed: true/);
+  assert.match(route, /status: "submitted", submitted_at: now/);
 });
 
 test("job gate never calls missing or stale match data a qualification mismatch", async () => {
@@ -144,10 +155,10 @@ test("job gate never calls missing or stale match data a qualification mismatch"
     application_readiness: { documents_state: "confirmed", has_saved_maritime_cv: true }
   };
   window.__setSmartApplicationState({ ...base, matches: [] });
-  assert.equal(window.__jobApplicationGate({ id: "listing", smartJobId: "job" }).actionLabel, "refreshEligibility");
+  assert.equal(window.__jobApplicationGate({ id: "listing", smartJobId: "job" }).blocked, undefined);
 
   window.__setSmartApplicationState({ ...base, matches: [{ job_id: "job", eligible: false, hard_gate_status: "needs_data" }] });
-  assert.equal(window.__jobApplicationGate({ id: "listing", smartJobId: "job" }).blocked, true);
+  assert.equal(window.__jobApplicationGate({ id: "listing", smartJobId: "job" }).blocked, undefined);
 
   window.__setSmartApplicationState({ ...base, matches: [{ job_id: "job", eligible: true, hard_gate_status: "passed" }] });
   assert.equal(window.__jobApplicationGate({ id: "listing", smartJobId: "job" }).label, "apply");

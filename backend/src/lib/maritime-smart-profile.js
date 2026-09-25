@@ -430,7 +430,7 @@ function firstLocalizedValue(payload, items, key) {
   return localizedText({});
 }
 
-function canonicalRank(value) {
+export function canonicalRank(value) {
   const normalized = text(value).normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "").replace(/[əƏ]/g, "e").replace(/ı/g, "i")
     .replace(/[^\p{L}\p{N}]+/gu, " ").trim().toLocaleLowerCase("und");

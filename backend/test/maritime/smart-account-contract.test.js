@@ -364,8 +364,8 @@ test("shared maritime navigation keeps complete translations for the smart accou
   assert.match(source, /function loadSeafarerClassification\(\)/);
   assert.match(source, /readiness\.seafarer_status/);
   assert.match(source, /function jobApplicationGate\(job\)/);
-  assert.match(source, /\/v1\/maritime\/smart-account\/\$\{encodeURIComponent\(smartApplicationState\.run\.id\)\}\/application-drafts/);
-  assert.match(source, /\/v1\/maritime\/application-drafts\/\$\{encodeURIComponent\(draft\.id\)\}\/submit/);
+  assert.match(source, /\/v1\/maritime\/manual-applications/);
+  assert.match(source, /share_documents: true/);
   assert.doesNotMatch(source, /id: `application-\$\{job\.id\}-\$\{Date\.now\(\)\}`/);
 });
 

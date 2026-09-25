@@ -47,7 +47,7 @@ test("high-risk CV and application actions consume a fresh passkey proof", async
   const [proof, route] = await Promise.all([readFile(proofUrl, "utf8"), readFile(smartRouteUrl, "utf8")]);
   assert.match(proof, /maritime_consume_passkey_proof/);
   assert.match(proof, /x-allona-passkey-proof/);
-  assert.equal((route.match(/await requireMaritimePasskeyProof\(request, ctx\.user\.id\);/g) || []).length, 5);
+  assert.equal((route.match(/await requireMaritimePasskeyProof\(request, ctx\.user\.id\);/g) || []).length, 6);
   assert.match(route, /save_locked_maritime_cv_profile/);
   assert.match(route, /set_maritime_auto_apply_preference/);
   assert.match(route, /confirm_maritime_smart_account/);

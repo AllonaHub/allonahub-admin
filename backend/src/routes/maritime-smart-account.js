@@ -3,6 +3,7 @@ import { MARITIME_PROFILE_PHOTO_BUCKET, maritimeGlobalPassportReadiness } from "
 import {
   MARITIME_SMART_RULE_VERSION,
   buildMaritimeSmartProfile,
+  canonicalRank,
   maritimeSmartSnapshotHash,
   matchMaritimeJobs
 } from "../lib/maritime-smart-profile.js";
@@ -15,6 +16,7 @@ import { auditEvent, authContext, hasMfa, hasRole, supabaseAdmin } from "../lib/
 
 const runParamsSchema = z.object({ runId: z.string().uuid() }).strict();
 const applicationParamsSchema = z.object({ applicationId: z.string().uuid() }).strict();
+const manualApplicationSchema = z.object({ job_id: z.string().uuid(), share_documents: z.literal(true) }).strict();
 const confirmationSchema = z.object({ confirmation: z.literal(true) }).strict();
 const autoApplyPreferenceSchema = z.object({
   enabled: z.boolean(),
@@ -958,7 +960,14 @@ async function latestSmartState(userId, user) {
     .limit(1)
     .maybeSingle();
   const run = assertDb(runResult, "Akıllı hesap kaydı okunamadı.") || null;
-  if (!run) return { run: null, matches: [], application_drafts: [], application_readiness: applicationReadiness, cv_identity: cvIdentity };
+  if (!run) {
+    const applications = assertDb(await supabaseAdmin.from("maritime_hiring_applications")
+      .select("id,job_id,status,submitted_at")
+      .eq("seafarer_user_id", userId).eq("status", "submitted")
+      .order("submitted_at", { ascending: false }).limit(100), "Başvurular okunamadı.") || [];
+    return { run: null, matches: [], application_drafts: applications,
+      application_readiness: applicationReadiness, cv_identity: cvIdentity };
+  }
 
   const [matchesResult, applicationsResult] = await Promise.all([
     supabaseAdmin
@@ -996,7 +1005,7 @@ async function latestSmartState(userId, user) {
   });
   const matchedJobIds = new Set(matches.map((match) => match.job_id));
   const applicationDrafts = (assertDb(applicationsResult, "Başvuru taslakları okunamadı.") || [])
-    .filter((application) => matchedJobIds.has(application.job_id))
+    .filter((application) => matchedJobIds.has(application.job_id) || application.status === "submitted")
     .map((application) => ({
       id: application.id,
       job_id: application.job_id,
@@ -1116,6 +1125,53 @@ async function persistSeafarerClassification(ctx, snapshot) {
 }
 
 export function registerMaritimeSmartAccountRoutes(app) {
+  app.post("/v1/maritime/manual-applications", {
+    config: { rateLimit: { max: 20, timeWindow: "10 minutes" } }
+  }, async (request, reply) => {
+    const ctx = await requireCustomer(request, "maritime.manual_application.submit");
+    const input = manualApplicationSchema.parse(request.body || {});
+    await requireMaritimePasskeyProof(request, ctx.user.id);
+    const job = (await verifiedOpenJobs()).find((item) => item.id === input.job_id);
+    if (!job) throw httpError("İlan artık başvuruya açık değil.", 409, "JOB_UNAVAILABLE");
+    const cv = assertDb(await supabaseAdmin.from("maritime_cv_profiles")
+      .select("profile_status,profile_payload")
+      .eq("seafarer_user_id", ctx.user.id).maybeSingle(), "Maritime CV okunamadı.");
+    if (!cv || cv.profile_payload?.data_origin !== "user_entered_maritime_cv" || ["restricted", "stale"].includes(cv.profile_status)) {
+      throw httpError("Başvurmadan önce Maritime CV'nizi kaydedin.", 409, "MARITIME_CV_REQUIRED");
+    }
+    const candidateRank = canonicalRank(buildMaritimeSmartProfile({ cvProfile: cv }).profile.rank);
+    if (!candidateRank || !canonicalRank(job.rank_code) || candidateRank !== canonicalRank(job.rank_code)) {
+      throw httpError("CV'nizdeki rütbe bu ilana uygun değil.", 409, "RANK_MISMATCH");
+    }
+
+    const existing = assertDb(await supabaseAdmin.from("maritime_hiring_applications")
+      .select("id,status").eq("job_id", job.id).eq("seafarer_user_id", ctx.user.id).maybeSingle(), "Başvuru kontrol edilemedi.");
+    if (existing && existing.status === "submitted") return { ok: true, application: existing, idempotent: true };
+    if (existing && !["drafted", "awaiting_candidate_approval"].includes(existing.status)) {
+      throw httpError("Bu ilandaki başvurunuzun durumu değişti.", 409, "APPLICATION_STATE_CONFLICT");
+    }
+    const now = new Date().toISOString();
+    const consent = { final_submission_confirmed: true, final_submission_confirmed_at: now,
+      documents_share_confirmed: true, documents_share_confirmed_at: now, consent_version: "maritime-manual-rank-v1" };
+    let applicationId = existing?.id;
+    if (!applicationId) {
+      const inserted = await supabaseAdmin.from("maritime_hiring_applications").insert({
+        job_id: job.id, partner_id: job.partner_id, seafarer_user_id: ctx.user.id,
+        status: "awaiting_candidate_approval", candidate_consent_snapshot: consent,
+        metadata: { job_title: job.job_title, job_reference: job.job_reference, matching_source: "maritime_cv_rank" }
+      }).select("id").single();
+      applicationId = assertDb(inserted, "Başvuru oluşturulamadı.").id;
+    }
+    const submitted = assertDb(await supabaseAdmin.from("maritime_hiring_applications")
+      .update({ status: "submitted", submitted_at: now, candidate_consent_snapshot: consent })
+      .eq("id", applicationId).eq("seafarer_user_id", ctx.user.id)
+      .select("id,job_id,status,submitted_at").single(), "Başvuru gönderilemedi.");
+    await auditEvent({ request, actorId: ctx.user.id, actorRole: ctx.profile.role,
+      action: "maritime.manual_application_submitted", resourceType: "maritime_hiring_application", resourceId: applicationId,
+      metadata: { job_id: job.id, documents_share_confirmed: true } });
+    reply.code(201);
+    return { ok: true, application: submitted };
+  });
   app.get("/v1/maritime/cv-profile", {
     config: { rateLimit: { max: 60, timeWindow: "1 minute" } }
   }, async (request) => {
