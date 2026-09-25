@@ -451,6 +451,9 @@
       const tabs = [["overview", "Genel Bakış"], ["eligibility", "Uygunluk"], ["documents", "Belgeler"], ["service", "Deniz Hizmeti"], ["references", "Firma Referansları"], ["interviews", "Görüşmeler"], ["offers", "Teklifler"], ["history", "İşlem Geçmişi"]];
       const cards = (rows, title) => rows.length ? rows.map((item) => historyCard(title, statusLabel(item.status || item.offer_status), dateTime(item.created_at || item.scheduled_start))).join("") : personnelEmpty(`${title} kaydı bulunmuyor.`);
       target.innerHTML = `<section class="mp-candidate-detail"><div class="mp-history-card-head"><div><strong>${escape(room.candidate?.full_name || room.candidate?.public_id || "Aday")}</strong><span>${escape(room.candidate?.rank || "Yeterlilik bilgisi bekleniyor")}</span></div><span class="mp-status-pill is-${escape(room.status)}">${escape(statusLabel(room.status))}</span></div><div class="mp-candidate-tabs" role="tablist" aria-label="Aday detay bölümleri">${tabs.map(([key, label], index) => `<button type="button" role="tab" data-mp-candidate-tab="${key}" aria-selected="${index === 0}">${label}</button>`).join("")}</div><div data-mp-candidate-pane="overview"><div class="mp-candidate-card__facts">${candidateFacts(room).map((fact) => `<span>${escape(fact)}</span>`).join("")}</div><p class="mp-note">Bu görünüm yalnız aktif ve süreli şirket-aday ilişkisi kapsamındaki güvenli özeti gösterir.</p></div><div data-mp-candidate-pane="eligibility" hidden>${match ? historyCard(`${Math.round(Number(match.preference_score || 0))}% açıklanabilir eşleşme`, statusLabel(match.hard_gate_status), `Kural sürümü: ${match.metadata?.rule_version || "kayıtlı sürüm"}`) : personnelEmpty("Bu aday için güncel eşleşme sonucu bulunmuyor.")}</div><div data-mp-candidate-pane="documents" hidden>${historyCard("Belge hazırlığı", statusLabel(room.candidate?.readiness_level), "Hassas belge erişimi ayrıca amaç, süre ve audit kontrolü gerektirir.")}</div><div data-mp-candidate-pane="service" hidden>${historyCard("Deniz hizmeti özeti", `${room.candidate?.sea_service_days || 0} gün · ${room.candidate?.sea_service_count || 0} kayıt`, (room.candidate?.vessel_types || []).join(", ") || "Gemi türü kaydı yok")}</div><div data-mp-candidate-pane="references" hidden>${personnelEmpty("Firmalara özel referanslar yalnız doğrulanmış iş ilişkisi ve audit kaydıyla Güven bölümünde açılır.")}</div><div data-mp-candidate-pane="interviews" hidden>${cards(interviews, "Görüşme")}</div><div data-mp-candidate-pane="offers" hidden>${cards(offers, "Teklif / kontrat")}</div><div data-mp-candidate-pane="history" hidden>${cards(applications, "İşe alım işlemi")}</div><div class="mp-history-actions"><button type="button" data-mp-candidate-cv="${escape(room.id)}">CV ve Hizmet Belgeleri</button><button type="button" data-mp-candidate-invite="${escape(room.id)}" data-job-id="${escape(room.job_id || "")}" ${room.job_id ? "" : "disabled"}>Davet Et</button><button type="button" data-mp-candidate-favorite="${escape(room.id)}" ${favorite ? "disabled" : ""}>${favorite ? "Favorilerde" : "Favoriye Ekle"}</button></div><div data-mp-cv-preview role="status" aria-live="polite"></div></section>`;
+      const documentPane = $("[data-mp-candidate-pane='documents']", target);
+      documentPane.innerHTML = `<p class="mp-note">Adayın başvuru sırasında verdiği belge izni veya sonradan onayladığı erişim geçerli olmalıdır. Bağlantılar kısa süreli ve erişimler kayıtlıdır.</p><div class="mp-history-actions"><button type="button" data-mp-candidate-documents="${escape(room.id)}">Belgeleri Gör</button><button type="button" data-mp-document-request="${escape(room.id)}">Belge İzni İste</button></div><div data-mp-document-list role="status" aria-live="polite"></div>`;
+      $$(".mp-history-actions", target).at(-1).insertAdjacentHTML("beforeend", `<button type="button" data-mp-candidate-chat="${escape(room.id)}">Mesaj Gönder</button>`);
       return;
     }
     if (panel === "ready-pool") {
@@ -524,11 +527,14 @@
     if (panel === "applications") {
       const target = $("[data-mp-applications-list]", root);
       const rooms = state.data.candidate_rooms || [];
-      target.innerHTML = `<h3>Başvuru ve işe alım dosyaları</h3>${rooms.length ? rooms.map((room) => {
+      const applications = state.data.applications || [];
+      const listed = rooms.filter((room) => applications.some((item) => item.id === room.application_id));
+      const matched = listed.filter((room) => (state.data.matches || []).some((item) => item.job_id === room.job_id && item.seafarer_user_id === room.seafarer_user_id));
+      target.innerHTML = `<h3>Başvuranlar (${listed.length})</h3><p class="mp-note">Yalnızca açık ve adayın onayladığı başvurular gösterilir. Belge erişimi ayrıca aday iznine bağlıdır.</p>${listed.length ? listed.map((room) => {
         const job = (state.data.jobs || []).find((item) => item.id === room.job_id);
         const application = (state.data.applications || []).find((item) => item.id === room.application_id);
-        return historyCard(job?.job_title || "İşe alım dosyası", `${candidateLabel(room)} · ${statusLabel(application?.status || room.status)}`, room.hiring_room_id ? `Dosya: ${room.hiring_room_id.slice(0, 8).toLocaleUpperCase("tr-TR")}` : "Başvuru alındı", "", `<button type="button" data-mp-candidate-inspect="${escape(room.id)}">Adayı ve CV'yi İncele</button>`);
-      }).join("") : '<div class="mp-empty">Henüz açık başvuru veya işe alım dosyası bulunmuyor.</div>'}`;
+        return historyCard(candidateLabel(room), `${job?.job_title || "İşe alım dosyası"} · ${statusLabel(application?.status || room.status)}`, [room.candidate?.rank, room.candidate?.sea_service_days ? `${room.candidate.sea_service_days} gün deniz hizmeti` : ""].filter(Boolean).join(" · ") || "Aday profili", "", `<button type="button" data-mp-candidate-inspect="${escape(room.id)}">Profili ve CV'yi İncele</button><button type="button" data-mp-candidate-chat="${escape(room.id)}">Mesaj Gönder</button>`);
+      }).join("") : '<div class="mp-empty">Henüz açık ve izinli başvuru bulunmuyor.</div>'}<h3>Uygun olanlar (${matched.length})</h3>${matched.length ? matched.map((room) => personnelCandidateCard(room, (state.data.matches || []).find((item) => item.job_id === room.job_id && item.seafarer_user_id === room.seafarer_user_id))).join("") : '<div class="mp-empty">Henüz doğrulanmış eşleşme bulunmuyor. Başvuranları yine de inceleyebilirsiniz.</div>'}`;
     }
     if (panel === "notifications") {
       const target = $("[data-mp-notifications-list]", root);
@@ -1590,6 +1596,47 @@
       openPanel("candidate-detail", inspectCandidate);
       return;
     }
+    const chatCandidate = event.target.closest("[data-mp-candidate-chat]");
+    if (chatCandidate) {
+      const roomId = chatCandidate.dataset.mpCandidateChat;
+      location.href = `../ecosystem/maritime-firm-chat.html?source=partner&partner_id=${encodeURIComponent(state.partnerId)}&room_id=${encodeURIComponent(roomId)}`;
+      return;
+    }
+    const requestDocuments = event.target.closest("[data-mp-document-request]");
+    if (requestDocuments) {
+      requestDocuments.disabled = true;
+      try {
+        const result = await api(`/v1/maritime/partner-center/candidate-rooms/${encodeURIComponent(requestDocuments.dataset.mpDocumentRequest)}/document-request`, { method: "POST", body: { partner_id: state.partnerId } });
+        alert(result.status === "accepted" ? "Adayın belge izni zaten açık." : "Belge izni talebi adaya gönderildi. Yanıtı Firma Mesajları bölümünde görebilirsiniz.", "success");
+      } catch (error) { alert(error.message || "Belge izni istenemedi."); }
+      finally { requestDocuments.disabled = false; }
+      return;
+    }
+    const candidateDocuments = event.target.closest("[data-mp-candidate-documents]");
+    if (candidateDocuments) {
+      const list = candidateDocuments.closest("[data-mp-candidate-pane]")?.querySelector("[data-mp-document-list]");
+      if (!list) return;
+      candidateDocuments.disabled = true;
+      list.textContent = "Belgeler yükleniyor…";
+      try {
+        const roomId = candidateDocuments.dataset.mpCandidateDocuments;
+        const result = await api(`/v1/maritime/partner-center/candidate-rooms/${encodeURIComponent(roomId)}/documents?partner_id=${encodeURIComponent(state.partnerId)}`);
+        list.innerHTML = result.documents?.length ? `<ul>${result.documents.map((item) => `<li><button type="button" data-mp-candidate-document="${escape(item.id)}" data-room-id="${escape(roomId)}">${escape(item.name || item.type || "Belge")}</button></li>`).join("")}</ul>` : "Adayın paylaşılabilir belgesi bulunmuyor.";
+      } catch (error) { list.textContent = error.message || "Belgeler açılamadı."; }
+      finally { candidateDocuments.disabled = false; }
+      return;
+    }
+    const candidateDocument = event.target.closest("[data-mp-candidate-document]");
+    if (candidateDocument) {
+      const opened = window.open("", "_blank");
+      try {
+        const result = await api(`/v1/maritime/partner-center/candidate-rooms/${encodeURIComponent(candidateDocument.dataset.roomId)}/documents/${encodeURIComponent(candidateDocument.dataset.mpCandidateDocument)}/access?partner_id=${encodeURIComponent(state.partnerId)}`);
+        if (!result.url) throw new Error("Belge bağlantısı oluşturulamadı.");
+        if (opened) { opened.opener = null; opened.location.replace(result.url); }
+        else location.href = result.url;
+      } catch (error) { opened?.close(); alert(error.message || "Belge açılamadı."); }
+      return;
+    }
     const inspectCv = event.target.closest("[data-mp-candidate-cv]");
     if (inspectCv) {
       const preview = inspectCv.closest(".mp-candidate-detail")?.querySelector("[data-mp-cv-preview]");
@@ -1599,7 +1646,14 @@
       try {
         const result = await api(`/v1/maritime/partner-center/candidate-rooms/${encodeURIComponent(inspectCv.dataset.mpCandidateCv)}/cv?partner_id=${encodeURIComponent(state.partnerId)}`);
         const cv = result.cv || {};
-        preview.innerHTML = `<section class="mp-cv-review"><h3>${escape(cv.display_name || "Aday CV")}</h3><p>${escape(cv.rank || "Rütbe belirtilmedi")} · ${escape(cv.sea_service_summary || "")}</p><h4>Sertifikalar</h4>${(cv.certificates || []).length ? `<ul>${cv.certificates.map((item) => `<li>${escape(item.name)}${item.code ? ` (${escape(item.code)})` : ""}${item.expiry_date ? ` · ${escape(item.expiry_date)}` : ""}</li>`).join("")}</ul>` : `<p>Sertifika kaydı bulunmuyor.</p>`}<h4>Deniz hizmeti</h4>${(cv.vessel_experience || []).length ? `<ul>${cv.vessel_experience.map((item) => `<li>${escape([item.vessel_name, item.rank, item.sign_on_date, item.sign_off_date].filter(Boolean).join(" · "))}</li>`).join("")}</ul>` : `<p>Deniz hizmeti kaydı bulunmuyor.</p>`}<h4>İzinli hizmet belgeleri</h4>${(result.documents || []).length ? `<ul>${result.documents.map((item) => `<li><button type="button" data-mp-service-document="${escape(item.id)}">${escape(item.name || "Hizmet belgesini aç")}</button></li>`).join("")}</ul>` : `<p>Paylaşılmış hizmet belgesi bulunmuyor.</p>`}</section>`;
+        const items = (rows, formatter, fallback) => rows?.length ? `<ul>${rows.map((item) => `<li>${escape(formatter(item))}</li>`).join("")}</ul>` : `<p>${escape(fallback)}</p>`;
+        preview.innerHTML = `<section class="mp-cv-review"><h3>${escape(cv.display_name || "Aday CV")}</h3><p>${escape([cv.rank || "Rütbe belirtilmedi", cv.nationality, cv.sea_service_summary].filter(Boolean).join(" · "))}</p>
+          ${cv.professional_summary ? `<p>${escape(cv.professional_summary)}</p>` : ""}
+          <h4>Sertifikalar</h4>${items(cv.certificates, (item) => [item.name, item.code, item.expiry_date].filter(Boolean).join(" · "), "Sertifika kaydı bulunmuyor.")}
+          <h4>Deniz hizmeti</h4>${items(cv.vessel_experience, (item) => [item.vessel_name, item.company_name, item.rank, item.sign_on_date, item.sign_off_date].filter(Boolean).join(" · "), "Deniz hizmeti kaydı bulunmuyor.")}
+          <h4>Eğitim</h4>${items(cv.education, (item) => [item.institution, item.qualification, item.start_date, item.end_date].filter(Boolean).join(" · "), "Eğitim kaydı bulunmuyor.")}
+          <h4>Dil ve beceriler</h4>${items(cv.languages, (item) => [item.language, item.level].filter(Boolean).join(" · "), "Dil kaydı bulunmuyor.")}${items(cv.skills, (item) => item, "Beceri kaydı bulunmuyor.")}
+          <h4>İzinli hizmet belgeleri</h4>${(result.documents || []).length ? `<ul>${result.documents.map((item) => `<li><button type="button" data-mp-service-document="${escape(item.id)}">${escape(item.name || "Hizmet belgesini aç")}</button></li>`).join("")}</ul>` : `<p>Paylaşılmış hizmet belgesi bulunmuyor.</p>`}</section>`;
       } catch (error) { preview.textContent = error.message || "CV şu anda açılamadı."; }
       finally { inspectCv.disabled = false; }
       return;

@@ -71,7 +71,6 @@ async function listThreads(ctx, partnerId) {
     const latest = db(await supabaseAdmin.from("maritime_connect_messages")
       .select("id,body,sender_user_id,created_at").eq("thread_id", thread.id).eq("message_type", "text")
       .order("created_at", { ascending: false }).limit(1).maybeSingle());
-    if (!latest) continue;
     const cursor = db(await supabaseAdmin.from("maritime_connect_read_cursors")
       .select("last_read_at").eq("thread_id", thread.id).eq("user_id", ctx.user.id).maybeSingle());
     let unreadQuery = supabaseAdmin.from("maritime_connect_messages")
@@ -80,10 +79,13 @@ async function listThreads(ctx, partnerId) {
     if (cursor) unreadQuery = unreadQuery.gt("created_at", cursor.last_read_at);
     const unreadResult = await unreadQuery;
     if (unreadResult.error) throw fail("Okunmamış mesajlar alınamadı.", 503);
-    const unread = Number(unreadResult.count || 0) > 0;
+    const pendingPermission = !isPartner ? db(await supabaseAdmin.from("maritime_candidate_document_grants")
+      .select("id").eq("candidate_room_id", thread.candidate_room_id).eq("seafarer_user_id", ctx.user.id)
+      .eq("status", "pending").gt("expires_at", new Date().toISOString()).maybeSingle()) : null;
+    const unread = Number(unreadResult.count || 0) > 0 || Boolean(pendingPermission);
     const candidateProfile = isPartner ? db(await supabaseAdmin.from("profiles").select("full_name").eq("id", thread.seafarer_user_id).maybeSingle()) : null;
-    result.push({ id: thread.id, company_name: access.company.display_name, candidate_user_id: thread.seafarer_user_id,
-      candidate_name: candidateProfile?.full_name || "Aday", partner_id: thread.partner_id, last_message: latest.body.slice(0, 120), last_message_at: latest.created_at, unread });
+    result.push({ id: thread.id, candidate_room_id: thread.candidate_room_id, company_name: access.company.display_name, candidate_user_id: thread.seafarer_user_id,
+      candidate_name: candidateProfile?.full_name || "Aday", partner_id: thread.partner_id, last_message: latest?.body?.slice(0, 120) || "Belge erişim talebi", last_message_at: latest?.created_at || thread.created_at, unread });
   }
   return result;
 }

@@ -19,6 +19,7 @@ import {
 import { ensureMaritimeCustomerProfile } from "../lib/maritime-customer-profile.js";
 import { normalizeMaritimeProfilePhoto } from "../lib/maritime-profile-photo.js";
 import { auditEvent, authContext, hasMfa, hasRole, supabaseAdmin } from "../lib/supabase.js";
+import { canViewCandidateDocuments } from "../lib/maritime-candidate-document-access.js";
 
 const uploadIntentSchema = z.object({
   files: maritimeDocumentUploadFilesSchema,
@@ -200,7 +201,7 @@ async function seaServiceDocumentAccess(ctx, document) {
   if (!permittedIds.length) return "";
   const applicationResult = await supabaseAdmin
     .from("maritime_hiring_applications")
-    .select("id,job_id,partner_id,candidate_consent_snapshot")
+    .select("id,job_id,partner_id,status,candidate_consent_snapshot")
     .eq("seafarer_user_id", document.seafarer_user_id)
     .in("partner_id", permittedIds)
     .in("status", PARTNER_DOCUMENT_ACCESS_STATUSES)
@@ -213,14 +214,17 @@ async function seaServiceDocumentAccess(ctx, document) {
     .some((row) => row.serviceDocumentId === document.id);
   if (!linked) return "";
   const rooms = assertDb(await supabaseAdmin.from("maritime_private_candidate_rooms")
-    .select("application_id,job_id,partner_id,expires_at")
+    .select("id,application_id,job_id,partner_id,expires_at")
     .in("application_id", applications.map((row) => row.id))
     .in("partner_id", permittedIds)
     .eq("seafarer_user_id", document.seafarer_user_id)
     .eq("candidate_visible", true)
     .in("status", ["active", "offer", "hired"]), "Aday dosyası doğrulanamadı.") || [];
+  const grants = rooms.length ? assertDb(await supabaseAdmin.from("maritime_candidate_document_grants")
+    .select("candidate_room_id,status,expires_at").in("candidate_room_id", rooms.map((room) => room.id)), "Belge izni doğrulanamadı.") || [] : [];
   return applications.some((row) => rooms.some((room) => room.application_id === row.id && room.job_id === row.job_id
-    && room.partner_id === row.partner_id && (!room.expires_at || new Date(room.expires_at).getTime() > Date.now()))) ? "partner_application" : "";
+    && room.partner_id === row.partner_id && (!room.expires_at || new Date(room.expires_at).getTime() > Date.now())
+    && canViewCandidateDocuments(row, grants.find((grant) => grant.candidate_room_id === room.id)))) ? "partner_application" : "";
 }
 
 async function ownedIntake(userId, intakeId) {

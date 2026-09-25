@@ -4,6 +4,7 @@ import { auditEvent, authContext, hasMfa, hasRole, supabaseAdmin } from "../lib/
 import { isValidImoNumber, normalizeImoNumber } from "../lib/maritime-vessel-provider.js";
 import { MARSOH_SUPPORTED_LANGUAGES, translateMarsohTextDetailed } from "../lib/marsoh-translation.js";
 import { matchVerifiedFormerWorkers, parsePrivatePoolFile, validatePoolRows } from "../lib/maritime-private-pool.js";
+import { canViewCandidateDocuments } from "../lib/maritime-candidate-document-access.js";
 import {
   MARIPARTNER_REFERENCE_CATEGORIES,
   MARIPARTNER_REFERENCE_QUESTIONS,
@@ -85,6 +86,8 @@ const refreshResponseSchema = z.object({
   changed_fields: z.array(z.enum(MARIPARTNER_REFRESH_QUESTIONS)).max(8).optional().default([])
 }).strict();
 const evidenceResponseSchema = z.object({ decision: z.enum(["accepted", "declined"]) }).strict();
+const documentRequestSchema = z.object({ partner_id: uuid }).strict();
+const documentDecisionSchema = z.object({ decision: z.enum(["accepted", "declined", "revoked"]) }).strict();
 const evidenceTemplateSchema = z.object({
   partner_id: uuid,
   name: z.string().trim().min(3).max(140),
@@ -438,6 +441,31 @@ async function candidateRoom(partnerId, roomId) {
   return room;
 }
 
+async function activeApplicationForRoom(room) {
+  if (!room.application_id || !room.job_id) throw httpError("Adayın açık başvurusu bulunmuyor.", 403, "CANDIDATE_APPLICATION_CONSENT_REQUIRED");
+  const application = assertDb(await supabaseAdmin.from("maritime_hiring_applications")
+    .select("id,status,candidate_consent_snapshot")
+    .eq("id", room.application_id).eq("job_id", room.job_id)
+    .eq("partner_id", room.partner_id).eq("seafarer_user_id", room.seafarer_user_id)
+    .maybeSingle(), "Başvuru izni doğrulanamadı.");
+  if (!application || !["submitted", "shortlisted", "interviewing", "offer_sent", "offer_accepted", "hired"].includes(application.status)
+    || application.candidate_consent_snapshot?.final_submission_confirmed !== true) {
+    throw httpError("Adayın açık başvuru izni bulunmuyor.", 403, "CANDIDATE_APPLICATION_CONSENT_REQUIRED");
+  }
+  return application;
+}
+
+async function documentPermission(room) {
+  const application = await activeApplicationForRoom(room);
+  const grant = assertDb(await supabaseAdmin.from("maritime_candidate_document_grants")
+    .select("id,status,expires_at").eq("candidate_room_id", room.id).maybeSingle(), "Belge izni doğrulanamadı.");
+  if (["declined", "revoked"].includes(grant?.status)) throw httpError("Aday belge paylaşımına izin vermedi.", 403, "CANDIDATE_DOCUMENT_CONSENT_REQUIRED");
+  if (!canViewCandidateDocuments(application, grant)) {
+    throw httpError("Aday belge paylaşımına henüz izin vermedi.", 403, "CANDIDATE_DOCUMENT_CONSENT_REQUIRED");
+  }
+  return application;
+}
+
 async function staffRows(partnerId) {
   const business = assertDb(await supabaseAdmin.from("partner_businesses").select("owner_id").eq("id", partnerId).single(), "Şirket sahibi okunamadı.");
   const staff = assertDb(await supabaseAdmin.from("partner_staff").select("user_id,full_name,staff_role,status").eq("partner_id", partnerId).eq("status", "active"), "Şirket ekibi okunamadı.") || [];
@@ -517,7 +545,14 @@ async function partnerDashboard(partnerId, userId) {
     supabaseAdmin.from("maritime_vessel_company_relationships").select("id,vessel_profile_id,imo_number,relationship_role,valid_from,valid_until,verification_status,created_at,updated_at").eq("partner_id", partnerId).not("verification_status", "in", '(rejected,revoked)').order("created_at", { ascending: false }).limit(500)
   ]);
   const jobRows = assertDb(jobs, "İlanlar okunamadı.") || [];
-  const roomRows = (assertDb(rooms, "Aday odaları okunamadı.") || []).filter((room) => room.candidate_visible === true && (!room.expires_at || new Date(room.expires_at).getTime() > Date.now()));
+  const openRooms = (assertDb(rooms, "Aday odaları okunamadı.") || []).filter((room) => room.application_id && room.candidate_visible === true && (!room.expires_at || new Date(room.expires_at).getTime() > Date.now()));
+  const roomApplications = openRooms.length ? assertDb(await supabaseAdmin.from("maritime_hiring_applications")
+    .select("id,job_id,partner_id,seafarer_user_id,status,candidate_consent_snapshot")
+    .in("id", openRooms.map((room) => room.application_id)).eq("partner_id", partnerId), "Aday başvuru izinleri okunamadı.") || [] : [];
+  const roomRows = openRooms.filter((room) => roomApplications.some((application) => application.id === room.application_id
+    && application.job_id === room.job_id && application.seafarer_user_id === room.seafarer_user_id
+    && ["submitted", "shortlisted", "interviewing", "offer_sent", "offer_accepted", "hired"].includes(application.status)
+    && application.candidate_consent_snapshot?.final_submission_confirmed === true));
   const profileIds = [...new Set(roomRows.map((item) => item.seafarer_user_id))];
   const [profiles, cvProfiles, workspaces] = profileIds.length ? await Promise.all([
     supabaseAdmin.from("profiles").select("id,public_id,full_name").in("id", profileIds),
@@ -813,6 +848,161 @@ export function registerMaritimePartnerCenterRoutes(app) {
     return { ...base, restricted: false, ...dashboard, notification_preferences: notificationPreferences };
   });
 
+  app.post("/v1/maritime/partner-center/candidate-rooms/:roomId/document-request", { config: { rateLimit: { max: 12, timeWindow: "1 hour" } } }, async (request) => {
+    const roomId = uuid.parse(request.params.roomId);
+    const { partner_id: partnerId } = documentRequestSchema.parse(request.body || {});
+    const access = await requirePartner(request, "evidence_request.create", partnerId);
+    await ensureHiringAuthority(access);
+    const room = await candidateRoom(partnerId, roomId);
+    await activeApplicationForRoom(room);
+    const existing = assertDb(await supabaseAdmin.from("maritime_candidate_document_grants")
+      .select("id,status,expires_at").eq("candidate_room_id", room.id).maybeSingle(), "Belge talebi okunamadı.");
+    if (existing?.status === "accepted" && Date.parse(existing.expires_at) > Date.now()) return { ok: true, status: "accepted" };
+    if (existing?.status === "pending" && Date.parse(existing.expires_at) > Date.now()) return { ok: true, status: "pending" };
+    if (["declined", "revoked"].includes(existing?.status)) throw httpError("Aday bu belge iznini kapattı.", 403, "CANDIDATE_DOCUMENT_CONSENT_REQUIRED");
+    const expiresAt = new Date(Date.now() + 7 * 86400000).toISOString();
+    const row = { candidate_room_id: room.id, partner_id: partnerId, seafarer_user_id: room.seafarer_user_id,
+      requested_by: access.ctx.user.id, status: "pending", purpose: "Başvuru belgelerini işe alım değerlendirmesi için görüntüleme",
+      requested_at: new Date().toISOString(), decided_at: null, expires_at: expiresAt };
+    assertDb(await supabaseAdmin.from("maritime_candidate_document_grants").upsert(row, { onConflict: "candidate_room_id" }), "Belge talebi gönderilemedi.");
+    const thread = assertDb(await supabaseAdmin.from("maritime_connect_threads")
+      .select("id").eq("candidate_room_id", room.id).eq("thread_scope", "private_candidate").maybeSingle(), "Aday görüşmesi okunamadı.");
+    if (!thread) {
+      const inserted = await supabaseAdmin.from("maritime_connect_threads").insert({
+        candidate_room_id: room.id, partner_id: partnerId, seafarer_user_id: room.seafarer_user_id,
+        thread_scope: "private_candidate", purpose: "consented_hiring_conversation", status: "active", created_by: access.ctx.user.id
+      });
+      if (inserted.error) {
+        const concurrent = assertDb(await supabaseAdmin.from("maritime_connect_threads")
+          .select("id").eq("candidate_room_id", room.id).eq("thread_scope", "private_candidate").maybeSingle(), "Aday görüşmesi doğrulanamadı.");
+        if (!concurrent) throw httpError("Aday görüşmesi açılamadı.", 503, "CANDIDATE_CHAT_UNAVAILABLE");
+      }
+    }
+    await logAction(request, access.ctx, "maripartner.candidate_documents_requested", "maritime_private_candidate_room", room.id, { partner_id: partnerId });
+    return { ok: true, status: "pending" };
+  });
+
+  app.get("/v1/maritime/candidate/document-requests", async (request) => {
+    const ctx = await authContext(request);
+    if (!ctx?.profilePersisted || ctx.profile.account_status !== "active" || !hasRole(ctx.profile, "customer")) throw httpError("Denizci hesabı gerekir.", 403, "SEAFARER_ACCOUNT_REQUIRED");
+    const rows = assertDb(await supabaseAdmin.from("maritime_candidate_document_grants")
+      .select("id,candidate_room_id,partner_id,status,purpose,requested_at,expires_at")
+      .eq("seafarer_user_id", ctx.user.id).order("requested_at", { ascending: false }).limit(50), "Belge talepleri okunamadı.") || [];
+    const requests = rows.filter((row) => row.status !== "pending" || Date.parse(row.expires_at) > Date.now());
+    const rooms = assertDb(await supabaseAdmin.from("maritime_private_candidate_rooms")
+      .select("id,partner_id,application_id,status,candidate_visible,expires_at")
+      .eq("seafarer_user_id", ctx.user.id).eq("candidate_visible", true)
+      .in("status", ["active", "offer", "hired"]).limit(50), "Aday ilişkileri okunamadı.") || [];
+    const missing = rooms.filter((room) => room.application_id && !rows.some((row) => row.candidate_room_id === room.id)
+      && (!room.expires_at || Date.parse(room.expires_at) > Date.now()));
+    if (missing.length) {
+      const applications = assertDb(await supabaseAdmin.from("maritime_hiring_applications")
+        .select("id,status,candidate_consent_snapshot").in("id", missing.map((room) => room.application_id)), "Başvuru izinleri okunamadı.") || [];
+      for (const room of missing) {
+        const application = applications.find((item) => item.id === room.application_id);
+        if (application?.candidate_consent_snapshot?.documents_share_confirmed === true && canViewCandidateDocuments(application, null)) {
+          requests.push({ id: null, candidate_room_id: room.id, partner_id: room.partner_id, status: "accepted", application_consent: true });
+        }
+      }
+    }
+    return { ok: true, requests };
+  });
+
+  app.post("/v1/maritime/candidate/document-permissions/:roomId/revoke", async (request) => {
+    const ctx = await authContext(request);
+    if (!ctx?.profilePersisted || ctx.profile.account_status !== "active" || !hasRole(ctx.profile, "customer")) throw httpError("Denizci hesabı gerekir.", 403, "SEAFARER_ACCOUNT_REQUIRED");
+    const roomId = uuid.parse(request.params.roomId);
+    const raw = assertDb(await supabaseAdmin.from("maritime_private_candidate_rooms")
+      .select("partner_id,seafarer_user_id").eq("id", roomId).eq("seafarer_user_id", ctx.user.id).maybeSingle(), "Aday ilişkisi okunamadı.");
+    if (!raw) throw httpError("Aday ilişkisi bulunamadı.", 404, "CANDIDATE_RELATIONSHIP_REQUIRED");
+    const room = await candidateRoom(raw.partner_id, roomId);
+    await activeApplicationForRoom(room);
+    assertDb(await supabaseAdmin.from("maritime_candidate_document_grants").upsert({
+      candidate_room_id: room.id, partner_id: room.partner_id, seafarer_user_id: ctx.user.id,
+      requested_by: ctx.user.id, status: "revoked", purpose: "Aday tarafından geri çekilen belge paylaşım izni",
+      decided_at: new Date().toISOString(), expires_at: new Date(Date.now() + 365 * 86400000).toISOString()
+    }, { onConflict: "candidate_room_id" }), "Belge izni geri çekilemedi.");
+    await logAction(request, ctx, "maritime.candidate_document_permission_revoked", "maritime_private_candidate_room", room.id, {});
+    return { ok: true, status: "revoked" };
+  });
+
+  app.post("/v1/maritime/candidate/document-permissions/:roomId/allow", async (request) => {
+    const ctx = await authContext(request);
+    if (!ctx?.profilePersisted || ctx.profile.account_status !== "active" || !hasRole(ctx.profile, "customer")) throw httpError("Denizci hesabı gerekir.", 403, "SEAFARER_ACCOUNT_REQUIRED");
+    const roomId = uuid.parse(request.params.roomId);
+    const raw = assertDb(await supabaseAdmin.from("maritime_private_candidate_rooms")
+      .select("partner_id").eq("id", roomId).eq("seafarer_user_id", ctx.user.id).maybeSingle(), "Aday ilişkisi okunamadı.");
+    if (!raw) throw httpError("Aday ilişkisi bulunamadı.", 404, "CANDIDATE_RELATIONSHIP_REQUIRED");
+    const room = await candidateRoom(raw.partner_id, roomId);
+    await activeApplicationForRoom(room);
+    assertDb(await supabaseAdmin.from("maritime_candidate_document_grants").upsert({
+      candidate_room_id: room.id, partner_id: room.partner_id, seafarer_user_id: ctx.user.id,
+      requested_by: ctx.user.id, status: "accepted", purpose: "Adayın kendi isteğiyle verdiği işe alım belgesi görüntüleme izni",
+      decided_at: new Date().toISOString(), expires_at: new Date(Date.now() + 30 * 86400000).toISOString()
+    }, { onConflict: "candidate_room_id" }), "Belge izni açılamadı.");
+    await logAction(request, ctx, "maritime.candidate_document_permission_allowed", "maritime_private_candidate_room", room.id, {});
+    return { ok: true, status: "accepted" };
+  });
+
+  app.post("/v1/maritime/candidate/document-requests/:requestId/respond", async (request) => {
+    const ctx = await authContext(request);
+    if (!ctx?.profilePersisted || ctx.profile.account_status !== "active" || !hasRole(ctx.profile, "customer")) throw httpError("Denizci hesabı gerekir.", 403, "SEAFARER_ACCOUNT_REQUIRED");
+    const requestId = uuid.parse(request.params.requestId);
+    const { decision } = documentDecisionSchema.parse(request.body || {});
+    const current = assertDb(await supabaseAdmin.from("maritime_candidate_document_grants")
+      .select("id,candidate_room_id,partner_id,status,expires_at").eq("id", requestId)
+      .eq("seafarer_user_id", ctx.user.id).maybeSingle(), "Belge talebi okunamadı.");
+    if (!current || (decision !== "revoked" && Date.parse(current.expires_at) <= Date.now()) || (decision === "revoked" ? current.status !== "accepted" : current.status !== "pending")) {
+      throw httpError("Bu belge talebi artık yanıtlanamaz.", 409, "DOCUMENT_REQUEST_NOT_OPEN");
+    }
+    if (decision === "accepted") {
+      const room = await candidateRoom(current.partner_id, current.candidate_room_id);
+      if (room.seafarer_user_id !== ctx.user.id) throw httpError("Aday ilişkisi doğrulanamadı.", 403, "CANDIDATE_RELATIONSHIP_REQUIRED");
+      await activeApplicationForRoom(room);
+    }
+    const updated = assertDb(await supabaseAdmin.from("maritime_candidate_document_grants")
+      .update({ status: decision, decided_at: new Date().toISOString(), ...(decision === "accepted" ? { expires_at: new Date(Date.now() + 30 * 86400000).toISOString() } : {}) }).eq("id", requestId)
+      .eq("seafarer_user_id", ctx.user.id).eq("status", current.status).select("id").maybeSingle(), "Belge izni kaydedilemedi.");
+    if (!updated) throw httpError("Belge izni başka bir oturumda değişti. Sayfayı yenileyin.", 409, "DOCUMENT_REQUEST_CHANGED");
+    await logAction(request, ctx, "maritime.candidate_document_permission_changed", "maritime_candidate_document_grant", requestId, { decision });
+    return { ok: true, status: decision };
+  });
+
+  app.get("/v1/maritime/partner-center/candidate-rooms/:roomId/documents", { config: { rateLimit: { max: 40, timeWindow: "5 minutes" } } }, async (request) => {
+    const roomId = uuid.parse(request.params.roomId);
+    const partnerId = uuid.parse(request.query?.partner_id);
+    const access = await requirePartner(request, "candidate_cv.read", partnerId);
+    await ensureHiringAuthority(access);
+    const room = await candidateRoom(partnerId, roomId);
+    await documentPermission(room);
+    const rows = assertDb(await supabaseAdmin.from("maritime_document_intakes")
+      .select("id,original_file_name,document_type,created_at")
+      .eq("seafarer_user_id", room.seafarer_user_id)
+      .in("status", ["user_confirmed", "verification_pending", "verified"])
+      .order("created_at", { ascending: false }).limit(100), "Aday belgeleri okunamadı.") || [];
+    await logAction(request, access.ctx, "maripartner.candidate_documents_listed", "maritime_private_candidate_room", room.id, { count: rows.length });
+    return { ok: true, documents: rows.map(({ id, original_file_name, document_type, created_at }) => ({ id, name: original_file_name, type: document_type, created_at })) };
+  });
+
+  app.get("/v1/maritime/partner-center/candidate-rooms/:roomId/documents/:documentId/access", { config: { rateLimit: { max: 40, timeWindow: "5 minutes" } } }, async (request) => {
+    const roomId = uuid.parse(request.params.roomId);
+    const documentId = uuid.parse(request.params.documentId);
+    const partnerId = uuid.parse(request.query?.partner_id);
+    const access = await requirePartner(request, "candidate_cv.read", partnerId);
+    await ensureHiringAuthority(access);
+    const room = await candidateRoom(partnerId, roomId);
+    await documentPermission(room);
+    const document = assertDb(await supabaseAdmin.from("maritime_document_intakes")
+      .select("id,original_file_name,storage_bucket,storage_path,status").eq("id", documentId)
+      .eq("seafarer_user_id", room.seafarer_user_id)
+      .in("status", ["user_confirmed", "verification_pending", "verified"]).maybeSingle(), "Belge okunamadı.");
+    if (!document) throw httpError("Belge bulunamadı.", 404, "MARITIME_DOCUMENT_NOT_FOUND");
+    const signed = await supabaseAdmin.storage.from(document.storage_bucket).createSignedUrl(document.storage_path, 300);
+    if (signed.error || !signed.data?.signedUrl) throw httpError("Belge bağlantısı oluşturulamadı.", 503, "MARITIME_DOCUMENT_SIGNING_FAILED");
+    await logAction(request, access.ctx, "maripartner.candidate_document_viewed", "maritime_document_intake", document.id, { partner_id: partnerId, candidate_room_id: room.id });
+    return { ok: true, url: signed.data.signedUrl, expires_in_seconds: 300 };
+  });
+
   app.get("/v1/maritime/partner-center/candidate-rooms/:roomId/cv", { config: { rateLimit: { max: 40, timeWindow: "5 minutes" } } }, async (request) => {
     const roomId = uuid.parse(request.params.roomId);
     const partnerId = uuid.parse(request.query?.partner_id);
@@ -834,12 +1024,14 @@ export function registerMaritimePartnerCenterRoutes(app) {
     const summary = reviewerCandidateFromProfilePayload(payload);
     const allowedDocumentIds = [...new Set((Array.isArray(payload.manual_cv?.seaData) ? payload.manual_cv.seaData : [])
       .map((row) => row.serviceDocumentId).filter((id) => uuid.safeParse(id).success))];
+    const grant = assertDb(await supabaseAdmin.from("maritime_candidate_document_grants")
+      .select("status,expires_at").eq("candidate_room_id", room.id).maybeSingle(), "Belge izni doğrulanamadı.");
     const certificates = (Array.isArray(payload.certificate_records) ? payload.certificate_records : []).slice(0, 60).map((row) => ({
       name: String(row.name || row.certificate_name || row.title || row.code || "Sertifika").slice(0, 160),
       code: String(row.code || "").slice(0, 40),
       expiry_date: /^\d{4}-\d{2}-\d{2}$/.test(String(row.expiry_date || "")) ? row.expiry_date : null
     }));
-    const documentRows = allowedDocumentIds.length ? assertDb(await supabaseAdmin.from("maritime_document_intakes")
+    const documentRows = allowedDocumentIds.length && canViewCandidateDocuments(application, grant) ? assertDb(await supabaseAdmin.from("maritime_document_intakes")
       .select("id,original_file_name,document_type,metadata,status")
       .eq("seafarer_user_id", room.seafarer_user_id)
       .in("id", allowedDocumentIds)
@@ -847,7 +1039,17 @@ export function registerMaritimePartnerCenterRoutes(app) {
       .eq("metadata->>source", "maritime_cv_sea_service")
       .neq("status", "pending_upload").limit(60), "Hizmet belgeleri okunamadı.") || [] : [];
     await logAction(request, access.ctx, "maripartner.candidate_cv_viewed", "maritime_private_candidate_room", room.id, { partner_id: partnerId, application_id: application.id });
-    return { ok: true, cv: { ...summary, certificates }, documents: documentRows.map((row) => ({ id: row.id, name: row.original_file_name })) };
+    const text = (value, limit = 160) => typeof value === "string" ? value.trim().slice(0, limit) : "";
+    const education = (Array.isArray(payload.education) ? payload.education : []).slice(0, 15).map((item) => ({
+      institution: text(item.institution), qualification: text(item.qualification), start_date: text(item.start_date, 10), end_date: text(item.end_date, 10)
+    }));
+    const languages = (Array.isArray(payload.languages) ? payload.languages : []).slice(0, 15).map((item) => ({
+      language: text(item.language, 80), level: text(item.level, 80)
+    }));
+    const skills = (Array.isArray(payload.skills) ? payload.skills : []).slice(0, 30).map((item) => text(item.name, 120)).filter(Boolean);
+    return { ok: true, cv: { ...summary, certificates, education, languages, skills,
+      professional_summary: text(payload.professional_summary, 1500), nationality: text(payload.nationality, 80) },
+      documents: documentRows.map((row) => ({ id: row.id, name: row.original_file_name })) };
   });
 
   app.post("/v1/maritime/partner-center/ui-translations", { config: { rateLimit: { max: 24, timeWindow: "1 minute" } } }, async (request) => {

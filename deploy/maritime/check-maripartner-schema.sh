@@ -179,6 +179,20 @@ begin
     raise exception 'MariPartner company logo bucket is missing or unsafe';
   end if;
 
+  if to_regclass('public.maritime_candidate_document_grants') is null then
+    raise exception 'Candidate document permission table is missing';
+  end if;
+
+  if not exists (
+    select 1 from pg_class c
+    where c.oid = 'public.maritime_candidate_document_grants'::regclass
+      and c.relrowsecurity
+  ) or has_table_privilege('authenticated', 'public.maritime_candidate_document_grants', 'SELECT')
+    or has_table_privilege('authenticated', 'public.maritime_candidate_document_grants', 'INSERT')
+    or has_table_privilege('authenticated', 'public.maritime_candidate_document_grants', 'UPDATE') then
+    raise exception 'Candidate document permissions must be server-only and RLS protected';
+  end if;
+
   if exists (
     select 1 from pg_policies
     where schemaname = 'storage'

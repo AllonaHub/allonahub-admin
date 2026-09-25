@@ -5,7 +5,7 @@
   const params = new URLSearchParams(location.search);
   const partnerId = params.get("partner_id");
   const partner = params.get("source") === "partner" && !!partnerId;
-  const state = { session: null, threads: [], rooms: [], active: null, messages: [], seen: new Set(), loaded: false, timer: null };
+  const state = { session: null, threads: [], rooms: [], documentRequests: [], active: null, messages: [], seen: new Set(), loaded: false, timer: null };
   const base = () => /^(localhost|127\.0\.0\.1)$/i.test(location.hostname) ? "http://localhost:3000" : String(App.config?.apiBaseUrl || "https://api.allonahub.com").replace(/\/$/, "");
   function status(text) { $("[data-firm-status]").textContent = text || ""; }
   async function api(path, options = {}) {
@@ -50,17 +50,47 @@
     }
     root.scrollTop = root.scrollHeight;
   }
+  function renderDocumentRequest() {
+    const root = $("[data-firm-document-request]"); root.replaceChildren();
+    const request = state.documentRequests.find((item) => item.candidate_room_id === state.active?.candidate_room_id);
+    if (!request || (partner && request.status !== "pending")) return;
+    const card = document.createElement("div"); card.className = "firm-chat-permission";
+    const label = document.createElement("p");
+    label.textContent = partner ? "Adaydan belge görüntüleme izni bekleniyor." : request.status === "accepted" ? "Belge görüntüleme izni açık. İstediğiniz zaman geri çekebilirsiniz." : request.status === "declined" || request.status === "revoked" ? "Bu belge paylaşım izni kapalı." : "Bu şirket, başvurunuzdaki belgeleri işe alım değerlendirmesi için görüntülemek istiyor. İzni daha sonra geri çekebilirsiniz.";
+    card.append(label);
+    if (!partner) {
+      const actions = document.createElement("div"); actions.className = "firm-chat-permission-actions";
+      const decisions = request.status === "pending" ? [["accepted", "İzin Ver"], ["declined", "Reddet"]] : request.status === "accepted" ? [["revoked", "İzni Geri Çek"]] : [["accepted", "İzin Ver"]];
+      for (const [decision, text] of decisions) {
+        const button = document.createElement("button"); button.type = "button"; button.textContent = text;
+        button.addEventListener("click", async () => {
+          button.disabled = true;
+          try {
+            const direct = request.application_consent || request.status === "declined" || request.status === "revoked";
+            const endpoint = direct
+              ? `/v1/maritime/candidate/document-permissions/${encodeURIComponent(request.candidate_room_id)}/${decision === "revoked" ? "revoke" : "allow"}`
+              : `/v1/maritime/candidate/document-requests/${encodeURIComponent(request.id)}/respond`;
+            await api(endpoint, { method: "POST", body: JSON.stringify(direct ? {} : { decision }) });
+            await refresh(); status(decision === "accepted" ? "Belge görüntüleme izni verildi." : "Belge görüntüleme izni kapatıldı.");
+          } catch (error) { status(error.message); button.disabled = false; }
+        });
+        actions.append(button);
+      }
+      card.append(actions);
+    }
+    root.append(card);
+  }
   async function openRoom(room) {
     try {
       const result = await api(path, { method: "POST", body: JSON.stringify({ partner_id: partnerId, candidate_room_id: room.id }) });
-      await openThread({ id: result.thread_id, candidate_user_id: room.candidate_user_id, candidate_name: room.candidate_name });
+      await openThread({ id: result.thread_id, candidate_room_id: room.id, candidate_user_id: room.candidate_user_id, candidate_name: room.candidate_name });
     } catch (error) { status(error.message); }
   }
   async function openThread(thread) {
     state.active = thread; document.body.classList.add("firm-chat-open");
     $("[data-firm-name]").textContent = name(thread);
     $("[data-firm-subtitle]").textContent = partner ? "Onaylı aday görüşmesi" : "Doğrulanmış şirket görüşmesi";
-    renderList();
+    renderList(); renderDocumentRequest();
     try {
       const result = await api(`${path}/${encodeURIComponent(thread.id)}/messages`);
       state.messages = result.messages.reverse(); renderMessages();
@@ -79,15 +109,19 @@
       state.seen.add(key);
     }
     state.threads = result.threads;
+    if (!partner) {
+      const permissions = await api("/v1/maritime/candidate/document-requests");
+      state.documentRequests = permissions.requests || [];
+    }
     state.loaded = true;
     if (partner) {
       const eligible = await api(`/v1/maritime/connect-chat/eligible-rooms?partner_id=${encodeURIComponent(partnerId)}`);
       state.rooms = eligible.rooms;
     }
-    renderList();
+    renderList(); renderDocumentRequest();
     if (state.active) {
       const latest = state.threads.find((item) => item.id === state.active.id);
-      if (latest && state.messages.at(-1)?.created_at !== latest.last_message_at) await openThread(latest);
+      if (latest && state.messages.length && state.messages.at(-1)?.created_at !== latest.last_message_at) await openThread(latest);
     }
   }
   async function init() {
@@ -100,7 +134,15 @@
     const notify = $("[data-firm-notify]");
     if (!("Notification" in window) || Notification.permission === "denied") notify.hidden = true;
     else notify.addEventListener("click", async () => { const permission = await Notification.requestPermission(); notify.hidden = permission !== "default"; status(permission === "granted" ? "Tarayıcı bildirimleri açıldı." : "Tarayıcı bildirimi izni verilmedi."); });
-    try { await refresh(); } catch (error) { status(error.message); }
+    try {
+      await refresh();
+      if (partner && params.get("room_id")) {
+        const room = state.rooms.find((item) => item.id === params.get("room_id"));
+        const thread = state.threads.find((item) => item.candidate_room_id === params.get("room_id"));
+        if (thread) await openThread(thread);
+        else if (room) await openRoom(room);
+      }
+    } catch (error) { status(error.message); }
     $("[data-firm-form]").addEventListener("submit", async (event) => {
       event.preventDefault(); if (!state.active) return;
       const input = $("[data-firm-input]"); const body = input.value.trim(); if (!body) return;

@@ -46,6 +46,7 @@ MIGRATIONS=(
   "$ROOT_DIR/supabase/migrations/20260921010000_repair_auth_device_security_and_failure_reporting.sql"
   "$ROOT_DIR/supabase/migrations/20260921020000_allow_confirmed_manual_global_cv.sql"
   "$ROOT_DIR/supabase/migrations/20260925160000_maritime_submitted_application_rooms.sql"
+  "$ROOT_DIR/supabase/migrations/20260925190000_maritime_candidate_document_grants.sql"
   "$ROOT_DIR/supabase/migrations/20260925193000_maritime_private_chat_read_cursors.sql"
   "$ROOT_DIR/supabase/migrations/20260925194500_marsoh_rejected_audit_idx.sql"
   "$ROOT_DIR/supabase/migrations/20260925210000_marsoh_violation_evidence.sql"
