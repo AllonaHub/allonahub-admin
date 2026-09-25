@@ -523,7 +523,7 @@
       : `<div class="maritime-job-meta"><span><b>${escapeHtml(text("department"))}</b>${escapeHtml(departmentLabel(job.department))}</span><span><b>${escapeHtml(text("contract"))}</b>${escapeHtml(job.contract)}</span><span><b>${escapeHtml(text("route"))}</b>${escapeHtml(job.location)}</span></div>`;
     const matched = session && candidateMatches.find((match) => match.job_id === job.smartJobId && match.rank_compatible === true);
     return `<article class="maritime-job-card" data-job-id="${escapeHtml(job.id)}" data-department="${escapeHtml(job.department)}">
-      <div class="maritime-job-head"><div class="maritime-job-title"><span class="maritime-reference">${escapeHtml(job.reference)}</span><h3>${escapeHtml(job.title)}</h3></div><span class="maritime-verified-badge"><i class="fa-solid fa-circle-check" aria-hidden="true"></i>${escapeHtml(text("verifiedCompany"))}</span>${matched ? `<span class="maritime-match-badge">${escapeHtml(text(matched.eligible ? "matchedJobs" : "rankCompatible"))}</span>` : ""}</div>
+      <div class="maritime-job-head"><div class="maritime-job-title"><span class="maritime-reference">${escapeHtml(job.reference)}</span><h3>${escapeHtml(job.title)}</h3></div><div class="maritime-job-badges">${matched ? `<span class="maritime-match-badge">${escapeHtml(text("rankCompatible"))}</span>` : ""}<span class="maritime-verified-badge"><i class="fa-solid fa-circle-check" aria-hidden="true"></i>${escapeHtml(text("verifiedCompany"))}</span></div></div>
       ${highlights}
       <p class="maritime-job-description">${escapeHtml(job.summary)}</p>
       ${metadata}

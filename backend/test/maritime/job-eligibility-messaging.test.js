@@ -7,6 +7,7 @@ const portalUrl = new URL("../../../js/allona-maritime-portal.js", import.meta.u
 const routeUrl = new URL("../../src/routes/maritime-smart-account.js", import.meta.url);
 const submissionModeMigrationUrl = new URL("../../../supabase/migrations/20260919182500_add_maritime_application_submission_mode.sql", import.meta.url);
 const jobsPageUrl = new URL("../../../pages/ecosystem/maritime-jobs.html", import.meta.url);
+const jobsStyleUrl = new URL("../../../css/allona-maritime-portal.css", import.meta.url);
 const autoApplyPageUrl = new URL("../../../pages/ecosystem/maritime-auto-apply.html", import.meta.url);
 
 async function portalGate() {
@@ -146,6 +147,16 @@ test("manual submissions check saved rank and explicit document consent on the s
   assert.match(route, /documents_share_confirmed: true/);
   assert.match(route, /status: "submitted", submitted_at: now/);
   assert.match(route, /submission_mode: "manual"/);
+});
+
+test("rank-compatible job badge precedes the verified-company badge and stays legible in every theme", async () => {
+  const [source, style] = await Promise.all([readFile(portalUrl, "utf8"), readFile(jobsStyleUrl, "utf8")]);
+  const card = source.slice(source.indexOf("function jobCard(job)"), source.indexOf("function jobCard(job)") + 4500);
+  assert.ok(card.indexOf('class="maritime-match-badge"') < card.indexOf('class="maritime-verified-badge"'));
+  assert.match(card, /text\("rankCompatible"\)/);
+  assert.match(style, /\.maritime-job-head \.maritime-match-badge/);
+  assert.match(style, /data-theme="white"\] \.maritime-job-head \.maritime-match-badge/);
+  assert.match(style, /@media \(max-width: 700px\) \{\s*\.maritime-job-head \{ flex-wrap: wrap; \}/);
 });
 
 test("database firewall permits consented manual rank matches without relaxing automatic matching", async () => {
