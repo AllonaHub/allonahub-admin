@@ -4,7 +4,7 @@
   const I18n = window.MariPartnerI18n;
   const t = (source) => I18n?.t(source) || source;
   const applyI18n = (root) => { I18n?.apply(root || document.body); };
-  const state = { session: null, data: null, partnerId: "", activePanel: "", lastFocus: null, pendingLogoPath: null, finance: null, selectedRoomId: "", routeSync: false, candidateFilters: {}, privateCandidates: [], privateImport: null };
+  const state = { session: null, data: null, partnerId: "", activePanel: "", panelOrigin: "", lastFocus: null, pendingLogoPath: null, finance: null, selectedRoomId: "", routeSync: false, candidateFilters: {}, privateCandidates: [], privateImport: null };
   const titles = { jobs: "Şirket İlanları", "job-create": "Yeni İlan Oluştur", "job-bulk-create": "Toplu İlan Oluştur", vessels: "Gemilerim", "vessel-create": "Gemi Ekle", joining: "Yerleştirme", candidates: "Yetkili Adaylar", "private-pool": "Aday Havuzu", "candidate-detail": "Aday Detayı", applications: "Başvurular ve İşe Alım Dosyaları", notifications: "Şirket Bildirimleri", finance: "Finans ve Faturalandırma", company: "Şirket Hesabı", verification: "Doğrulama Şartları", refresh: "Havuzu Güncelle", evidence: "Kanıt Kontrolü", sla: "Süreç Süreleri", handover: "Dosya Devri", review: "Güvenli İnceleme", references: "Doğrulanmış Referans", governance: "Karar ve Değer Merkezi", "ready-pool": "Hazır Aday Havuzu", matches: "Akıllı Eşleşmeler", urgent: "Acil Personel ve Replacement", pending: "Bekleyen İşlemler", pipeline: "Hiring Pipeline", interviews: "Görüşmeler", offers: "Teklifler ve Kontratlar", "active-crew": "Aktif Mürettebat", relief: "Relief ve Rehire" };
   const templates = { jobs: "mpJobsTemplate", "job-create": "mpJobCreateTemplate", "job-bulk-create": "mpJobBulkTemplate", vessels: "mpVesselsTemplate", "vessel-create": "mpVesselCreateTemplate", joining: "mpJoiningTemplate", candidates: "mpCandidatesTemplate", "private-pool": "mpPrivatePoolTemplate", "candidate-detail": "mpPersonnelDataTemplate", applications: "mpApplicationsTemplate", notifications: "mpNotificationsTemplate", finance: "mpFinanceTemplate", company: "mpCompanyTemplate", verification: "mpVerificationTemplate", refresh: "mpRefreshTemplate", evidence: "mpEvidenceTemplate", sla: "mpSlaTemplate", handover: "mpHandoverTemplate", review: "mpReviewTemplate", references: "mpReferencesTemplate", governance: "mpGovernanceTemplate", "ready-pool": "mpReadyPoolTemplate", matches: "mpPersonnelDataTemplate", pending: "mpPersonnelDataTemplate", pipeline: "mpPersonnelDataTemplate", interviews: "mpPersonnelDataTemplate", offers: "mpPersonnelDataTemplate", "active-crew": "mpPersonnelDataTemplate", relief: "mpPersonnelDataTemplate", urgent: "mpUrgentTemplate" };
   const standalonePanels = new Set(["jobs", "job-create", "job-bulk-create", "vessels", "vessel-create", "joining", "candidates", "private-pool", "applications", "notifications", "finance", "company", "verification"]);
@@ -478,8 +478,18 @@
       target.innerHTML = `<h3>Açıklanabilir eşleşmeler</h3>${rows.length ? rows.map(({ room, match }) => personnelCandidateCard(room, match)).join("") : personnelEmpty("Güncel kuralları geçen yetkili eşleşme bulunmuyor.")}`;
       return;
     }
+    if (panel === "pipeline") {
+      const applications = state.data.applications || [];
+      target.innerHTML = `<h3>İncelemedeki adaylar (${applications.length})</h3>${applications.length ? applications.map((application) => {
+        const room = (state.data.candidate_rooms || []).find((item) => item.application_id === application.id);
+        if (!room) return historyCard("Başvuru", "Aday erişimi için paylaşım onayı bekleniyor.", dateTime(application.created_at));
+        const candidate = room.candidate || {};
+        const job = (state.data.jobs || []).find((item) => item.id === application.job_id);
+        return `<article class="mp-candidate-card mp-applicant-card"><div><strong>${escape(candidate.full_name || candidate.public_id || "Aday")}</strong><span>${escape(candidate.rank || "Rütbe belirtilmedi")}</span><div class="mp-candidate-card__facts">${[job?.job_title, ...candidateFacts(room)].filter(Boolean).map((fact) => `<span>${escape(fact)}</span>`).join("")}</div></div><div class="mp-candidate-card__actions"><button type="button" data-mp-candidate-cv="${escape(room.id)}">CV'sini Gör</button><button type="button" data-mp-candidate-documents="${escape(room.id)}">Belgeleri Gör</button></div><div class="mp-applicant-card__result" data-mp-cv-preview role="status" aria-live="polite"></div><div class="mp-applicant-card__result" data-mp-document-list role="status" aria-live="polite"></div></article>`;
+      }).join("") : personnelEmpty("İncelemede aday bulunmuyor.")}`;
+      return;
+    }
     const collectionMap = {
-      pipeline: [state.data.applications || [], "Aktif işe alım dosyası bulunmuyor."],
       interviews: [state.data.interviews || [], "Planlanmış görüşme bulunmuyor."],
       offers: [state.data.offers || [], "Teklif veya kontrat kaydı bulunmuyor."],
       "active-crew": [state.data.work_relationships || [], "Aktif mürettebat kaydı bulunmuyor."],
@@ -798,6 +808,7 @@
   function openPanel(panel, trigger) {
     const template = document.getElementById(templates[panel]);
     if (!template) return;
+    if (!state.routeSync && state.activePanel !== panel) state.panelOrigin = state.activePanel || "operations";
     state.activePanel = panel;
     setActiveNavigation(panel);
     const wrap = $("[data-mp-drawer-wrap]");
@@ -1604,7 +1615,14 @@
       $$('[data-mp-candidate-pane]', detail).forEach((pane) => { pane.hidden = pane.dataset.mpCandidatePane !== candidateTab.dataset.mpCandidateTab; });
       return;
     }
-    if (event.target.closest("[data-mp-back]")) openCenter();
+    if (event.target.closest("[data-mp-back]")) {
+      const origin = state.panelOrigin;
+      state.panelOrigin = "";
+      if (origin === "center") openCenter();
+      else if (origin && templates[origin]) openPanel(origin);
+      else closePanel();
+      return;
+    }
     if (event.target.closest("[data-mp-close]")) closePanel();
     const inspectCandidate = event.target.closest("[data-mp-candidate-inspect]");
     if (inspectCandidate) {
@@ -1630,7 +1648,7 @@
     }
     const candidateDocuments = event.target.closest("[data-mp-candidate-documents]");
     if (candidateDocuments) {
-      const list = candidateDocuments.closest("[data-mp-candidate-pane]")?.querySelector("[data-mp-document-list]");
+      const list = candidateDocuments.closest(".mp-applicant-card, [data-mp-candidate-pane]")?.querySelector("[data-mp-document-list]");
       if (!list) return;
       candidateDocuments.disabled = true;
       list.textContent = "Belgeler yükleniyor…";
@@ -1655,7 +1673,7 @@
     }
     const inspectCv = event.target.closest("[data-mp-candidate-cv]");
     if (inspectCv) {
-      const preview = inspectCv.closest(".mp-candidate-detail")?.querySelector("[data-mp-cv-preview]");
+      const preview = inspectCv.closest(".mp-applicant-card, .mp-candidate-detail")?.querySelector("[data-mp-cv-preview]");
       if (!preview) return;
       inspectCv.disabled = true;
       preview.textContent = "CV yükleniyor…";

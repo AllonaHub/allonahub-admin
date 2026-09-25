@@ -454,6 +454,8 @@ body.mp-body[data-theme] .mp-main article { color: var(--mp-ink) !important; }
 .mp-candidate-card__facts span { padding: 4px 7px; border: 1px solid var(--mp-line); color: var(--mp-muted); background: #f7fbfc; font-size: 11px; }
 .mp-candidate-card__actions { display: flex; gap: 7px; }
 .mp-candidate-card__actions button { min-height: 40px; padding: 7px 10px; }
+.mp-applicant-card__result { grid-column: 1 / -1; min-width: 0; overflow-wrap: anywhere; }
+.mp-applicant-card__result:empty { display: none; }
 .mp-more { position: relative; }
 .mp-more summary { width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid var(--mp-line); border-radius: 5px; color: var(--mp-navy); background: #fff; font-size: 21px; font-weight: 900; cursor: pointer; list-style: none; }
 .mp-more summary::-webkit-details-marker { display: none; }
