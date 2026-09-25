@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import WebSocket from "ws";
 import { config } from "../config.js";
 import { sendSecurityAlertFromAuditEvent } from "./security-alerts.js";
+import { maritimeAdminNotificationForAudit, queueMaritimeAdminNotification } from "./maritime-admin-notifications.js";
 
 export const supabaseAdmin = createClient(config.supabase.url, config.supabase.serviceRoleKey, {
   auth: {
@@ -287,6 +288,15 @@ export async function auditEvent({
     source,
     purpose
   };
+  const notifyAdmin = async () => {
+    const event = maritimeAdminNotificationForAudit({ action, resourceType, resourceId, actorId, metadata: cleanMetadata, requestId });
+    if (!event) return;
+    try {
+      await queueMaritimeAdminNotification({ supabase: supabaseAdmin, event });
+    } catch (error) {
+      request?.log?.warn({ action, code: error?.code || "ADMIN_EMAIL_QUEUE_FAILED" }, "Maritime admin email could not be queued");
+    }
+  };
 
   const rpcPayload = {
     p_actor_id: actorId,
@@ -310,6 +320,7 @@ export async function auditEvent({
   const { error: rpcError } = await supabaseAdmin.rpc("append_security_audit_event", rpcPayload);
   if (!rpcError) {
     sendSecurityAlertFromAuditEvent(alertEvent, request);
+    await notifyAdmin();
     return;
   }
 
@@ -341,4 +352,5 @@ export async function auditEvent({
     evidence_tags: cleanEvidenceTags
   }, request);
   sendSecurityAlertFromAuditEvent(alertEvent, request);
+  await notifyAdmin();
 }

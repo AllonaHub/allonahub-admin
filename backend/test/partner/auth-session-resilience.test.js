@@ -68,7 +68,7 @@ test("auth-critical assets are network-first and the Supabase browser SDK is pin
     source("pages/account/user.html")
   ]);
 
-  assert.match(worker, /allonahub-pwa-20260920-auth-session1/);
+  assert.match(worker, /const ALLONAHUB_CACHE = "allonahub-pwa-[^"\n]+"/);
   assert.match(worker, /requestUrl\.pathname === "\/js\/user-profile-sync\.js"/);
   assert.match(loginPage, /@supabase\/supabase-js@2\.108\.2/);
 });

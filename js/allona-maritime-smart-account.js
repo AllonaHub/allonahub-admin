@@ -14,6 +14,10 @@
     prepareButton: ["Global CV'mi Oluştur", "Global CV-mi yarat", "Global CV жасау", "Global CV-ni yaratish", "Global CV түзүү", "Create My Global CV", "Meinen Global CV erstellen", "Создать Global CV", "إنشاء Global CV"],
     refreshButton: ["Maritime CV'den Güncelle", "Maritime CV-dən yenilə", "Maritime CV-ден жаңарту", "Maritime CV-dan yangilash", "Maritime CV-ден жаңыртуу", "Update from Maritime CV", "Aus Maritime CV aktualisieren", "Обновить из Maritime CV", "تحديث من Maritime CV"],
     availableNow: ["Şimdi İşe Hazırım", "İndi işə hazıram", "Қазір жұмысқа дайынмын", "Hozir ishga tayyorman", "Азыр ишке даярмын", "I Am Available Now", "Ich bin jetzt verfügbar", "Я готов к работе сейчас", "أنا متاح للعمل الآن"],
+    onboardNow: ["Gemideyim", "Gəmidəyəm", "Кемедемін", "Kemadaman", "Кемедемин", "I Am On Board", "Ich bin an Bord", "Я на борту", "أنا على متن السفينة"],
+    unavailableNow: ["Şu an müsait değilim", "Hazırda uyğun deyiləm", "Қазір қолжетімсізбін", "Hozir mavjud emasman", "Азыр бош эмесмин", "I Am Not Available", "Ich bin derzeit nicht verfügbar", "Сейчас я недоступен", "لست متاحًا الآن"],
+    availabilityPaused: ["İlan e-postaları durduruldu.", "Elan e-poçtları dayandırıldı.", "Вакансия хаттары тоқтатылды.", "Vakansiya xatlari to‘xtatildi.", "Жумуш каттары токтотулду.", "Job emails are paused.", "Job-E-Mails wurden pausiert.", "Письма о вакансиях приостановлены.", "تم إيقاف رسائل الوظائف مؤقتًا."],
+    jobEmailHint: ["Müsaitim seçiliyken rütbenize uygun yeni ilanlar e-postanıza gelir. Gemideyim veya Müsait değilim seçimi gönderimleri durdurur.", "Uyğunam seçildikdə rütbənizə uyğun yeni elanlar e-poçtunuza gəlir. Gəmidəyəm və ya uyğun deyiləm seçimi göndərişləri dayandırır.", "Қолжетімді кезде дәрежеңізге сай жаңа вакансиялар келеді. Кемеде немесе қолжетімсіз күйі хаттарды тоқтатады.", "Mavjud bo‘lsangiz, darajangizga mos yangi e'lonlar keladi. Kemada yoki mavjud emas holati xatlarni to‘xtatadi.", "Бош болсоңуз, даражаңызга ылайык жаңы жарыялар келет. Кемеде же бош эмес абалы каттарды токтотот.", "New jobs matching your rank are emailed while you are available. On board or unavailable pauses them.", "Neue Stellen passend zu Ihrem Rang kommen per E-Mail, wenn Sie verfügbar sind. An Bord oder nicht verfügbar pausiert sie.", "Новые вакансии по вашему званию приходят по почте, когда вы доступны. Статусы на борту и недоступен отключают письма.", "تصلك الوظائف الجديدة المناسبة لرتبتك عند اختيار متاح. يوقف خيار على متن السفينة أو غير متاح الرسائل."],
     availableNowDone: ["İşe hazır durumunuz kaydedildi ve eşleşmeler yenilendi.", "İşə hazır vəziyyətiniz saxlanıldı və uyğunluqlar yeniləndi.", "Жұмысқа дайын күйіңіз сақталып, сәйкестіктер жаңартылды.", "Ishga tayyor holatingiz saqlandi va mosliklar yangilandi.", "Ишке даяр абалыңыз сакталды жана дал келүүлөр жаңыртылды.", "Your available-now status was saved and matches were refreshed.", "Ihre sofortige Verfügbarkeit wurde gespeichert und die Abgleiche aktualisiert.", "Готовность к работе сохранена, совпадения обновлены.", "تم حفظ جاهزيتك للعمل الآن وتحديث المطابقات."],
     privacy: ["Yalnız sizin onayladığınız bilgiler kullanılır. Belgeler ve iletişim bilgileriniz firmalara açılmaz.", "Yalnız təsdiqlədiyiniz məlumatlar istifadə olunur. Sənədlər və əlaqə məlumatlarınız şirkətlərə açılmır.", "Тек өзіңіз растаған деректер пайдаланылады. Құжаттар мен байланыс деректері компанияларға ашылмайды.", "Faqat siz tasdiqlagan maʼlumotlar ishlatiladi. Hujjat va aloqa maʼlumotlari kompaniyalarga ochilmaydi.", "Сиз ырастаган маалыматтар гана колдонулат. Документтер жана байланыш маалыматы компанияларга ачылбайт.", "Only information you confirmed is used. Your documents and contact details are not disclosed to companies.", "Es werden nur bestätigte Angaben verwendet. Dokumente und Kontaktdaten werden Unternehmen nicht offengelegt.", "Используются только подтвержденные вами данные. Документы и контакты компаниям не раскрываются.", "لا تُستخدم إلا المعلومات التي أكّدتها، ولا تُكشف مستنداتك أو بيانات اتصالك للشركات."],
     confirmationRule: ["Akıllı profil ve CV siz onaylamadan kesinleşmez. Hiçbir başvuru ayrıca son onayınız olmadan gönderilmez.", "Ağıllı profil və CV siz təsdiqləmədən yekunlaşmır. Heç bir müraciət ayrıca son təsdiqiniz olmadan göndərilmir.", "Ақылды профиль мен CV сіз растамайынша бекітілмейді. Еш өтінім жеке соңғы растаусыз жіберілмейді.", "Aqlli profil va CV siz tasdiqlamaguncha yakunlanmaydi. Hech bir ariza alohida yakuniy tasdiqsiz yuborilmaydi.", "Акылдуу профиль жана CV сиз ырастамайынча бекитилбейт. Эч бир арыз өзүнчө акыркы ырастоосуз жөнөтүлбөйт.", "The smart profile and CV are not finalized without your approval. No application is submitted without a separate final confirmation.", "Smart-Profil und CV werden erst nach Ihrer Freigabe final. Keine Bewerbung wird ohne separate Endbestätigung versendet.", "Умный профиль и CV не утверждаются без вашего согласия. Ни одна заявка не отправляется без отдельного финального подтверждения.", "لا يُعتمد الملف الذكي أو السيرة دون موافقتك، ولا يُرسل أي طلب دون تأكيد نهائي منفصل."],
@@ -741,9 +745,12 @@
         <div class="maritime-smart-status"><span class="${ready ? "is-ready" : "is-warning"}"><i class="fa-solid ${ready ? "fa-circle-check" : "fa-circle-exclamation"}" aria-hidden="true"></i>${escapeHtml(text(ready ? "ready" : "needsAttention"))}</span><small>${escapeHtml(text(confirmed ? "profileConfirmed" : "profileDraft"))}</small></div>
         <div class="maritime-smart-command-actions">
           ${confirmed ? "" : `<button class="maritime-button maritime-button--primary" type="button" data-confirm-smart><i class="fa-solid fa-check-double" aria-hidden="true"></i>${escapeHtml(text("confirmProfile"))}</button>`}
-          ${profile.current_work_status === "available_now" ? "" : `<button class="maritime-button maritime-button--availability" type="button" data-available-now><i class="fa-solid fa-person-circle-check" aria-hidden="true"></i>${escapeHtml(text("availableNow"))}</button>`}
+          ${profile.current_work_status === "available_now" && profile.job_email_opted_in ? "" : `<button class="maritime-button maritime-button--availability" type="button" data-available-now><i class="fa-solid fa-person-circle-check" aria-hidden="true"></i>${escapeHtml(text("availableNow"))}</button>`}
+          ${profile.current_work_status === "onboard" ? "" : `<button class="maritime-button" type="button" data-availability-status="onboard"><i class="fa-solid fa-ship" aria-hidden="true"></i>${escapeHtml(text("onboardNow"))}</button>`}
+          ${profile.current_work_status === "not_available" ? "" : `<button class="maritime-button" type="button" data-availability-status="not_available"><i class="fa-solid fa-pause" aria-hidden="true"></i>${escapeHtml(text("unavailableNow"))}</button>`}
           <button class="maritime-button" type="button" data-prepare-smart><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i>${escapeHtml(text("refreshButton"))}</button>
         </div>
+        <p class="maritime-smart-availability-hint">${escapeHtml(text("jobEmailHint"))}</p>
       </div>
       <aside class="maritime-smart-score" style="--smart-score:${score * 3.6}deg"><div><strong>${score}%</strong><span>${escapeHtml(text("readiness"))}</span></div></aside>
     </section>
@@ -813,7 +820,7 @@
 
   function setBusy(busy) {
     state.busy = busy;
-    document.querySelectorAll("[data-prepare-smart], [data-confirm-smart], [data-available-now], [data-prepare-drafts], [data-prepare-all], [data-submit-application], [data-print-cv]").forEach(function (button) {
+    document.querySelectorAll("[data-prepare-smart], [data-confirm-smart], [data-available-now], [data-availability-status], [data-prepare-drafts], [data-prepare-all], [data-submit-application], [data-print-cv]").forEach(function (button) {
       if (busy) button.disabled = true;
       else if (button.hasAttribute("data-prepare-drafts")) button.disabled = state.payload?.run?.status !== "user_confirmed" || !state.selected.size;
       else button.disabled = false;
@@ -874,12 +881,28 @@
     setBusy(true);
     try {
       await api("/v1/maritime/smart-account/availability", { method: "PATCH", body: JSON.stringify({ confirmation: true, work_status: "available_now", available_from: null }) });
-      state.payload = await api("/v1/maritime/smart-account/prepare", { method: "POST", body: JSON.stringify({}) });
+      await api("/v1/maritime/smart-account/prepare", { method: "POST", body: JSON.stringify({}) });
+      state.payload = await api("/v1/maritime/smart-account");
       state.selected.clear();
       render();
       setNotice(text("availableNowDone"), "success");
     } catch (error) {
       setNotice(text("requestError"), "error");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function setAvailabilityStatus(status) {
+    if (state.busy || !["onboard", "not_available"].includes(status)) return;
+    setBusy(true);
+    try {
+      await api("/v1/maritime/smart-account/availability", { method: "PATCH", body: JSON.stringify({ confirmation: true, work_status: status, available_from: null }) });
+      state.payload = await api("/v1/maritime/smart-account");
+      render();
+      setNotice(text("availabilityPaused"), "success");
+    } catch (error) {
+      setNotice(actionErrorText(error), "error");
     } finally {
       setBusy(false);
     }
@@ -1095,6 +1118,8 @@
       if (event.target.closest("[data-prepare-smart]")) return prepare();
       if (event.target.closest("[data-confirm-smart]")) return confirmSmart();
       if (event.target.closest("[data-available-now]")) return setAvailableNow();
+      const availabilityButton = event.target.closest("[data-availability-status]");
+      if (availabilityButton) return setAvailabilityStatus(availabilityButton.dataset.availabilityStatus);
       if (event.target.closest("[data-prepare-drafts]")) return prepareDrafts();
       if (event.target.closest("[data-prepare-all]")) return prepareAllDrafts();
       if (event.target.closest("[data-open-cv]")) return openCv();

@@ -129,6 +129,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .mp-close, .mp-back { width: 48px; height: 48px; flex: 0 0 48px; border: 1px solid rgba(255,255,255,.25); border-radius: 50%; color: #fff; background: rgba(255,255,255,.06); font-size: 28px; cursor: pointer; }
 .mp-back { font-size: 22px; }
 .mp-drawer__body { flex: 1; overflow: auto; padding: 20px; overscroll-behavior: contain; }
+.mp-joining-row { display: grid; gap: 6px; padding: 12px 0; border-bottom: 1px solid var(--mp-line); }
+.mp-joining-row small, .mp-joining-row span { overflow-wrap: anywhere; }
+.mp-joining-row button { justify-self: start; min-height: 44px; }
 @keyframes mp-drawer-in { from { transform: translateX(24px); } }
 
 .mp-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-bottom: 22px; padding: 18px; border: 1px solid var(--mp-line); background: #fff; }
@@ -345,6 +348,43 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .mp-action-icon { margin-bottom: 4px; }
   .mp-center-tabs button { min-width: 0; padding-inline: 5px; font-size: 13px; }
   .mp-task-list > button, .mp-task-list > div { align-items: flex-start; flex-direction: column; }
+}
+
+/* Joining is a focused operation surface within the shared partner drawer. */
+body.mp-body[data-theme] .mp-drawer.mp-drawer--joining > header {
+  color: #09364d !important;
+  background: #e7f8fc !important;
+  border-bottom: 2px solid #34cce4;
+  box-shadow: inset 0 -5px 16px rgba(26, 186, 222, .12);
+}
+body.mp-body[data-theme] .mp-drawer.mp-drawer--joining > header :where(h2, p) { color: #09364d !important; }
+.mp-drawer--joining .mp-close, .mp-drawer--joining .mp-back {
+  color: #07506a; background: #fff; border-color: #56c5dc;
+  box-shadow: 0 2px 0 #80d6e9, 0 5px 12px rgba(6, 114, 154, .12);
+}
+.mp-drawer--joining .mp-drawer__body { min-width: 0; }
+.mp-joining-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; min-width: 0; margin: 16px 0 24px; }
+.mp-joining-form label { display: grid; align-content: start; gap: 7px; min-width: 0; color: var(--mp-ink); font-size: 13px; font-weight: 750; }
+.mp-joining-form label.mp-full { grid-column: 1 / -1; }
+.mp-joining-form label > span { line-height: 1.35; overflow-wrap: anywhere; }
+.mp-joining-form :where(input, select, textarea) { width: 100%; min-width: 0; max-width: 100%; min-height: 46px; padding: 10px 12px; border: 1px solid #a7d2df; border-radius: 5px; color: var(--mp-ink); background: #fff; box-shadow: inset 0 1px 3px rgba(0, 47, 68, .05); }
+.mp-joining-form textarea { min-height: 86px; resize: vertical; }
+.mp-joining-form :where(input, select, textarea):focus-visible { border-color: #04a9d6; }
+body.mp-body[data-theme] .mp-joining-save, .mp-joining-row button {
+  min-height: 48px; padding: 11px 18px; border: 1px solid #079bc6; border-radius: 5px;
+  color: #06374e; background: linear-gradient(180deg, #d8faff, #80e5f3);
+  box-shadow: 0 2px 0 #078bad, 0 0 0 1px rgba(26, 214, 239, .18), 0 5px 13px rgba(0, 130, 167, .14);
+  font-weight: 850; line-height: 1.3; cursor: pointer;
+}
+.mp-joining-save { grid-column: 1 / -1; justify-self: start; max-width: 100%; white-space: normal; }
+body.mp-body[data-theme] .mp-joining-save:hover, .mp-joining-row button:hover { box-shadow: 0 2px 0 #078bad, 0 0 0 2px rgba(26, 214, 239, .32), 0 7px 16px rgba(0, 130, 167, .19); }
+.mp-joining-row { min-width: 0; }
+.mp-joining-row button { max-width: 100%; white-space: normal; }
+@media (max-width: 600px) {
+  .mp-joining-form { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .mp-joining-form label.mp-full, .mp-joining-save { grid-column: 1; }
+  body.mp-body[data-theme] .mp-drawer.mp-drawer--joining > header { padding: 12px 14px; gap: 10px; }
+  .mp-drawer--joining .mp-drawer__body { padding: 14px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

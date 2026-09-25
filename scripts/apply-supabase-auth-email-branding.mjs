@@ -106,9 +106,20 @@ const payload = compact({
   mailer_templates_confirmation_content: readTemplate("confirmation.html"),
   mailer_subjects_recovery: `${senderName} şifre yenileme bağlantın`,
   mailer_templates_recovery_content: readTemplate("recovery.html"),
+  mailer_subjects_invite: `${senderName} davetiniz`,
+  mailer_templates_invite_content: readTemplate("invite.html"),
+  mailer_subjects_magic_link: `${senderName} giriş bağlantınız`,
+  mailer_templates_magic_link_content: readTemplate("magic-link.html"),
+  mailer_subjects_email_change: `${senderName} e-posta değişikliğini doğrulayın`,
+  mailer_templates_email_change_content: readTemplate("email-change.html"),
+  mailer_subjects_reauthentication: `${senderName} doğrulama kodunuz: {{ .Token }}`,
+  mailer_templates_reauthentication_content: readTemplate("reauthentication.html"),
   mailer_notifications_password_changed_enabled: true,
   mailer_subjects_password_changed_notification: `${senderName} şifren güncellendi`,
-  mailer_templates_password_changed_notification_content: readTemplate("password-changed.html")
+  mailer_templates_password_changed_notification_content: readTemplate("password-changed.html"),
+  mailer_notifications_email_changed_enabled: true,
+  mailer_subjects_email_changed_notification: `${senderName} e-posta adresiniz değişti`,
+  mailer_templates_email_changed_notification_content: readTemplate("email-changed.html")
 });
 
 if (args.has("--dry-run")) {
@@ -117,6 +128,10 @@ if (args.has("--dry-run")) {
     console.warn("Warning: no custom SMTP credentials were provided. Supabase's default SMTP may still show Supabase as the sender.");
   }
   process.exit(0);
+}
+
+if (!hasPartialSmtp) {
+  throw new Error("Custom SMTP credentials are required before changing production Auth email settings. No changes were sent.");
 }
 
 const response = await fetch(`${apiBaseUrl}/projects/${encodeURIComponent(projectRef)}/config/auth`, {

@@ -199,11 +199,11 @@ export const config = {
     enabled: readBool("MARITIME_REFERENCE_NOTIFICATIONS_ENABLED", true),
     recipient: readEnv("MARITIME_REFERENCE_NOTIFICATION_TO", {
       required: false,
-      defaultValue: "Allahonahub@gmail.com"
+      defaultValue: "allonahub@gmail.com"
     }),
     sender: readEnv("MARITIME_REFERENCE_NOTIFICATION_FROM", {
       required: false,
-      defaultValue: "AllonaHub Denizcilik <bildirim@allonahub.com>"
+      defaultValue: readEnv("ALLONAHUB_EMAIL_FROM", { required: false, defaultValue: "AllonaHub <destek@allonahub.com>" })
     }),
     resendApiKey: readOptionalSecret("RESEND_API_KEY", "MARITIME_REFERENCE_RESEND_API_KEY"),
     resendApiUrl: readEnv("RESEND_API_URL", {
@@ -211,6 +211,14 @@ export const config = {
       defaultValue: "https://api.resend.com/emails"
     }),
     timeoutMs: readNumber("MARITIME_REFERENCE_EMAIL_TIMEOUT_MS", 12000)
+  },
+  maritimeAdminNotifications: {
+    enabled: readBool("MARITIME_ADMIN_NOTIFICATIONS_ENABLED", true),
+    recipient: readEnv("MARITIME_ADMIN_NOTIFICATION_TO", { required: false, defaultValue: "allonahub@gmail.com" }),
+    sender: readEnv("MARITIME_ADMIN_NOTIFICATION_FROM", { required: false, defaultValue: readEnv("ALLONAHUB_EMAIL_FROM", { required: false, defaultValue: "AllonaHub <destek@allonahub.com>" }) }),
+    resendApiKey: readOptionalSecret("RESEND_API_KEY", "MARITIME_REFERENCE_RESEND_API_KEY"),
+    resendApiUrl: readEnv("RESEND_API_URL", { required: false, defaultValue: "https://api.resend.com/emails" }),
+    timeoutMs: readNumber("MARITIME_ADMIN_EMAIL_TIMEOUT_MS", 12000)
   },
   mariPartner: {
     employerReferencesEnabled: readBool("MARIPARTNER_EMPLOYER_REFERENCES_ENABLED", true),

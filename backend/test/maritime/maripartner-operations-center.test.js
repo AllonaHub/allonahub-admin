@@ -14,7 +14,7 @@ import {
 const root = new URL("../../../", import.meta.url);
 const read = (path) => readFileSync(new URL(path, root), "utf8");
 
-test("MariPartner exposes exactly eight primary navigation entries", () => {
+test("MariPartner navigation includes joining after vessels", () => {
   const html = read("pages/partner/maripartner.html");
   const navigation = html.match(/<nav class="mp-primary-nav"[\s\S]*?<\/nav>/)?.[0] || "";
   const labels = [...navigation.matchAll(/<strong>([^<]+)<\/strong>/g)].map((match) => match[1]);
@@ -23,6 +23,7 @@ test("MariPartner exposes exactly eight primary navigation entries", () => {
     "Personel Merkezi",
     "İlanlar",
     "Gemiler",
+    "Yerleştirme",
     "MarSoh",
     "Bildirimler",
     "Finans ve Faturalandırma",
@@ -33,10 +34,23 @@ test("MariPartner exposes exactly eight primary navigation entries", () => {
 test("operations center keeps bulk creation beside the primary new-job action", () => {
   const html = read("pages/partner/maripartner.html");
   const actions = html.match(/<section class="mp-quick-actions"[\s\S]*?<\/section>/)?.[0] || "";
-  assert.equal((actions.match(/<button/g) || []).length, 7);
+  assert.equal((actions.match(/<button/g) || []).length, 10);
   assert.match(actions, /class="mp-quick-action-group"/);
-  for (const label of ["Yeni İlan", "Toplu İlan", "Hazır Aday Bul", "Aday Havuzu", "Acil Personel Bul", "Eşleşmeleri Gör", "Bekleyen İşlemleri Gör"]) assert.match(actions, new RegExp(label));
+  for (const label of ["Yeni İlan", "Toplu İlan", "Hazır Aday Bul", "Aday Havuzu", "Eşleşmeleri Gör", "Görüşmeler", "Teklif ve Kontrat", "Yerleştirme", "Acil Personel Bul", "Bekleyen İşlemleri Gör"]) assert.match(actions, new RegExp(label));
   for (const counter of ["ready_to_join", "pending_interviews", "pending_offers", "urgent_replacements", "active_crew", "upcoming_relief"]) assert.match(html, new RegExp(`data-mp-count="${counter}"`));
+});
+
+test("joining operations require accepted offer, candidate consent and tenant authority", () => {
+  const route = read("backend/src/routes/maritime-partner-center.js");
+  const migration = read("supabase/migrations/20260925170000_maritime_joining_operations.sql");
+  const html = read("pages/partner/maripartner.html");
+  assert.match(route, /\["accepted", "contracted"\]\.includes\(offer\.offer_status\)/);
+  assert.match(route, /application\.candidate_consent_snapshot\?\.final_submission_confirmed !== true/);
+  assert.match(route, /requirePartner\(request, "joining\.manage", body\.partner_id, \{ manager: true \}\)/);
+  assert.match(route, /\.eq\("id", body\.offer_id\)\.eq\("partner_id", body\.partner_id\)/);
+  assert.match(migration, /alter table public\.maritime_joining_operations enable row level security/);
+  assert.match(migration, /revoke all on public\.maritime_joining_operations from public, anon, authenticated/);
+  assert.match(html, /Talep, kesin rezervasyon anlamına gelmez/);
 });
 
 test("candidate cards keep two visible actions and preserve privileged operations behind server routes", () => {
@@ -84,7 +98,7 @@ test("MariPartner keeps URL state, a locked light theme and responsive safeguard
   assert.match(html, /data-platform-controls-slot="home"/);
   assert.match(html, /js\/platform\.js/);
   assert.match(html, /data-theme="white" data-partner-theme-locked="true"/);
-  assert.match(html, /css\/maripartner\.css\?v=20260925-private-pool2/);
+  assert.match(html, /css\/maripartner\.css\?v=20260925-joining2/);
   assert.match(html, /js\/platform\.js\?v=20260920-partner-light1/);
   assert.match(html, /js\/maripartner-i18n\.js\?v=20260920-maripartner-job6/);
   assert.match(script, /searchParams\.set\("view"/);

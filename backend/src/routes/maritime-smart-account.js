@@ -960,6 +960,13 @@ async function latestSmartState(userId, user) {
     .limit(1)
     .maybeSingle();
   const run = assertDb(runResult, "Akıllı hesap kaydı okunamadı.") || null;
+  if (run?.smart_snapshot?.profile) {
+    const workspace = assertDb(await supabaseAdmin.from("maritime_seafarer_workspaces")
+      .select("current_work_status,job_email_opted_in_at")
+      .eq("user_id", userId).maybeSingle(), "Müsaitlik durumu okunamadı.");
+    run.smart_snapshot.profile.current_work_status = workspace?.current_work_status || "unknown";
+    run.smart_snapshot.profile.job_email_opted_in = Boolean(workspace?.job_email_opted_in_at);
+  }
   if (!run) {
     const applications = assertDb(await supabaseAdmin.from("maritime_hiring_applications")
       .select("id,job_id,status,submitted_at")

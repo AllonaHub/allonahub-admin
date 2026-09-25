@@ -28,3 +28,23 @@ test("confirmation email uses the AllonaHub identity and a scanner-safe verifica
   assert.match(script, /mailer_subjects_confirmation/);
   assert.match(script, /readTemplate\("confirmation\.html"\)/);
 });
+
+test("every configured auth email has a branded template and required action token", async () => {
+  const script = await source("scripts/apply-supabase-auth-email-branding.mjs");
+  const flows = [
+    ["invite", "invite.html", /\{\{ \.ConfirmationURL \}\}/],
+    ["magic_link", "magic-link.html", /\{\{ \.ConfirmationURL \}\}/],
+    ["email_change", "email-change.html", /\{\{ \.ConfirmationURL \}\}/],
+    ["reauthentication", "reauthentication.html", /\{\{ \.Token \}\}/],
+    ["email_changed_notification", "email-changed.html", /Hesap güvenliği bildirimi/]
+  ];
+
+  for (const [key, file, action] of flows) {
+    const template = await source(`supabase/auth-email-templates/${file}`);
+    assert.match(script, new RegExp(`mailer_subjects_${key}`));
+    assert.ok(script.includes(`readTemplate("${file}")`));
+    assert.match(template, /AllonaHub/);
+    assert.match(template, action);
+    assert.doesNotMatch(template, /<script\b/i);
+  }
+});

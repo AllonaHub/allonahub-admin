@@ -5,6 +5,9 @@ import rateLimit from "@fastify/rate-limit";
 import { config } from "./config.js";
 import { registerAutoDefense } from "./lib/auto-defense.js";
 import { registerMaritimePhotoParsers } from "./lib/maritime-profile-photo.js";
+import { deliverDueMaritimeJobEmailAlerts } from "./lib/maritime-job-email-alerts.js";
+import { deliverDueAllonaHubWelcomeGuides } from "./lib/allonahub-welcome-guide.js";
+import { supabaseAdmin } from "./lib/supabase.js";
 import { runtimeSecurityProtection } from "./lib/security-alerts.js";
 import { EInvoicingError } from "./modules/e-invoicing/errors.js";
 import { PlatformContextError } from "./modules/platform/errors.js";
@@ -309,5 +312,21 @@ export async function buildApp() {
   registerMaritimePartnerCenterRoutes(app);
   registerMaritimeSmartAccountRoutes(app);
   registerMarsohRoutes(app);
+  let jobAlertTimer;
+  app.addHook("onListen", async () => {
+    if (!config.maritimeReferenceNotifications.enabled || !config.maritimeReferenceNotifications.resendApiKey) return;
+    const deliver = () => {
+      deliverDueMaritimeJobEmailAlerts({ supabase: supabaseAdmin })
+        .catch((error) => app.log.warn({ code: error?.code || "JOB_ALERT_RETRY_FAILED" }, "Maritime job email retry failed"));
+      deliverDueAllonaHubWelcomeGuides({ supabase: supabaseAdmin })
+        .catch((error) => app.log.warn({ code: error?.code || "WELCOME_GUIDE_RETRY_FAILED" }, "Welcome guide email retry failed"));
+    };
+    jobAlertTimer = setInterval(deliver, 60000);
+    jobAlertTimer.unref();
+    deliver();
+  });
+  app.addHook("onClose", async () => {
+    if (jobAlertTimer) clearInterval(jobAlertTimer);
+  });
   return app;
 }

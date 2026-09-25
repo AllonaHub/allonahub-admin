@@ -2067,6 +2067,12 @@
     ownerLoading("MariPartner Yönetimi");
     const payload = await api("/v1/admin/maripartner?limit=120");
     state.mariPartner = payload;
+    const joiningRows = (payload.joining_requests || []).map((item) => ownerLine(
+      `Yerleştirme talebi · ${item.joining_port || "Liman bekleniyor"}`,
+      `Şirket ${escape(item.partner_id)} / Katılım ${escape(item.joining_date || "belirtilmedi")} / Uçuş ${escape(item.flight_status)} / Otel ${escape(item.hotel_status)} / Transfer ${escape(item.transfer_status)} / Havalimanı ${escape(item.arrival_airport || "belirtilmedi")} / ${escape(item.request_note || "")}`,
+      "",
+      "medium"
+    ));
     const businessRows = (payload.businesses || []).map((item) => ownerLine(
       item.display_name || item.partner_code || "Denizcilik şirketi",
       `${escape(item.partner_code || "-")} / ${escape(item.status || "-")} / ${escape(item.verification_status || "-")}`,
@@ -2148,6 +2154,7 @@
       marsohPanel("Gemi doğrulama kuyruğu", "Partnerin IMO ile kaydettiği gemi bilgisi sahipliği kanıtlamaz. Şirket-gemi ilişkisini güvenilir kaynağa göre doğrulayın veya reddedin.", vesselRows.join("") || ownerEmpty("İnceleme bekleyen gemi kaydı yok.")),
       marsohPanel("Tarihsel gemi-şirket yetkisi", "Güncel sahiplik tek başına geçmiş çalışma dönemini doğrulamaz. IMO, şirket rolü ve geçerli tarih aralığını resmî kanıta göre kaydedin.", `<form class="sa-inline-form" data-maripartner-relationship-form><select name="partner_id" required><option value="">Şirket seçin</option>${(payload.businesses || []).map((item) => `<option value="${escape(item.id)}">${escape(item.display_name || item.partner_code)}</option>`).join("")}</select><input name="imo_number" inputmode="numeric" pattern="[0-9]{7}" maxlength="7" placeholder="IMO (7 hane)" required><input name="company_name" maxlength="240" placeholder="Tarihsel şirket adı" required><select name="relationship_role"><option value="employer">İşveren</option><option value="owner">Donatan</option><option value="manager">Yönetici</option><option value="operator">Operatör</option><option value="crewing_agent">Crewing agent</option><option value="authorized_representative">Yetkili temsilci</option></select><input type="date" name="valid_from"><input type="date" name="valid_until"><select name="verification_status"><option value="admin_verified">Admin doğruladı</option><option value="registry_verified">Sicil doğruladı</option></select><input name="reason" minlength="6" maxlength="1000" placeholder="Kanıt ve karar gerekçesi" required><button type="submit">Tarihsel Yetkiyi Kaydet</button></form>`),
       marsohPanel("Denizcilik şirketleri", "MariPartner erişimi yalnız aktif ve doğrulanmış şirket üyelikleriyle açılır.", businessRows.join("") || ownerEmpty("Denizcilik şirketi bulunamadı.")),
+      marsohPanel("Yerleştirme talepleri", "Uçuş, otel ve transfer talepleri rezervasyon değildir; şirket onayı ve operasyon teyidi gerektirir.", joiningRows.join("") || ownerEmpty("Bekleyen yerleştirme talebi yok.")),
       marsohPanel("Doğrulanmış işveren referansları", "Adaya ve kamuya kapalı; tarihsel çalışma ilişkisi, moderasyon ve ikinci inceleme korumalıdır.", referenceRows.join("") || ownerEmpty("İnceleme bekleyen referans yok.")),
       marsohPanel("Referans itirazları", "İtirazlar ayrı güven vakası ve denetim iziyle ele alınır.", disputeRows.join("") || ownerEmpty("Açık referans itirazı yok.")),
       marsohPanel("Temsilci yetkileri", "Referans oluşturma yetkisi doğrulanmış şirket temsilcisiyle sınırlıdır.", authorityRows.join("") || ownerEmpty("Aktif temsilci yetkisi yok.")),

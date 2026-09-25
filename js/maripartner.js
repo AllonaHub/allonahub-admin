@@ -5,9 +5,9 @@
   const t = (source) => I18n?.t(source) || source;
   const applyI18n = (root) => { I18n?.apply(root || document.body); };
   const state = { session: null, data: null, partnerId: "", activePanel: "", lastFocus: null, pendingLogoPath: null, finance: null, selectedRoomId: "", routeSync: false, candidateFilters: {}, privateCandidates: [], privateImport: null };
-  const titles = { jobs: "Şirket İlanları", "job-create": "Yeni İlan Oluştur", "job-bulk-create": "Toplu İlan Oluştur", vessels: "Gemilerim", "vessel-create": "Gemi Ekle", candidates: "Yetkili Adaylar", "private-pool": "Aday Havuzu", "candidate-detail": "Aday Detayı", applications: "Başvurular ve İşe Alım Dosyaları", notifications: "Şirket Bildirimleri", finance: "Finans ve Faturalandırma", company: "Şirket Hesabı", verification: "Doğrulama Şartları", refresh: "Havuzu Güncelle", evidence: "Kanıt Kontrolü", sla: "Süreç Süreleri", handover: "Dosya Devri", review: "Güvenli İnceleme", references: "Doğrulanmış Referans", governance: "Karar ve Değer Merkezi", "ready-pool": "Hazır Aday Havuzu", matches: "Akıllı Eşleşmeler", urgent: "Acil Personel ve Replacement", pending: "Bekleyen İşlemler", pipeline: "Hiring Pipeline", interviews: "Görüşmeler", offers: "Teklifler ve Kontratlar", "active-crew": "Aktif Mürettebat", relief: "Relief ve Rehire" };
-  const templates = { jobs: "mpJobsTemplate", "job-create": "mpJobCreateTemplate", "job-bulk-create": "mpJobBulkTemplate", vessels: "mpVesselsTemplate", "vessel-create": "mpVesselCreateTemplate", candidates: "mpCandidatesTemplate", "private-pool": "mpPrivatePoolTemplate", "candidate-detail": "mpPersonnelDataTemplate", applications: "mpApplicationsTemplate", notifications: "mpNotificationsTemplate", finance: "mpFinanceTemplate", company: "mpCompanyTemplate", verification: "mpVerificationTemplate", refresh: "mpRefreshTemplate", evidence: "mpEvidenceTemplate", sla: "mpSlaTemplate", handover: "mpHandoverTemplate", review: "mpReviewTemplate", references: "mpReferencesTemplate", governance: "mpGovernanceTemplate", "ready-pool": "mpReadyPoolTemplate", matches: "mpPersonnelDataTemplate", pending: "mpPersonnelDataTemplate", pipeline: "mpPersonnelDataTemplate", interviews: "mpPersonnelDataTemplate", offers: "mpPersonnelDataTemplate", "active-crew": "mpPersonnelDataTemplate", relief: "mpPersonnelDataTemplate", urgent: "mpUrgentTemplate" };
-  const standalonePanels = new Set(["jobs", "job-create", "job-bulk-create", "vessels", "vessel-create", "candidates", "private-pool", "applications", "notifications", "finance", "company", "verification"]);
+  const titles = { jobs: "Şirket İlanları", "job-create": "Yeni İlan Oluştur", "job-bulk-create": "Toplu İlan Oluştur", vessels: "Gemilerim", "vessel-create": "Gemi Ekle", joining: "Yerleştirme", candidates: "Yetkili Adaylar", "private-pool": "Aday Havuzu", "candidate-detail": "Aday Detayı", applications: "Başvurular ve İşe Alım Dosyaları", notifications: "Şirket Bildirimleri", finance: "Finans ve Faturalandırma", company: "Şirket Hesabı", verification: "Doğrulama Şartları", refresh: "Havuzu Güncelle", evidence: "Kanıt Kontrolü", sla: "Süreç Süreleri", handover: "Dosya Devri", review: "Güvenli İnceleme", references: "Doğrulanmış Referans", governance: "Karar ve Değer Merkezi", "ready-pool": "Hazır Aday Havuzu", matches: "Akıllı Eşleşmeler", urgent: "Acil Personel ve Replacement", pending: "Bekleyen İşlemler", pipeline: "Hiring Pipeline", interviews: "Görüşmeler", offers: "Teklifler ve Kontratlar", "active-crew": "Aktif Mürettebat", relief: "Relief ve Rehire" };
+  const templates = { jobs: "mpJobsTemplate", "job-create": "mpJobCreateTemplate", "job-bulk-create": "mpJobBulkTemplate", vessels: "mpVesselsTemplate", "vessel-create": "mpVesselCreateTemplate", joining: "mpJoiningTemplate", candidates: "mpCandidatesTemplate", "private-pool": "mpPrivatePoolTemplate", "candidate-detail": "mpPersonnelDataTemplate", applications: "mpApplicationsTemplate", notifications: "mpNotificationsTemplate", finance: "mpFinanceTemplate", company: "mpCompanyTemplate", verification: "mpVerificationTemplate", refresh: "mpRefreshTemplate", evidence: "mpEvidenceTemplate", sla: "mpSlaTemplate", handover: "mpHandoverTemplate", review: "mpReviewTemplate", references: "mpReferencesTemplate", governance: "mpGovernanceTemplate", "ready-pool": "mpReadyPoolTemplate", matches: "mpPersonnelDataTemplate", pending: "mpPersonnelDataTemplate", pipeline: "mpPersonnelDataTemplate", interviews: "mpPersonnelDataTemplate", offers: "mpPersonnelDataTemplate", "active-crew": "mpPersonnelDataTemplate", relief: "mpPersonnelDataTemplate", urgent: "mpUrgentTemplate" };
+  const standalonePanels = new Set(["jobs", "job-create", "job-bulk-create", "vessels", "vessel-create", "joining", "candidates", "private-pool", "applications", "notifications", "finance", "company", "verification"]);
   const legacyViewAliases = Object.freeze({ hiring: "pipeline", "smart-matches": "matches", candidates: "ready-pool", "urgent-crew": "urgent", "crew-matrix": "active-crew", "crew-pool": "ready-pool", interviews: "interviews", "offers-contracts": "offers", "active-crew": "active-crew", "relief-rehire": "relief", references: "references", verification: "verification", team: "company", analytics: "governance" });
   const referenceCategories = [
     ["professional_competence", "Mesleki yeterlilik"], ["safety_awareness", "Emniyet farkındalığı"], ["rule_compliance", "Kural uyumu"],
@@ -746,6 +746,37 @@
     target.append(row);
   }
 
+  async function loadJoining(root) {
+    const serviceLabel = { not_needed: "Gerekli değil", company_arranging: "Firma ayarlıyor", requested: "AllonaHub'dan talep edildi", confirmed: "Firma tarafından teyit edildi" };
+    const select = $("[data-mp-joining-offers]", root);
+    const eligible = (state.data.offers || []).filter((offer) => ["accepted", "contracted"].includes(offer.offer_status));
+    eligible.forEach((offer) => {
+      const job = (state.data.jobs || []).find((row) => row.id === offer.job_id);
+      const option = document.createElement("option");
+      option.value = offer.id;
+      option.textContent = `${job?.job_title || job?.rank_code || "Teklif"} · ${offer.id.slice(0, 8)}`;
+      select.append(option);
+    });
+    const target = $("[data-mp-joining-list]", root);
+    try {
+      const result = await api(`/v1/maritime/partner-center/joining-operations?partner_id=${encodeURIComponent(state.partnerId)}`);
+      const rows = result.operations || [];
+      target.innerHTML = rows.length ? `<h3>Yerleştirme dosyaları</h3>${rows.map((row) => `<article class="mp-joining-row"><strong>${escape((state.data.jobs || []).find((job) => job.id === row.job_id)?.job_title || "Katılım planı")}</strong><span>${escape(row.joining_port || "Liman belirtilmedi")} · ${escape(row.joining_date || "Tarih bekleniyor")}</span><small>Uçuş: ${escape(serviceLabel[row.flight_status] || row.flight_status)} · Otel: ${escape(serviceLabel[row.hotel_status] || row.hotel_status)} · Transfer: ${escape(serviceLabel[row.transfer_status] || row.transfer_status)}</small><button type="button" data-mp-joining-edit="${escape(row.offer_id)}">Düzenle</button></article>`).join("")}` : '<p class="mp-empty">Henüz yerleştirme dosyası yok. Kabul edilmiş teklif için plan açabilirsiniz.</p>';
+      root._joiningOperations = rows;
+    } catch (error) { target.textContent = error.message || "Yerleştirme dosyaları açılamadı."; }
+  }
+
+  async function submitJoining(form) {
+    const values = new FormData(form);
+    const body = { partner_id: state.partnerId, offer_id: values.get("offer_id"), joining_date: values.get("joining_date") || null,
+      joining_port: values.get("joining_port") || "", arrival_airport: values.get("arrival_airport") || "", arrival_at: values.get("arrival_at") ? new Date(values.get("arrival_at")).toISOString() : null, flight_status: values.get("flight_status"), hotel_status: values.get("hotel_status"),
+      transfer_status: values.get("transfer_status"), hotel_nights: values.get("hotel_nights") ? Number(values.get("hotel_nights")) : null,
+      request_note: values.get("request_note") || "" };
+    await api("/v1/maritime/partner-center/joining-operations", { method: "POST", body });
+    await loadJoining(form.closest("[data-mp-drawer-body]"));
+    alert("Yerleştirme planı kaydedildi. Talep edilen hizmetler henüz rezervasyon değildir.", "success");
+  }
+
   function openPanel(panel, trigger) {
     const template = document.getElementById(templates[panel]);
     if (!template) return;
@@ -753,11 +784,13 @@
     setActiveNavigation(panel);
     const wrap = $("[data-mp-drawer-wrap]");
     $("[data-mp-drawer]")?.classList.toggle("mp-drawer--bulk", panel === "job-bulk-create");
+    $("[data-mp-drawer]")?.classList.toggle("mp-drawer--joining", panel === "joining");
     if (wrap.hidden) state.lastFocus = trigger || document.activeElement;
     const body = $("[data-mp-drawer-body]");
     $("[data-mp-drawer-title]").textContent = t(titles[panel]);
     $("[data-mp-back]").hidden = standalonePanels.has(panel);
     body.replaceChildren(template.content.cloneNode(true));
+    if (panel === "joining") loadJoining(body);
     if (panel === "private-pool") {
       const select = $("[data-mp-private-job]", body);
       (state.data.jobs || []).forEach((job) => {
@@ -1509,6 +1542,20 @@
       return;
     }
     const vesselLookup = event.target.closest("[data-mp-vessel-lookup]");
+    const joiningEdit = event.target.closest("[data-mp-joining-edit]");
+    if (joiningEdit) {
+      const root = $("[data-mp-drawer-body]");
+      const row = (root._joiningOperations || []).find((item) => item.offer_id === joiningEdit.dataset.mpJoiningEdit);
+      const form = $("[data-mp-joining-form]", root);
+      if (row && form) {
+        ["offer_id", "joining_date", "joining_port", "arrival_airport", "arrival_at", "flight_status", "hotel_status", "transfer_status", "hotel_nights", "request_note"].forEach((key) => {
+          const input = form.elements.namedItem(key);
+          if (input) input.value = key === "arrival_at" && row[key] ? new Date(row[key]).toISOString().slice(0, 16) : (row[key] ?? "");
+        });
+        form.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      return;
+    }
     if (vesselLookup) {
       try { await lookupVessel(vesselLookup.closest("form")); }
       catch (error) { alert(error.message || "Gemi bilgileri getirilemedi."); }
@@ -1669,7 +1716,7 @@
       renderPoolFilter($("[data-mp-drawer-body]"));
       return;
     }
-    const handler = form.matches("[data-mp-job-form]") ? submitJob : form.matches("[data-mp-job-bulk-form]") ? submitBulkJobs : form.matches("[data-mp-vessel-form]") ? submitVessel : form.matches("[data-mp-profile-form]") ? submitProfile : form.matches("[data-mp-refresh-form]") ? submitRefresh : form.matches("[data-mp-evidence-template-form]") ? submitEvidenceTemplate : form.matches("[data-mp-evidence-request-form]") ? submitEvidenceRequest : form.matches("[data-mp-sla-form]") ? submitSla : form.matches("[data-mp-sla-start-form]") ? submitSlaStart : form.matches("[data-mp-sla-extend-form]") ? submitSlaExtend : form.matches("[data-mp-handover-form]") ? submitHandover : form.matches("[data-mp-review-form]") ? submitReview : form.matches("[data-mp-reference-form]") ? submitEmployerReference : form.matches("[data-mp-urgent-form]") ? submitUrgent : form.matches("[data-mp-notification-preferences-form]") ? submitNotificationPreferences : null;
+    const handler = form.matches("[data-mp-joining-form]") ? submitJoining : form.matches("[data-mp-job-form]") ? submitJob : form.matches("[data-mp-job-bulk-form]") ? submitBulkJobs : form.matches("[data-mp-vessel-form]") ? submitVessel : form.matches("[data-mp-profile-form]") ? submitProfile : form.matches("[data-mp-refresh-form]") ? submitRefresh : form.matches("[data-mp-evidence-template-form]") ? submitEvidenceTemplate : form.matches("[data-mp-evidence-request-form]") ? submitEvidenceRequest : form.matches("[data-mp-sla-form]") ? submitSla : form.matches("[data-mp-sla-start-form]") ? submitSlaStart : form.matches("[data-mp-sla-extend-form]") ? submitSlaExtend : form.matches("[data-mp-handover-form]") ? submitHandover : form.matches("[data-mp-review-form]") ? submitReview : form.matches("[data-mp-reference-form]") ? submitEmployerReference : form.matches("[data-mp-urgent-form]") ? submitUrgent : form.matches("[data-mp-notification-preferences-form]") ? submitNotificationPreferences : null;
     if (!handler) return;
     event.preventDefault();
     try { await submitWithButton(form, () => handler(form)); }
