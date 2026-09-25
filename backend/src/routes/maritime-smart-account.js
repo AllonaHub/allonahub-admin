@@ -1157,10 +1157,19 @@ export function registerMaritimeSmartAccountRoutes(app) {
     if (!applicationId) {
       const inserted = await supabaseAdmin.from("maritime_hiring_applications").insert({
         job_id: job.id, partner_id: job.partner_id, seafarer_user_id: ctx.user.id,
-        status: "awaiting_candidate_approval", candidate_consent_snapshot: consent,
+        status: "awaiting_candidate_approval", submission_mode: "manual", candidate_consent_snapshot: consent,
         metadata: { job_title: job.job_title, job_reference: job.job_reference, matching_source: "maritime_cv_rank" }
       }).select("id").single();
-      applicationId = assertDb(inserted, "Başvuru oluşturulamadı.").id;
+      if (inserted.error && /saved Maritime CV rank does not match/i.test(inserted.error.message || "")) {
+        throw httpError("CV'nizdeki rütbe bu ilana uygun değil.", 409, "RANK_MISMATCH");
+      }
+      if (inserted.error && /manual application consent required/i.test(inserted.error.message || "")) {
+        throw httpError("Başvuru için belge paylaşım izninizi işaretleyin.", 409, "APPLICATION_CONSENT_REQUIRED");
+      }
+      if (inserted.error && /current eligible CV match required/i.test(inserted.error.message || "")) {
+        throw httpError("Başvuru güvenlik kuralı güncelleniyor. Lütfen kısa süre sonra yeniden deneyin.", 503, "APPLICATION_RULE_UPDATE_REQUIRED");
+      }
+      applicationId = assertDb(inserted, "Başvuru kaydedilemedi. Lütfen kısa süre sonra yeniden deneyin.").id;
     }
     const submitted = assertDb(await supabaseAdmin.from("maritime_hiring_applications")
       .update({ status: "submitted", submitted_at: now, candidate_consent_snapshot: consent })

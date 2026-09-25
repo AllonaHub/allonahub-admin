@@ -145,6 +145,17 @@ test("manual submissions check saved rank and explicit document consent on the s
   assert.match(route, /candidateRank !== canonicalRank\(job\.rank_code\)/);
   assert.match(route, /documents_share_confirmed: true/);
   assert.match(route, /status: "submitted", submitted_at: now/);
+  assert.match(route, /submission_mode: "manual"/);
+});
+
+test("database firewall permits consented manual rank matches without relaxing automatic matching", async () => {
+  const migration = await readFile(new URL("../../../supabase/migrations/20260925023000_allow_rank_matched_manual_maritime_applications.sql", import.meta.url), "utf8");
+  assert.match(migration, /matching_source' = 'maritime_cv_rank'/);
+  assert.match(migration, /documents_share_confirmed' is distinct from 'true'/);
+  assert.match(migration, /cv_rank <> job_rank/);
+  assert.match(migration, /run\.status = 'user_confirmed'/);
+  assert.match(migration, /match\.hard_gate_status = 'passed'/);
+  assert.match(migration, /'kaptan'.*'master'/s);
 });
 
 test("job gate never calls missing or stale match data a qualification mismatch", async () => {
