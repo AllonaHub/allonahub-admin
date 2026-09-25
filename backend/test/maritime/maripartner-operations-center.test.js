@@ -33,9 +33,9 @@ test("MariPartner exposes exactly eight primary navigation entries", () => {
 test("operations center keeps bulk creation beside the primary new-job action", () => {
   const html = read("pages/partner/maripartner.html");
   const actions = html.match(/<section class="mp-quick-actions"[\s\S]*?<\/section>/)?.[0] || "";
-  assert.equal((actions.match(/<button/g) || []).length, 6);
+  assert.equal((actions.match(/<button/g) || []).length, 7);
   assert.match(actions, /class="mp-quick-action-group"/);
-  for (const label of ["Yeni İlan", "Toplu İlan", "Hazır Aday Bul", "Acil Personel Bul", "Eşleşmeleri Gör", "Bekleyen İşlemleri Gör"]) assert.match(actions, new RegExp(label));
+  for (const label of ["Yeni İlan", "Toplu İlan", "Hazır Aday Bul", "Aday Havuzu", "Acil Personel Bul", "Eşleşmeleri Gör", "Bekleyen İşlemleri Gör"]) assert.match(actions, new RegExp(label));
   for (const counter of ["ready_to_join", "pending_interviews", "pending_offers", "urgent_replacements", "active_crew", "upcoming_relief"]) assert.match(html, new RegExp(`data-mp-count="${counter}"`));
 });
 
@@ -84,7 +84,7 @@ test("MariPartner keeps URL state, a locked light theme and responsive safeguard
   assert.match(html, /data-platform-controls-slot="home"/);
   assert.match(html, /js\/platform\.js/);
   assert.match(html, /data-theme="white" data-partner-theme-locked="true"/);
-  assert.match(html, /css\/maripartner\.css\?v=20260925-match-badge1/);
+  assert.match(html, /css\/maripartner\.css\?v=20260925-private-pool2/);
   assert.match(html, /js\/platform\.js\?v=20260920-partner-light1/);
   assert.match(html, /js\/maripartner-i18n\.js\?v=20260920-maripartner-job6/);
   assert.match(script, /searchParams\.set\("view"/);

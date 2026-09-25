@@ -3,6 +3,7 @@ import { config } from "../config.js";
 import { auditEvent, authContext, hasMfa, hasRole, supabaseAdmin } from "../lib/supabase.js";
 import { isValidImoNumber, normalizeImoNumber } from "../lib/maritime-vessel-provider.js";
 import { MARSOH_SUPPORTED_LANGUAGES, translateMarsohTextDetailed } from "../lib/marsoh-translation.js";
+import { matchVerifiedFormerWorkers, parsePrivatePoolFile, validatePoolRows } from "../lib/maritime-private-pool.js";
 import {
   MARIPARTNER_REFERENCE_CATEGORIES,
   MARIPARTNER_REFERENCE_QUESTIONS,
@@ -688,6 +689,59 @@ async function translatePartnerUiTexts(texts, targetLanguage) {
 }
 
 export function registerMaritimePartnerCenterRoutes(app) {
+  app.get("/v1/maritime/partner-center/private-candidates", async (request) => {
+    const partnerId = uuid.parse(request.query?.partner_id);
+    const access = await requirePartner(request, "private_candidate.read", partnerId);
+    await ensureHiringAuthority(access);
+    const offset = z.coerce.number().int().min(0).max(100000).default(0).parse(request.query?.offset);
+    const result = supabaseAdmin.from("maritime_company_private_candidates")
+      .select("id,full_name,rank_code,email,phone,available_from,vessel_type,source,created_at")
+      .eq("partner_id", partnerId).order("created_at", { ascending: false }).order("id", { ascending: false }).range(offset, offset + 99);
+    if (request.query?.rank_code) result.eq("rank_code", z.enum(Object.keys(MARIPARTNER_JOB_RANKS)).parse(request.query.rank_code));
+    const candidates = assertDb(await result, "Şirket aday havuzu okunamadı.") || [];
+    const relationships = assertDb(await supabaseAdmin.from("maritime_work_relationships")
+      .select("seafarer_user_id,verification_status").eq("partner_id", partnerId)
+      .in("verification_status", ["registry_verified", "reviewer_verified"]).limit(1000), "Eski çalışma ilişkileri okunamadı.") || [];
+    const ids = [...new Set(relationships.map((row) => row.seafarer_user_id))];
+    const profiles = [];
+    for (let start = 0; start < ids.length; start += 100) {
+      profiles.push(...(assertDb(await supabaseAdmin.from("profiles").select("id,full_name,email,profile_visible").in("id", ids.slice(start, start + 100)), "Aday eşleşmesi kontrol edilemedi.") || []));
+    }
+    return { ok: true, candidates: matchVerifiedFormerWorkers(candidates, relationships, profiles), has_more: candidates.length === 100 };
+  });
+
+  app.post("/v1/maritime/partner-center/private-candidates/import", { bodyLimit: 1500000, config: { rateLimit: { max: 4, timeWindow: "10 minutes" } } }, async (request) => {
+    const body = z.object({ partner_id: uuid, file_name: z.string().max(120).regex(/\.(csv|xlsx)$/i), content_base64: z.string().max(1500000), batch_id: uuid, confirm: z.boolean().default(false), lawful_basis_confirmed: z.boolean() }).strict().parse(request.body || {});
+    const access = await requirePartner(request, "private_candidate.import", body.partner_id, { manager: true });
+    await ensureHiringAuthority(access);
+    if (!body.lawful_basis_confirmed) throw httpError("Adayları yüklemeden önce uygun işleme dayanağı ve aydınlatma sorumluluğunu onaylayın.", 400, "POOL_LAWFUL_BASIS_REQUIRED");
+    if (!/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(body.content_base64)) throw httpError("Dosya kodlaması geçersiz.", 400, "POOL_FILE_INVALID");
+    let rows;
+    try { rows = await parsePrivatePoolFile(Buffer.from(body.content_base64, "base64"), body.file_name); }
+    catch (error) { throw httpError(error.message || "Aday dosyası okunamadı.", 400, "POOL_FILE_INVALID"); }
+    const { accepted, rejected } = validatePoolRows(rows, MARIPARTNER_JOB_RANKS);
+    if (!body.confirm) return { ok: true, accepted_count: accepted.length, rejected_rows: rejected };
+    if (rejected.length || !accepted.length) throw httpError("Hatalı satırları düzeltip yeniden önizleyin.", 400, "POOL_ROWS_INVALID");
+    const records = accepted.map((row, index) => ({
+      partner_id: body.partner_id, imported_by: access.ctx.user.id, import_batch_id: body.batch_id, import_row_number: index + 2,
+      full_name: row.full_name, rank_code: row.rank_code, email: row.email || null, phone: row.phone || null,
+      available_from: row.available_from || null, vessel_type: row.vessel_type || null
+    }));
+    assertDb(await supabaseAdmin.from("maritime_company_private_candidates").upsert(records, { onConflict: "partner_id,import_batch_id,import_row_number", ignoreDuplicates: true }), "Aday havuzu kaydedilemedi.");
+    await logAction(request, access.ctx, "maripartner.private_pool_imported", "partner_business", body.partner_id, { row_count: records.length, batch_id: body.batch_id });
+    return { ok: true, imported_count: records.length };
+  });
+
+  app.delete("/v1/maritime/partner-center/private-candidates/:candidateId", async (request) => {
+    const partnerId = uuid.parse(request.query?.partner_id);
+    const candidateId = uuid.parse(request.params.candidateId);
+    const access = await requirePartner(request, "private_candidate.delete", partnerId, { manager: true });
+    await ensureHiringAuthority(access);
+    const deleted = assertDb(await supabaseAdmin.from("maritime_company_private_candidates").delete().eq("partner_id", partnerId).eq("id", candidateId).select("id"), "Aday silinemedi.");
+    if (!deleted?.length) throw httpError("Aday bulunamadı.", 404, "POOL_CANDIDATE_NOT_FOUND");
+    await logAction(request, access.ctx, "maripartner.private_pool_candidate_deleted", "maritime_company_private_candidate", candidateId, { partner_id: partnerId });
+    return { ok: true };
+  });
   app.get("/v1/maritime/partner-center", async (request) => {
     const partnerId = request.query?.partner_id ? uuid.parse(request.query.partner_id) : null;
     const access = await requirePartnerMembership(request, "dashboard.read", partnerId);

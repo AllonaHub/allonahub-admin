@@ -137,6 +137,14 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .mp-form textarea { min-height: 92px; resize: vertical; }
 .mp-form fieldset { margin: 0; border: 1px solid var(--mp-line); padding: 13px; }
 .mp-form legend { color: var(--mp-navy); font-weight: 800; }
+.mp-private-pool { display: grid; gap: 16px; min-width: 0; }
+.mp-private-import { display: grid; gap: 12px; padding: 16px; border: 1px solid var(--mp-line); background: #fff; }
+.mp-private-import label, .mp-private-filters label { display: grid; gap: 6px; min-width: 0; font-weight: 700; }
+.mp-private-import input[type="file"] { width: 100%; min-width: 0; }
+.mp-private-import .mp-check { display: flex; align-items: flex-start; gap: 8px; font-weight: 400; }
+.mp-private-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.mp-private-filters select { width: 100%; min-width: 0; min-height: 44px; }
+@media (max-width: 600px) { .mp-private-filters { grid-template-columns: 1fr; } }
 .mp-form .mp-check { display: flex; align-items: center; gap: 9px; min-height: 40px; }
 .mp-check input { width: 20px; height: 20px; min-height: 0; margin: 0; }
 .mp-check-list { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px; }

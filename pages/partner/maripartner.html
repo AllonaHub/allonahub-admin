@@ -7,7 +7,7 @@
   <title>MariPartner | AllonaHub Denizcilik</title>
   <meta name="description" content="AllonaHub Denizcilik doğrulanmış şirket personel merkezi.">
   <link rel="stylesheet" href="../../css/platform.css?v=20260920-maripartner1">
-  <link rel="stylesheet" href="../../css/maripartner.css?v=20260925-match-badge1">
+  <link rel="stylesheet" href="../../css/maripartner.css?v=20260925-private-pool2">
 </head>
 <body class="mp-body" data-theme="white" data-partner-theme-locked="true">
   <a class="mp-skip" href="#mainContent">İçeriğe geç</a>
@@ -79,6 +79,7 @@
           <button class="mp-command-bar__primary mp-command-bar__bulk" type="button" data-mp-open="job-bulk-create"><span aria-hidden="true">▤</span><span><strong>Toplu İlan</strong><small>Birden çok rütbe</small></span></button>
         </div>
         <button type="button" data-mp-open="ready-pool"><span aria-hidden="true">◎</span><span><strong>Hazır Aday Bul</strong><small>Ready-to-Join havuzu</small></span></button>
+        <button type="button" data-mp-open="private-pool"><span aria-hidden="true">◉</span><span><strong>Aday Havuzu</strong><small>Şirket havuzu ve başvurular</small></span></button>
         <button type="button" data-mp-open="urgent"><span aria-hidden="true">!</span><span><strong>Acil Personel Bul</strong><small>Replacement akışı</small></span></button>
         <button type="button" data-mp-open="matches"><span aria-hidden="true">◇</span><span><strong>Eşleşmeleri Gör</strong><small>Açıklanabilir sonuçlar</small></span><b class="mp-match-alert" data-mp-match-badge hidden aria-label="Yeni eşleşme"></b></button>
         <button type="button" data-mp-open="pending"><span aria-hidden="true">◷</span><span><strong>Bekleyen İşlemleri Gör</strong><small>Atanmış görevler ve SLA</small></span></button>
@@ -180,6 +181,25 @@
   </template>
 
   <template id="mpCandidatesTemplate"><div class="mp-history" data-mp-candidates-list></div></template>
+  <template id="mpPrivatePoolTemplate">
+    <section class="mp-private-pool">
+      <p class="mp-note">Yüklediğiniz adaylar yalnızca şirketinizin yetkili ekibine görünür; başka şirketlere veya AllonaHub aday havuzuna aktarılmaz. Adayların verilerini yüklemeden önce uygun işleme dayanağını ve aydınlatmayı sağlayın.</p>
+      <form class="mp-private-import" data-mp-private-import>
+        <label><span>CSV veya Excel (.xlsx)</span><input type="file" name="file" accept=".csv,.xlsx" required></label>
+        <label class="mp-check"><input type="checkbox" name="lawful_basis" required> Adayların verilerini bu amaçla işleme ve yükleme yetkisine sahibim; gerekli aydınlatmayı yaptım.</label>
+        <p class="mp-note">İlk satır başlık: ad_soyad, rutbe, email, telefon, available_from, vessel_type. Ad ve rütbe zorunludur. Rütbeye “Kaptan” veya “master” gibi ad ya da kod yazabilirsiniz. En fazla 500 satır, 1 MB. Ham dosya saklanmaz.</p>
+        <button class="mp-primary" type="submit">Dosyayı Kontrol Et</button>
+        <div data-mp-private-preview role="status" aria-live="polite"></div>
+      </form>
+      <div class="mp-private-filters">
+        <label><span>Kaynak</span><select data-mp-private-source><option value="all">Tümü</option><option value="company_pool">Şirket havuzu</option><option value="previous_worker">Eskiden bizimle çalışmış adaylar</option><option value="allonahub_application">AllonaHub başvuruları</option></select></label>
+        <label><span>İlan / rütbe</span><select data-mp-private-job><option value="">Tüm ilanlar</option></select></label>
+      </div>
+      <button class="mp-secondary" type="button" data-mp-previous-workers>Eskiden bizimle çalışmış, AllonaHub’da kayıtlı adaylar</button>
+      <div class="mp-history" data-mp-private-list aria-live="polite"></div>
+      <button class="mp-secondary" type="button" data-mp-private-more hidden>Diğer adayları yükle</button>
+    </section>
+  </template>
   <template id="mpReadyPoolTemplate">
     <form class="mp-pool-filters" data-mp-pool-filter>
       <div class="mp-form-heading mp-full"><div><p>Yetkili aday havuzu</p><h3>Hazır aday filtreleri</h3></div><span class="mp-filter-count" data-mp-filter-count>0 aktif filtre</span></div>
@@ -483,6 +503,6 @@
   <script src="../../js/auth.js?v=20260920-auth-session1" defer></script>
   <script src="../../js/platform.js?v=20260920-partner-light1" defer></script>
   <script src="../../js/maripartner-i18n.js?v=20260920-maripartner-job6" defer></script>
-  <script src="../../js/maripartner.js?v=20260925-match-badge1" defer></script>
+  <script src="../../js/maripartner.js?v=20260925-private-pool2" defer></script>
 </body>
 </html>
