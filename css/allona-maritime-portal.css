@@ -929,6 +929,13 @@ body.maritime-portal-page[data-theme="white"] .maritime-application-dialog-actio
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 7px;
   background: rgba(0, 0, 0, 0.15);
+  color: inherit;
+  text-decoration: none;
+}
+
+.maritime-readiness-item:focus-visible {
+  outline: 2px solid #00dfff;
+  outline-offset: 2px;
 }
 
 .maritime-readiness-item > i {
@@ -3030,7 +3037,8 @@ body.maritime-documents-page[data-theme="white"] :where(.maritime-global-passpor
   scrollbar-width: thin;
 }
 
-.maritime-smart-chip-rail > span {
+.maritime-smart-chip-rail > span,
+.maritime-smart-chip-rail > a {
   display: inline-flex;
   min-height: 34px;
   flex: 0 0 auto;
@@ -3041,6 +3049,7 @@ body.maritime-documents-page[data-theme="white"] :where(.maritime-global-passpor
   color: #ffe8a0;
   font-size: 10px;
   font-weight: 850;
+  text-decoration: none;
 }
 
 .maritime-smart-positive {
@@ -3052,7 +3061,8 @@ body.maritime-documents-page[data-theme="white"] :where(.maritime-global-passpor
   font-size: 12px;
 }
 
-.maritime-smart-expiry-rail > span {
+.maritime-smart-expiry-rail > span,
+.maritime-smart-expiry-rail > a {
   display: grid;
   min-width: 180px;
   flex: 1 0 180px;
@@ -3062,12 +3072,24 @@ body.maritime-documents-page[data-theme="white"] :where(.maritime-global-passpor
   border-radius: 7px;
   background: rgba(255, 212, 71, 0.07);
   scroll-snap-align: start;
+  text-decoration: none;
 }
 
-.maritime-smart-expiry-rail > span[data-severity="expired"],
-.maritime-smart-expiry-rail > span[data-severity="critical"] {
+.maritime-smart-expiry-rail > :is(span, a)[data-severity="expired"],
+.maritime-smart-expiry-rail > :is(span, a)[data-severity="critical"] {
   border-color: rgba(255, 70, 93, 0.5);
   background: rgba(255, 70, 93, 0.09);
+}
+
+.maritime-smart-chip-rail > a:focus-visible,
+.maritime-smart-expiry-rail > a:focus-visible {
+  outline: 2px solid #00dfff;
+  outline-offset: 2px;
+}
+
+body.maritime-smart-account-page[data-theme="white"] .maritime-smart-chip-rail > a {
+  color: #144965;
+  border-color: #137e9a;
 }
 
 .maritime-smart-expiry-rail strong {
@@ -5592,5 +5614,36 @@ html[dir="rtl"] .maritime-document-progress > span {
   .maritime-portal-page *::after {
     scroll-behavior: auto !important;
     transition: none !important;
+  }
+}
+
+@media (max-width: 700px) {
+  .maritime-smart-account-page .maritime-smart-metrics,
+  .maritime-smart-account-page .maritime-smart-match-rail,
+  .maritime-smart-account-page .maritime-smart-chip-rail,
+  .maritime-smart-account-page .maritime-smart-expiry-rail {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    overflow: visible;
+    scroll-snap-type: none;
+  }
+  .maritime-smart-account-page .maritime-smart-match,
+  .maritime-smart-account-page .maritime-smart-metrics article,
+  .maritime-smart-account-page .maritime-smart-expiry-rail > :is(span, a) {
+    width: 100%;
+    min-width: 0;
+  }
+  .maritime-smart-account-page .maritime-smart-action-rail {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    overflow: visible;
+    scroll-snap-type: none;
+  }
+  .maritime-smart-account-page .maritime-smart-action-rail article {
+    width: 100%;
+    min-width: 0;
+  }
+  .maritime-smart-account-page .maritime-cv-identity .maritime-cv-facts {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

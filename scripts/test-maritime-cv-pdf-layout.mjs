@@ -24,9 +24,15 @@ try {
     await page.locator("#cv_photo").evaluate(image => image.decode());
     const dimensions = await page.locator(".cvPhotoFrame").evaluate(frame => {
       const photo = frame.querySelector("img");
-      return { frameHeight: frame.getBoundingClientRect().height, photoHeight: photo.getBoundingClientRect().height };
+      return { frameHeight: frame.getBoundingClientRect().height, photoHeight: photo.getBoundingClientRect().height,
+        ratio: photo.getBoundingClientRect().width / photo.getBoundingClientRect().height };
     });
     assert.ok(Math.abs(dimensions.frameHeight - dimensions.photoHeight) < 2, `Photo frame has empty height at ${width}px`);
+    assert.ok(Math.abs(dimensions.ratio - 2 / 3) < 0.03, `Photo aspect ratio changed at ${width}px`);
+    await page.evaluate(() => document.body.classList.add("pdf-capture"));
+    const pdfRatio = await page.locator("#cv_photo").evaluate(photo => photo.getBoundingClientRect().width / photo.getBoundingClientRect().height);
+    assert.ok(Math.abs(pdfRatio - 2 / 3) < 0.03, `PDF photo aspect ratio changed at ${width}px`);
+    await page.evaluate(() => document.body.classList.remove("pdf-capture"));
   }
   await page.evaluate(() => {
     window.validateMaritimeCV = () => true;

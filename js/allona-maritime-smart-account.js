@@ -134,6 +134,7 @@
     cvReferences: ["Referanslar", "Referanslar", "Ұсынымдар", "Tavsiyalar", "Сунуштар", "References", "Referenzen", "Рекомендации", "المراجع"],
     familyName: ["Soyadı", "Soyadı", "Тегі", "Familiya", "Фамилиясы", "Family name", "Nachname", "Фамилия", "اسم العائلة"],
     givenNames: ["Adı / adları", "Adı / adları", "Аты-жөні", "Ismi / ismlari", "Аты / аттары", "Given name(s)", "Vorname(n)", "Имя / имена", "الاسم / الأسماء"],
+    fatherName: ["Baba adı", "Ata adı", "Әкесінің аты", "Otasining ismi", "Атасынын аты", "Father's name", "Vatersname", "Отчество", "اسم الأب"],
     birthPlace: ["Doğum yeri", "Doğum yeri", "Туған жері", "Tug‘ilgan joy", "Туулган жери", "Place of birth", "Geburtsort", "Место рождения", "مكان الميلاد"],
     gender: ["Cinsiyet", "Cins", "Жынысы", "Jinsi", "Жынысы", "Gender", "Geschlecht", "Пол", "الجنس"],
     maritalStatus: ["Medeni durum", "Ailə vəziyyəti", "Отбасылық жағдайы", "Oilaviy holat", "Үй-бүлөлүк абалы", "Marital status", "Familienstand", "Семейное положение", "الحالة الاجتماعية"],
@@ -399,6 +400,11 @@
     return `<article><i class="fa-solid ${icon}" aria-hidden="true"></i><strong>${escapeHtml(value)}</strong><span>${escapeHtml(label)}</span></article>`;
   }
 
+  function missingDestination(item) {
+    const code = String(item || "").split(":")[0];
+    return code === "availability" ? "maritime-smart-account.html" : "maritime-cv.html";
+  }
+
   function valueList(values) {
     const rows = Array.isArray(values) ? values.filter(Boolean) : [];
     return rows.length
@@ -516,8 +522,9 @@
     const salary = currencyLabel(cv.desired_salary_amount, cv.desired_salary_currency);
     const professionalSummary = localizedValue(cv.professional_summary_i18n, cv.professional_summary);
     const identityFacts = cvFacts([
-      cvFact(text("familyName"), cv.family_name),
       cvFact(text("givenNames"), cv.given_names),
+      cvFact(text("familyName"), cv.family_name),
+      cvFact(text("fatherName"), cv.middle_name),
       cvFact(text("nationality"), nationality),
       cvFact(text("birthDate"), cv.date_of_birth, { date: true }),
       cvFact(text("birthPlace"), cv.place_of_birth),
@@ -675,7 +682,7 @@
             ${professionalSummary ? cvSection(text("cvProfessionalSummary"), `<p class="maritime-cv-summary-copy">${escapeHtml(professionalSummary)}</p>`) : ""}
             ${competencyRows.length ? cvSection(text("cvCompetencies"), competencyMarkup, "maritime-cv-competencies-v6", text("cvCompetencyLead")) : ""}
             <div class="maritime-cv-v4-grid maritime-cv-v4-grid--three">
-              ${cvSection(text("cvIdentity"), identityFacts)}
+              ${cvSection(text("cvIdentity"), identityFacts, "maritime-cv-identity")}
               ${cvSection(text("cvContact"), contactFacts)}
               ${cvSection(text("cvPhysical"), physicalFacts)}
             </div>
@@ -762,8 +769,8 @@
       ${summaryMetric("fa-file-shield", String(readiness.archived_document_count ?? readiness.confirmed_document_count ?? 0), text("documents"))}
     </section>
     <section class="maritime-smart-two-column">
-      <article class="maritime-smart-list-panel"><h2><i class="fa-solid fa-list-check" aria-hidden="true"></i>${escapeHtml(text("missingTitle"))}</h2>${missing.length ? `<div class="maritime-smart-chip-rail">${missing.map(function (item) { return `<span>${escapeHtml(missingLabel(item))}</span>`; }).join("")}</div>` : `<p class="maritime-smart-positive"><i class="fa-solid fa-circle-check" aria-hidden="true"></i>${escapeHtml(text("nothingMissing"))}</p>`}</article>
-      <article class="maritime-smart-list-panel"><h2><i class="fa-solid fa-calendar-check" aria-hidden="true"></i>${escapeHtml(text("expiryTitle"))}</h2>${alerts.length ? `<div class="maritime-smart-expiry-rail">${alerts.map(function (alert) { const expired = alert.days_remaining < 0; return `<span data-severity="${escapeHtml(alert.severity)}"><strong>${escapeHtml(alert.source_label || missingLabel(alert.item_type))}</strong><small>${escapeHtml(dateLabel(alert.expires_at))}</small><b>${escapeHtml(expired ? text("expired") : `${alert.days_remaining} ${text("days")} ${text("remaining")}`)}</b></span>`; }).join("")}</div>` : `<p class="maritime-smart-positive"><i class="fa-solid fa-circle-check" aria-hidden="true"></i>${escapeHtml(text("noExpiry"))}</p>`}</article>
+      <article class="maritime-smart-list-panel"><h2><i class="fa-solid fa-list-check" aria-hidden="true"></i>${escapeHtml(text("missingTitle"))}</h2>${missing.length ? `<div class="maritime-smart-chip-rail">${missing.map(function (item) { return `<a href="${escapeHtml(missingDestination(item))}">${escapeHtml(missingLabel(item))}</a>`; }).join("")}</div>` : `<p class="maritime-smart-positive"><i class="fa-solid fa-circle-check" aria-hidden="true"></i>${escapeHtml(text("nothingMissing"))}</p>`}</article>
+      <article class="maritime-smart-list-panel"><h2><i class="fa-solid fa-calendar-check" aria-hidden="true"></i>${escapeHtml(text("expiryTitle"))}</h2>${alerts.length ? `<div class="maritime-smart-expiry-rail">${alerts.map(function (alert) { const expired = alert.days_remaining < 0; return `<a href="maritime-cv.html" data-severity="${escapeHtml(alert.severity)}"><strong>${escapeHtml(alert.source_label || missingLabel(alert.item_type))}</strong><small>${escapeHtml(dateLabel(alert.expires_at))}</small><b>${escapeHtml(expired ? text("expired") : `${alert.days_remaining} ${text("days")} ${text("remaining")}`)}</b></a>`; }).join("")}</div>` : `<p class="maritime-smart-positive"><i class="fa-solid fa-circle-check" aria-hidden="true"></i>${escapeHtml(text("noExpiry"))}</p>`}</article>
     </section>`;
   }
 
@@ -792,7 +799,7 @@
     const selectableCount = matches.filter(function (match) { return match.eligible && !draftByJob.has(match.job_id); }).length;
     return `<section class="maritime-smart-section">
       <div class="maritime-document-section-head maritime-document-review-head"><div><span class="maritime-document-kicker">${escapeHtml(text("score"))}</span><h2>${escapeHtml(text("matchesTitle"))}</h2></div><p>${escapeHtml(text("matchesLead"))}</p></div>
-      ${matches.length ? `<div class="maritime-smart-match-rail">${matches.map(function (match) { return matchCard(match, draftByJob, confirmed); }).join("")}</div>` : `<div class="maritime-smart-empty"><i class="fa-solid fa-satellite-dish" aria-hidden="true"></i><p>${escapeHtml(text("noMatches"))}</p></div>`}
+      ${matches.some(function (match) { return match.rank_compatible === true; }) ? `<div class="maritime-smart-match-rail">${matches.filter(function (match) { return match.rank_compatible === true; }).map(function (match) { return matchCard(match, draftByJob, confirmed); }).join("")}</div>` : `<div class="maritime-smart-empty"><i class="fa-solid fa-satellite-dish" aria-hidden="true"></i><p>${escapeHtml(text("noMatches"))}</p></div>`}
       ${matches.length && selectableCount ? `<div class="maritime-smart-draft-action"><button class="maritime-button maritime-button--primary" type="button" data-prepare-drafts ${!confirmed || !state.selected.size ? "disabled" : ""}><i class="fa-solid fa-file-circle-plus" aria-hidden="true"></i>${escapeHtml(text("prepareDrafts"))}</button><small>${escapeHtml(text(confirmed ? "confirmationRule" : "confirmFirst"))}</small></div>` : ""}
     </section>`;
   }

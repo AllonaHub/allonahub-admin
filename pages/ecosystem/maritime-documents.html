@@ -7,7 +7,7 @@
   <meta name="description" content="Maritime CV kaydınızı yönetin, PDF belgelerinizi güvenli hesabınızda saklayın ve Global CV'nizi oluşturun.">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="../../css/platform.css?v=20260828-corporate4">
-  <link rel="stylesheet" href="../../css/allona-maritime-portal.css?v=20260915-global-cv2">
+  <link rel="stylesheet" href="../../css/allona-maritime-portal.css?v=20260925-mobile-fixes1">
 </head>
 <body class="maritime-portal-page maritime-account-page maritime-documents-page" data-maritime-view="documents">
   <div class="maritime-portal-shell">
@@ -61,16 +61,16 @@
             <div class="maritime-document-section-head">
               <span class="maritime-document-kicker" data-document-i18n="documentsArchive">Belge Arşivi</span>
               <h2 data-document-i18n="uploadHeading">PDF belgelerinizi yükleyin</h2>
-              <p data-document-i18n="uploadLead">Tek seferde en fazla 20 PDF dosyası seçebilirsiniz. Belgeler okunmaz ve CV alanlarını değiştirmez.</p>
+              <p data-document-i18n="uploadLead">Belgelerinizin görüntülerini tek bir PDF'de birleştirip yükleyin. Bu arşiv CV bilgilerinizi değiştirmez.</p>
             </div>
 
             <label class="maritime-document-dropzone" for="maritimeDocumentFiles" data-document-dropzone>
               <i class="fa-solid fa-file-pdf" aria-hidden="true"></i>
               <strong data-document-i18n="chooseFiles">PDF belgelerini seçin</strong>
               <span data-document-i18n="chooseFilesHint">PDF dosyalarını buraya bırakabilir veya cihazınızdan seçebilirsiniz.</span>
-              <small data-document-i18n="fileLimits">Her dosya en fazla 45 MB, toplam seçim en fazla 150 MB.</small>
+              <small data-document-i18n="fileLimits">Tek PDF, en fazla 20 MB.</small>
             </label>
-            <input class="maritime-document-file-input" id="maritimeDocumentFiles" name="files" type="file" multiple accept="application/pdf,.pdf" data-document-files>
+            <input class="maritime-document-file-input" id="maritimeDocumentFiles" name="files" type="file" accept="application/pdf,.pdf" data-document-files>
 
             <div class="maritime-document-selection" data-document-selection hidden>
               <div class="maritime-document-selection-head"><strong data-document-i18n="selectedFiles">Seçilen belgeler</strong><button type="button" data-clear-documents><i class="fa-solid fa-xmark" aria-hidden="true"></i><span data-document-i18n="clear">Temizle</span></button></div>
@@ -109,7 +109,7 @@
 
         <nav class="maritime-document-bottom-actions" aria-label="Belge sayfası bağlantıları" data-document-i18n-aria="documentPageLinks">
           <a class="maritime-button" href="../account/user-panel.html"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i><span data-document-i18n="backToPanel">Panele Dön</span></a>
-          <a class="maritime-button maritime-button--primary" href="maritime-jobs.html"><i class="fa-solid fa-briefcase" aria-hidden="true"></i><span data-document-i18n="matchingJobs">Bana Uygun İşler</span></a>
+          <a class="maritime-button maritime-button--primary" href="maritime-jobs.html?filter=matched"><i class="fa-solid fa-briefcase" aria-hidden="true"></i><span data-document-i18n="matchingJobs">Bana Uygun İşler</span></a>
         </nav>
       </div>
     </main>
@@ -121,7 +121,7 @@
   <script src="../../js/supabase-client.js?v=20260920-auth-session1" defer></script>
   <script src="../../js/auth.js?v=20260920-auth-session1" defer></script>
   <script src="../../js/platform.js?v=20260914-user-panel1" defer></script>
-  <script src="../../js/allona-maritime-documents.js?v=20260925-draft-global-cv1" defer></script>
-  <script src="../../js/allona-maritime-portal.js?v=20260915-match6" defer></script>
+  <script src="../../js/allona-maritime-documents.js?v=20260925-single-pdf1" defer></script>
+  <script src="../../js/allona-maritime-portal.js?v=20260925-mobile-fixes1" defer></script>
 </body>
 </html>

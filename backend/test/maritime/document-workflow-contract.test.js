@@ -101,10 +101,11 @@ test("the customer workspace separates manual Maritime CV, PDF archive, and Glob
   assert.match(page, /class="maritime-document-nav"[^>]+data-view-link="documents"/);
   assert.match(page, /href="maritime-cv\.html"[^>]+data-view-link="maritime-cv"/);
   assert.match(page, /data-create-global-cv/);
-  assert.match(page, /type="file" multiple/);
+  assert.match(page, /type="file" accept="application\/pdf,\.pdf" data-document-files/);
+  assert.doesNotMatch(page, /type="file" multiple/);
   assert.match(page, /accept="application\/pdf,\.pdf"/);
   assert.match(page, /data-document-i18n="saveDocuments">Belgeleri Kaydet/);
-  assert.match(page, /Belgeler okunmaz ve CV alanlarını değiştirmez/);
+  assert.match(page, /Belgelerinizin görüntülerini tek bir PDF'de birleştirip yükleyin/);
   assert.match(page, /id="maritimeDocumentUpload"/);
   assert.match(page, /data-document-i18n="backToPanel"/);
   assert.match(page, /data-document-i18n="matchingJobs"/);
@@ -156,8 +157,8 @@ test("the customer workspace separates manual Maritime CV, PDF archive, and Glob
   assert.match(maritimeCvAccount, /method: "DELETE"/);
   assert.doesNotMatch(portal, /career\/cv-form\.html/);
   assert.match(portal, /allona:maritime-documents-ready/);
-  assert.match(documentUi, /const maxFiles = 20/);
-  assert.match(documentUi, /const maxFileBytes = 45 \* 1024 \* 1024/);
+  assert.match(documentUi, /const maxFiles = 1/);
+  assert.match(documentUi, /const maxFileBytes = 20 \* 1024 \* 1024/);
   assert.match(documentUi, /const allowedTypes = \["application\/pdf"\]/);
   assert.match(documentUi, /\/v1\/maritime\/documents\/archive/);
   assert.match(documentUi, /\/v1\/maritime\/smart-account\/prepare/);

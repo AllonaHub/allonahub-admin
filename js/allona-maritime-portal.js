@@ -90,10 +90,14 @@
     openJobs: ["Tüm Açık İş İlanları", "Bütün açıq iş elanları", "Барлық ашық вакансiyalar", "Barcha ochiq ish eʼlonlari", "Бардык ачык жумуштар", "All Open Job Listings", "Alle offenen Stellen", "Все открытые вакансии", "جميع الوظائف المتاحة"],
     openJobsLead: ["Doğrulanmış firmalardan gelen tüm açık pozisyonları inceleyin. Firma kimliği başvurunuz kabul edildiğinde açılır.", "Təsdiqlənmiş şirkətlərdən gələn bütün açıq vəzifələrə baxın. Şirkətin kimliyi müraciətiniz qəbul ediləndə açılır.", "Расталған компаниялардың барлық ашық орындарын қараңыз. Компания атауы өтініміңіз қабылданғанда ашылады.", "Tasdiqlangan kompaniyalarning barcha ochiq lavozimlarini ko‘ring. Kompaniya nomi arizangiz qabul qilinganda ochiladi.", "Текшерилген компаниялардын бардык ачык кызматтарын көрүңүз. Компаниянын аты арызыңыз кабыл алынганда ачылат.", "Review every open position from verified companies. Company identity is revealed after your application is accepted.", "Prüfen Sie alle offenen Stellen verifizierter Unternehmen. Die Unternehmensidentität wird nach Annahme Ihrer Bewerbung sichtbar.", "Просматривайте все вакансии проверенных компаний. Компания раскрывается после принятия вашей заявки.", "استعرض جميع الوظائف المتاحة لدى الشركات الموثقة، وتظهر هوية الشركة بعد قبول طلبك."],
     filterAll: ["Tümü", "Hamısı", "Барлығы", "Barchasi", "Баары", "All", "Alle", "Все", "الكل"],
+    filterOfficers: ["Zabit Heyeti", "Zabit heyəti", "Офицерлер", "Ofitserlar", "Офицерлер", "Deck Officers", "Deckoffiziere", "Палубные офицеры", "ضباط السطح"],
     filterDeck: ["Güverte", "Göyərtə", "Палуба", "Paluba", "Палуба", "Deck", "Deck", "Палуба", "السطح"],
+    filterDeckCrew: ["Gemici", "Göyərtə heyəti", "Палуба құрамы", "Paluba ekipaji", "Палуба курамы", "Deck Crew", "Decksmannschaft", "Палубная команда", "طاقم السطح"],
+    filterEngineers: ["Makine Heyeti", "Maşın heyəti", "Механиктер", "Mexaniklar", "Механиктер", "Engine Officers", "Schiffstechniker", "Механики", "ضباط المحركات"],
     filterEngine: ["Makine", "Maşın", "Машина", "Mashina", "Машина", "Engine", "Maschine", "Машинное отделение", "المحركات"],
+    filterOilers: ["Yağcı", "Yağçı", "Моторшылар", "Moychilar", "Моторчулар", "Engine Crew", "Maschinenbesatzung", "Моторная команда", "طاقم المحركات"],
     filterElectrical: ["Elektrik", "Elektrik", "Электр", "Elektr", "Электр", "Electrical", "Elektro", "Электрика", "الكهرباء"],
-    filterHotel: ["Servis", "Xidmət", "Қызмет", "Xizmat", "Кызмат", "Service", "Service", "Сервис", "الخدمات"],
+    filterHotel: ["Aşçı ve Kamarot", "Aşpaz və kamarot", "Аспаз және стюард", "Oshpaz va styuard", "Ашпозчу жана стюард", "Cook and Steward", "Koch und Steward", "Повар и стюард", "الطاهي والمضيف"],
     verifiedCompany: ["Mavi rozetli firma", "Mavi nişanlı şirkət", "Көк белгісі бар компания", "Ko‘k nishonli kompaniya", "Көк белгиси бар компания", "Blue-badge company", "Unternehmen mit blauem Haken", "Компания с синей отметкой", "شركة ذات شارة زرقاء"],
     companyHidden: ["Firma kimliği kabul sonrası açılır", "Şirkət kimliyi qəbuldan sonra açılır", "Компания өтінім қабылданғанда ашылады", "Kompaniya ariza qabul qilinganda ochiladi", "Компания арыз кабыл алынганда ачылат", "Company identity opens after acceptance", "Unternehmensidentität nach Annahme sichtbar", "Компания раскрывается после принятия", "تظهر هوية الشركة بعد القبول"],
     department: ["Departman", "Şöbə", "Бөлім", "Bo‘lim", "Бөлүм", "Department", "Abteilung", "Отдел", "القسم"],
@@ -174,6 +178,7 @@
     statusAccepted: ["Kabul edildi", "Qəbul edildi", "Қабылданды", "Qabul qilindi", "Кабыл алынды", "Accepted", "Angenommen", "Принято", "تم القبول"],
     totalApplications: ["Toplam Başvuru", "Ümumi müraciət", "Барлық өтінім", "Jami ariza", "Жалпы арыз", "Total Applications", "Bewerbungen gesamt", "Всего заявок", "إجمالي الطلبات"],
     reviewing: ["Değerlendirilen", "Qiymətləndirilən", "Қаралуда", "Ko‘rib chiqilayotgan", "Каралып жаткан", "In Review", "In Prüfung", "На рассмотрении", "قيد التقييم"],
+    awaitingCompany: ["Şirket yanıtı bekleniyor", "Şirkətin cavabı gözlənilir", "Компания жауабы күтілуде", "Kompaniya javobi kutilmoqda", "Компаниянын жообу күтүлүүдө", "Awaiting company response", "Antwort des Unternehmens ausstehend", "Ожидается ответ компании", "بانتظار رد الشركة"],
     accepted: ["Kabul Edilen", "Qəbul edilən", "Қабылданған", "Qabul qilingan", "Кабыл алынган", "Accepted", "Angenommen", "Принято", "مقبولة"],
 
     noOffersTitle: ["Henüz iş teklifi yok", "Hələ iş təklifi yoxdur", "Әзірге ұсыныс жоқ", "Hozircha ish taklifi yo‘q", "Азырынча жумуш сунушу жок", "No job offers yet", "Noch keine Jobangebote", "Предложений пока нет", "لا توجد عروض بعد"],
@@ -192,6 +197,8 @@
     globalPassport: ["Global CV", "Global CV", "Global CV", "Global CV", "Global CV", "Global CV", "Global CV", "Global CV", "Global CV"],
     globalPassportDesc: ["Doğrulanmış küresel uygunluk özeti", "Təsdiqlənmiş qlobal uyğunluq xülasəsi", "Расталған жаһандық сәйкестік қорытындысы", "Tasdiqlangan global muvofiqlik xulosasi", "Текшерилген глобалдык шайкештик жыйынтыгы", "Verified global readiness summary", "Verifizierte globale Eignungsübersicht", "Подтвержденный глобальный профиль готовности", "ملخص الجاهزية العالمية الموثق"],
     pendingCheck: ["Kontrol bekleniyor", "Yoxlama gözlənilir", "Тексеру күтілуде", "Tekshiruv kutilmoqda", "Текшерүү күтүлүүдө", "Check pending", "Prüfung ausstehend", "Ожидает проверки", "بانتظار التحقق"],
+    ready: ["Hazır", "Hazırdır", "Дайын", "Tayyor", "Даяр", "Ready", "Bereit", "Готово", "جاهز"],
+    completeAction: ["Tamamla", "Tamamla", "Толықтыру", "To‘ldirish", "Толуктоо", "Complete", "Vervollständigen", "Завершить", "إكمال"],
     autoControlTitle: ["Otomatik başvuru tercihi", "Avtomatik müraciət seçimi", "Автоматты өтінім таңдауы", "Avtomatik ariza tanlovi", "Автоматтык арыз тандоосу", "Auto-apply preference", "Einstellung für automatische Bewerbung", "Настройка автоподачи", "تفضيل التقديم التلقائي"],
     autoControlLead: ["Etkinleştirme tercihiniz kaydedilir. Başvurular yalnız profil ve belge kontrolleri tamamlandığında başlar.", "Seçiminiz saxlanılır. Müraciətlər yalnız profil və sənədlər yoxlandıqdan sonra başlayır.", "Таңдау сақталады. Өтінімдер профиль мен құжат тексерілген соң басталады.", "Tanlov saqlanadi. Arizalar profil va hujjatlar tekshirilgandan keyin boshlanadi.", "Тандоо сакталат. Арыздар профиль жана документтер текшерилгенден кийин башталат.", "Your preference is saved. Applications start only after profile and document checks are complete.", "Ihre Einstellung wird gespeichert. Bewerbungen starten erst nach Profil- und Dokumentenprüfung.", "Настройка сохраняется. Подача начнется только после проверки профиля и документов.", "يتم حفظ تفضيلك، ولا تبدأ الطلبات إلا بعد اكتمال فحص الملف والمستندات."],
     enableAuto: ["Otomatik Başvuruyu Etkinleştir", "Avtomatik müraciəti aktiv et", "Автоматты өтінімді қосу", "Avtomatik arizani yoqish", "Автоматтык арызды иштетүү", "Enable Auto Apply", "Automatische Bewerbung aktivieren", "Включить автоподачу", "تفعيل التقديم التلقائي"],
@@ -378,6 +385,15 @@
     return "all";
   }
 
+  function jobGroup(rankCode) {
+    const rank = String(rankCode || "").trim().toLowerCase();
+    if (["master", "chief_officer", "second_officer", "third_officer", "deck_cadet"].includes(rank)) return "officers";
+    if (["bosun", "able_seaman", "ordinary_seaman", "deck_boy"].includes(rank)) return "deckCrew";
+    if (["chief_engineer", "second_engineer", "third_engineer", "fourth_engineer", "engine_cadet"].includes(rank)) return "engineers";
+    if (["engine_bosun", "able_engine_rating", "motorman", "oiler", "wiper", "fitter", "welder", "pumpman"].includes(rank)) return "oilers";
+    return departmentForRank(rank);
+  }
+
   async function loadPublicJobs() {
     const base = String(App.config && App.config.apiBaseUrl || "").replace(/\/$/, "");
     if (!base) return [];
@@ -419,6 +435,7 @@
           vesselDwt: Number(vessel.deadweight) || null,
           vesselGt: Number(vessel.gross_tonnage) || null,
           hasOperationalDetails: Boolean(requirements.joining_date || requirements.salary || requirements.vessel_public_profile),
+          rankCode: compact(requirements.rank_code, 60),
           department: departmentForRank(requirements.rank_code),
           verified: true,
           live: true
@@ -569,7 +586,8 @@
     if (!grid) return;
     const query = compact(new URLSearchParams(window.location.search).get("q"), 80).toLocaleLowerCase(localeCodes[language()] || "tr-TR");
     const filtered = jobs.filter(function (job) {
-      const departmentMatch = activeFilter === "all" || job.department === activeFilter;
+      const rankMatch = candidateMatches.some(function (match) { return match.job_id === job.smartJobId && match.rank_compatible === true; });
+      const departmentMatch = activeFilter === "all" || (activeFilter === "matched" ? rankMatch : jobGroup(job.rankCode) === activeFilter);
       const searchMatch = !query || `${job.title} ${job.summary} ${job.location} ${departmentLabel(job.department)}`.toLocaleLowerCase(localeCodes[language()] || "tr-TR").includes(query);
       return departmentMatch && searchMatch;
     });
@@ -664,8 +682,9 @@
     }
     jobs = liveJobs;
     const matchedCount = jobs.filter(function (job) { return candidateMatches.some((match) => match.job_id === job.smartJobId && match.rank_compatible === true); }).length;
-    root.innerHTML = `<section class="maritime-toolbar"><div class="maritime-toolbar-copy"><h2>${escapeHtml(text("openJobs"))}</h2><p>${escapeHtml(text("openJobsLead"))}</p></div><div class="maritime-jobs-counters">${session && matchedCount ? `<strong class="maritime-match-counter" aria-label="${escapeHtml(text("rankCompatible"))}: ${matchedCount}">${escapeHtml(text("rankCompatible"))}<span>${matchedCount}</span></strong>` : ""}<strong class="maritime-reference" data-jobs-count></strong></div></section>
-      <div class="maritime-filter-rail" role="toolbar" aria-label="${escapeHtml(text("openJobs"))}">${[["all", "filterAll"], ["deck", "filterDeck"], ["engine", "filterEngine"], ["electrical", "filterElectrical"], ["hotel", "filterHotel"]].map(function (item) { return `<button type="button" data-job-filter="${item[0]}" aria-pressed="${item[0] === activeFilter}">${escapeHtml(text(item[1]))}</button>`; }).join("")}</div>
+    activeFilter = new URLSearchParams(window.location.search).get("filter") === "matched" ? "matched" : activeFilter;
+    root.innerHTML = `<section class="maritime-toolbar"><div class="maritime-toolbar-copy"><h2>${escapeHtml(text("openJobs"))}</h2><p>${escapeHtml(text("openJobsLead"))}</p></div><div class="maritime-jobs-counters">${session && matchedCount ? `<button type="button" class="maritime-match-counter" data-job-filter="matched" aria-label="${escapeHtml(text("rankCompatible"))}: ${matchedCount}">${escapeHtml(text("rankCompatible"))}<span>${matchedCount}</span></button>` : ""}<strong class="maritime-reference" data-jobs-count></strong></div></section>
+      <div class="maritime-filter-rail" role="toolbar" aria-label="${escapeHtml(text("openJobs"))}">${[["all", "filterAll"], ["matched", "rankCompatible"], ["officers", "filterOfficers"], ["deckCrew", "filterDeckCrew"], ["engineers", "filterEngineers"], ["oilers", "filterOilers"], ["electrical", "filterElectrical"], ["hotel", "filterHotel"]].map(function (item) { return `<button type="button" data-job-filter="${item[0]}" aria-pressed="${item[0] === activeFilter}">${escapeHtml(text(item[1]))}</button>`; }).join("")}</div>
       <div class="maritime-notice" role="status" aria-live="polite" data-jobs-notice></div><section class="maritime-job-grid" data-jobs-grid></section>${applicationDialogMarkup()}`;
     renderJobResults();
     const pendingId = new URLSearchParams(window.location.search).get("apply");
@@ -704,7 +723,8 @@
   function applicationStatusKey(status) {
     if (["shortlisted", "interviewing"].includes(status)) return "statusShortlist";
     if (["offer_sent", "offer_accepted", "hired"].includes(status)) return "statusAccepted";
-    if (["submitted", "drafted", "awaiting_candidate_approval"].includes(status)) return "statusSubmitted";
+    if (status === "submitted") return "awaitingCompany";
+    if (["drafted", "awaiting_candidate_approval"].includes(status)) return "statusSubmitted";
     return "statusReview";
   }
 
@@ -762,9 +782,16 @@
 
   async function renderAuto() {
     if (!session) return authGate();
-    const preference = await loadAutoPreference();
+    const [preference] = await Promise.all([loadAutoPreference(), loadSmartApplicationState()]);
+    const readiness = smartApplicationState.application_readiness || {};
+    const profileReady = smartApplicationState.run?.smart_snapshot?.readiness?.ready_to_apply === true;
+    const cvReady = readiness.has_saved_maritime_cv === true;
+    const globalReady = Boolean(smartApplicationState.run?.smart_snapshot?.cv_draft);
+    const readinessRow = function (icon, title, lead, ready, href) {
+      return `<a class="maritime-readiness-item" href="${escapeHtml(portalUrl(href))}"><i class="fa-solid ${icon}" aria-hidden="true"></i><span><strong>${escapeHtml(text(title))}</strong><small>${escapeHtml(text(lead))}</small></span><span class="maritime-readiness-state">${escapeHtml(text(ready ? "ready" : "completeAction"))}</span></a>`;
+    };
     const noticeKey = preference.load_error ? "autoSaveFailed" : preference.updated_at ? (preference.enabled ? "autoSaved" : "autoPaused") : "";
-    root.innerHTML = `<section class="maritime-auto-layout"><div class="maritime-auto-copy"><h2>${escapeHtml(text("autoHeading"))}</h2><p>${escapeHtml(text("autoDescription"))}</p><div class="maritime-readiness-list"><div class="maritime-readiness-item"><i class="fa-solid fa-user-check" aria-hidden="true"></i><span><strong>${escapeHtml(text("profileReady"))}</strong><small>${escapeHtml(text("profileReadyDesc"))}</small></span><span class="maritime-readiness-state">${escapeHtml(text("pendingCheck"))}</span></div><div class="maritime-readiness-item"><i class="fa-solid fa-file-lines" aria-hidden="true"></i><span><strong>${escapeHtml(text("maritimeCv"))}</strong><small>${escapeHtml(text("maritimeCvDesc"))}</small></span><span class="maritime-readiness-state">${escapeHtml(text("pendingCheck"))}</span></div><div class="maritime-readiness-item"><i class="fa-solid fa-passport" aria-hidden="true"></i><span><strong>${escapeHtml(text("globalPassport"))}</strong><small>${escapeHtml(text("globalPassportDesc"))}</small></span><span class="maritime-readiness-state">${escapeHtml(text("pendingCheck"))}</span></div></div></div><aside class="maritime-auto-control"><h2>${escapeHtml(text("autoControlTitle"))}</h2><p>${escapeHtml(text("autoControlLead"))}</p><button class="maritime-button maritime-button--primary" type="button" data-auto-toggle aria-pressed="${preference.enabled === true}"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>${escapeHtml(text(preference.enabled === true ? "disableAuto" : "enableAuto"))}</button><a class="maritime-button" href="${escapeHtml(portalUrl("maritime-smart-account.html"))}">${escapeHtml(text("prepareCv"))}</a><div class="maritime-notice ${noticeKey ? "is-visible" : ""} ${preference.load_error ? "is-error" : preference.updated_at ? "is-success" : ""}" role="status" aria-live="polite" data-auto-notice>${noticeKey ? escapeHtml(text(noticeKey)) : ""}</div></aside></section>`;
+    root.innerHTML = `<section class="maritime-auto-layout"><div class="maritime-auto-copy"><h2>${escapeHtml(text("autoHeading"))}</h2><p>${escapeHtml(text("autoDescription"))}</p><div class="maritime-readiness-list">${readinessRow("fa-user-check", "profileReady", "profileReadyDesc", profileReady, "maritime-smart-account.html")}${readinessRow("fa-file-lines", "maritimeCv", "maritimeCvDesc", cvReady, "maritime-cv.html")}${readinessRow("fa-passport", "globalPassport", "globalPassportDesc", globalReady, "maritime-documents.html")}</div></div><aside class="maritime-auto-control"><h2>${escapeHtml(text("autoControlTitle"))}</h2><p>${escapeHtml(text("autoControlLead"))}</p><button class="maritime-button maritime-button--primary" type="button" data-auto-toggle aria-pressed="${preference.enabled === true}"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>${escapeHtml(text(preference.enabled === true ? "disableAuto" : "enableAuto"))}</button><a class="maritime-button" href="${escapeHtml(portalUrl("maritime-smart-account.html"))}">${escapeHtml(text("prepareCv"))}</a><div class="maritime-notice ${noticeKey ? "is-visible" : ""} ${preference.load_error ? "is-error" : preference.updated_at ? "is-success" : ""}" role="status" aria-live="polite" data-auto-notice>${noticeKey ? escapeHtml(text(noticeKey)) : ""}</div></aside></section>`;
   }
 
   async function toggleAutoPreference(button) {
