@@ -21,3 +21,15 @@ test("shared email template escapes user values and rejects unsafe action URLs",
   assert.match(html, /&lt;script&gt;/);
   assert.match(html, /A&amp;B/);
 });
+
+test("security and notification banners show each event title over their animation", () => {
+  const application = renderAllonaHubEmail({ title: "Başvurunuz alındı", message: "Başvurunuz kaydedildi." });
+  const complaint = renderAllonaHubEmail({ title: "Şikâyet talebiniz alındı", message: "Talebiniz incelenecek." });
+  const security = renderAllonaHubEmail({ variant: "security", title: "Şifre yenileme bağlantınız", message: "Şifrenizi yenileyin." });
+  assert.match(application, /allonahub-notification\.gif/);
+  assert.match(application, /<h1[^>]*>Başvurunuz alındı<\/h1>/);
+  assert.match(complaint, /<h1[^>]*>Şikâyet talebiniz alındı<\/h1>/);
+  assert.match(security, /allonahub-security\.gif/);
+  assert.match(security, /<h1[^>]*>Şifre yenileme bağlantınız<\/h1>/);
+  assert.doesNotMatch(application, /Şikâyet talebiniz alındı/);
+});
