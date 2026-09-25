@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import vm from "node:vm";
 import Fastify from "fastify";
 
 process.env.SUPABASE_URL = "https://global-cv.test";
@@ -8,6 +9,29 @@ process.env.SUPABASE_ANON_KEY = "test-anon-key";
 process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-key";
 process.env.AUDIT_LOG_ENABLED = "false";
 const { registerMaritimeSmartAccountRoutes } = await import("../../src/routes/maritime-smart-account.js");
+
+test("Global CV displays passport kinds as localized names rather than raw field codes", async () => {
+  const source = (await readFile(new URL("../../../js/allona-maritime-smart-account.js", import.meta.url), "utf8"))
+    .replace("function cvDocumentLabel(kind, label) {", "window.__cvDocumentLabel = function cvDocumentLabel(kind, label) {")
+    .replace("function cvChoiceLabel(value) {", "window.__cvChoiceLabel = function cvChoiceLabel(value) {");
+  const window = { Allona: {} };
+  const language = { value: "tr" };
+  vm.runInNewContext(source, {
+    window,
+    localStorage: { getItem() { return language.value; } },
+    document: { documentElement: { lang: "tr" }, addEventListener() {} },
+    URL,
+    Set
+  });
+  assert.equal(window.__cvDocumentLabel("passport", "ordinary_passport"), "Umuma mahsus pasaport");
+  language.value = "en";
+  assert.equal(window.__cvDocumentLabel("passport", "ordinary_passport"), "Ordinary passport");
+  assert.equal(window.__cvDocumentLabel("passport", "service_passport"), "Service passport");
+  assert.equal(window.__cvChoiceLabel("male"), "Male");
+  language.value = "tr";
+  assert.equal(window.__cvChoiceLabel("male"), "Erkek");
+  assert.equal(window.__cvChoiceLabel("married"), "Evli");
+});
 
 async function harness(t, cvProfile, role = "customer") {
   const userId = "00000000-0000-4000-8000-000000000001";

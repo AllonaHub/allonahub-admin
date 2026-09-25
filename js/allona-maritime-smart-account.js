@@ -433,6 +433,13 @@
   }
 
   function cvDocumentLabel(kind, label) {
+    const passportTypes = {
+      ordinary_passport: ["Umuma mahsus pasaport", "Ümumvətəndaş pasportu", "Жалпы азаматтық паспорт", "Oddiy pasport", "Жөнөкөй паспорт", "Ordinary passport", "Reisepass", "Обычный паспорт", "جواز سفر عادي"],
+      diplomatic_passport: ["Diplomatik pasaport", "Diplomatik pasport", "Дипломатиялық паспорт", "Diplomatik pasport", "Дипломатиялык паспорт", "Diplomatic passport", "Diplomatenpass", "Дипломатический паспорт", "جواز سفر دبلوماسي"],
+      service_passport: ["Hizmet pasaportu", "Xidməti pasport", "Қызметтік паспорт", "Xizmat pasporti", "Кызматтык паспорт", "Service passport", "Dienstpass", "Служебный паспорт", "جواز سفر خدمة"],
+      special_passport: ["Hususi pasaport", "Xüsusi pasport", "Арнайы паспорт", "Maxsus pasport", "Атайын паспорт", "Special passport", "Sonderpass", "Специальный паспорт", "جواز سفر خاص"]
+    };
+    if (passportTypes[label]) return rowText(passportTypes[label]);
     if (label) return label;
     const labels = {
       passport: rowText(missingLabels.passport),
@@ -442,6 +449,18 @@
       visa: text("visa")
     };
     return labels[kind] || text("cvDocumentsTitle");
+  }
+
+  function cvChoiceLabel(value) {
+    const labels = {
+      male: ["Erkek", "Kişi", "Ер", "Erkak", "Эркек", "Male", "Männlich", "Мужчина", "ذكر"],
+      female: ["Kadın", "Qadın", "Әйел", "Ayol", "Аял", "Female", "Weiblich", "Женщина", "أنثى"],
+      single: ["Bekâr", "Subay", "Бойдақ", "Turmush qurmagan", "Бойдок", "Single", "Ledig", "Не состоит в браке", "أعزب"],
+      married: ["Evli", "Evli", "Үйленген", "Turmush qurgan", "Үй-бүлөлүү", "Married", "Verheiratet", "В браке", "متزوج"],
+      divorced: ["Boşanmış", "Boşanmış", "Ажырасқан", "Ajrashgan", "Ажырашкан", "Divorced", "Geschieden", "Разведён", "مطلق"],
+      widowed: ["Dul", "Dul", "Жесір", "Beva", "Жесир", "Widowed", "Verwitwet", "Вдовец/вдова", "أرمل"]
+    };
+    return labels[String(value || "").toLowerCase()] ? rowText(labels[String(value).toLowerCase()]) : value;
   }
 
   function currencyLabel(amount, currency) {
@@ -486,8 +505,8 @@
       cvFact(text("nationality"), nationality),
       cvFact(text("birthDate"), cv.date_of_birth, { date: true }),
       cvFact(text("birthPlace"), cv.place_of_birth),
-      cvFact(text("gender"), cv.gender),
-      cvFact(text("maritalStatus"), cv.marital_status),
+      cvFact(text("gender"), cvChoiceLabel(cv.gender)),
+      cvFact(text("maritalStatus"), cvChoiceLabel(cv.marital_status)),
       cvFact(rowText(missingLabels.medical), medicalValue(cv.medical_fitness))
     ]);
     const contactFacts = cvFacts([
