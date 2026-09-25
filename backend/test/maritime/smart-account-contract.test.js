@@ -291,7 +291,9 @@ test("candidate match preview is server-calculated from saved Maritime CV withou
   assert.match(routes, /requireCustomer\(request, "maritime\.candidate_matches\.read"\)/);
   assert.match(routes, /input\.cvProfile\.profile_payload\?\.data_origin !== "user_entered_maritime_cv"/);
   assert.match(routes, /matchMaritimeJobs\(snapshot, jobs\)\.filter/);
-  assert.match(routes, /job_id: match\.job_id, eligible: true, hard_gate_status: "passed"/);
+  assert.match(routes, /filter\(\(match\) => match\.rank_compatible === true\)/);
+  assert.match(routes, /rank_compatible: true, eligible: match\.eligible === true/);
+  assert.match(routes, /hard_gate_status: match\.hard_gate_status/);
 });
 
 test("every smart-account label has a complete nine-language row", async () => {

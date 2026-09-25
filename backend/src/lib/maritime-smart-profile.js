@@ -968,6 +968,7 @@ export function matchMaritimeJob(smartProfile, job) {
     detail_label: text(object(job.metadata).detail_label || object(job.structured_requirements).contract_label),
     score,
     grade: score >= 85 ? "excellent" : score >= 70 ? "strong" : score >= 50 ? "potential" : "weak",
+    rank_compatible: rankRequired && rankMatched,
     eligible,
     hard_gate_status: !requirementsComplete ? "needs_data" : hardGatePassed ? "passed" : "failed",
     components,

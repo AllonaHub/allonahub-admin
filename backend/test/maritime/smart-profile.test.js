@@ -375,7 +375,23 @@ test("every MariPartner job rank matches the same rank saved in Maritime CV", ()
       hard_gates: { required_certificate_codes: ["SP", "SH", "SI", "SL", "SO"], minimum_sea_service_days: 0, medical_required: true }
     });
     assert.equal(match.components[0].status, "passed", rankCode);
+    assert.equal(match.rank_compatible, true, rankCode);
   }
+});
+
+test("a matching rank remains discoverable when certificates or sea service block application", () => {
+  const profile = { ...cvProfile, profile_payload: {
+    ...cvProfile.profile_payload, data_origin: "user_entered_maritime_cv",
+    rank: "Kaptan", suitable_positions: ["Kaptan"], certificate_codes: []
+  } };
+  const match = matchMaritimeJob(smart({ cvProfile: profile }), {
+    id: "captain-opening", partner_id: "30000000-0000-4000-8000-000000000001",
+    job_reference: "MJ-CAPTAIN", job_title: "Kaptan", rank_code: "master",
+    hard_gates: { required_certificate_codes: ["II/2"], minimum_sea_service_days: 720, medical_required: true }
+  });
+  assert.equal(match.rank_compatible, true);
+  assert.equal(match.eligible, false);
+  assert.ok(match.missing_requirements.some((value) => value.startsWith("sea_service_days:")));
 });
 
 test("matches localized rank names by canonical code without accepting a different rank", () => {

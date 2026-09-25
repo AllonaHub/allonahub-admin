@@ -178,14 +178,18 @@
     context.fillStyle = "#ffffff";
     context.fillRect(0, 0, OUTPUT_WIDTH, OUTPUT_HEIGHT);
     context.drawImage(image, crop.left, crop.top, crop.width, crop.height, 0, 0, OUTPUT_WIDTH, OUTPUT_HEIGHT);
-    let backgroundMethod = "connected_border";
+    let backgroundMethod = "original_preserved";
     let backgroundRatio = 0;
-    try {
-      await whitenWithPersonMask(canvas, context);
-      backgroundMethod = "local_person_segmentation";
-      backgroundRatio = 1;
-    } catch (error) {
-      backgroundRatio = whitenConnectedBackground(context, OUTPUT_WIDTH, OUTPUT_HEIGHT);
+    const border = dominantBorderColor(context.getImageData(0, 0, OUTPUT_WIDTH, OUTPUT_HEIGHT).data, OUTPUT_WIDTH, OUTPUT_HEIGHT);
+    if (Math.min(border.red, border.green, border.blue) < 238) {
+      try {
+        await whitenWithPersonMask(canvas, context);
+        backgroundMethod = "local_person_segmentation";
+        backgroundRatio = 1;
+      } catch (error) {
+        // Preserve the original pixels when segmentation is unavailable. Border-color
+        // flood filling can erase skin, hair or clothing in edited portraits.
+      }
     }
     const blob = await canvasBlob(canvas);
     if (blob.size > 2 * 1024 * 1024) throw new Error("PHOTO_ENCODE_TOO_LARGE");
@@ -195,7 +199,7 @@
       width: OUTPUT_WIDTH,
       height: OUTPUT_HEIGHT,
       background_ratio: backgroundRatio,
-      needs_review: backgroundMethod !== "local_person_segmentation" && backgroundRatio < 0.12,
+      needs_review: backgroundMethod !== "local_person_segmentation" && Math.min(border.red, border.green, border.blue) < 238,
       background_method: backgroundMethod,
       face_pixels_regenerated: false
     };

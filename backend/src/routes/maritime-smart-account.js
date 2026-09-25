@@ -1626,8 +1626,9 @@ export function registerMaritimeSmartAccountRoutes(app) {
     }
     const jobs = await verifiedOpenJobs();
     const snapshot = buildMaritimeSmartProfile(input);
-    const matches = matchMaritimeJobs(snapshot, jobs).filter((match) => match.eligible === true)
-      .map((match) => ({ job_id: match.job_id, eligible: true, hard_gate_status: "passed" }));
+    const matches = matchMaritimeJobs(snapshot, jobs).filter((match) => match.rank_compatible === true)
+      .map((match) => ({ job_id: match.job_id, rank_compatible: true, eligible: match.eligible === true,
+        hard_gate_status: match.hard_gate_status }));
     return { ok: true, matches };
   });
 
