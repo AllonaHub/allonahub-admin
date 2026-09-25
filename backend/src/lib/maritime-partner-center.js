@@ -71,7 +71,7 @@ export const MARIPARTNER_JOB_RANKS = Object.freeze({
   engine_cadet: "Makine Kadeti",
   engine_bosun: "Makine Lostromosu",
   able_engine_rating: "Usta Yağcı / Usta Makine Tayfası (STCW III/5)",
-  motorman: "Motorman / Motorcu",
+  motorman: "Motorman / Motorcu (STCW III/4)",
   oiler: "Yağcı",
   wiper: "Silici / Makine Tayfası",
   fitter: "Fitter",

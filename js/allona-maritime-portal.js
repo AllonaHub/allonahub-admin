@@ -416,8 +416,10 @@
           id: item.id,
           smartJobId: item.smart_job_id || null,
           reference: `AH-${String(item.id).slice(0, 8).toUpperCase()}`,
-          title: compact(item.title, 140),
-          summary: compact(item.summary, 360),
+          title: requirements.rank_code === "motorman" ? "Motorman / Motorcu (STCW III/4)" : compact(item.title, 140),
+          summary: requirements.rank_code === "motorman"
+            ? compact(item.summary, 360).replace(/Motorman \/ Motorcu(?! \(STCW III\/4\))/g, "Motorman / Motorcu (STCW III/4)")
+            : compact(item.summary, 360),
           location: compact(item.location_label, 120) || text("globalRoute"),
           contract: compact(item.detail_label, 120) || text("sixMonths"),
           experienceMonths: Number(requirements.minimum_sea_service_months) || 0,
@@ -533,6 +535,7 @@
 
   function jobCard(job) {
     const gate = jobApplicationGate(job);
+    const engineRatingCode = job.rankCode === "able_engine_rating" || job.rankCode === "engine_bosun" ? "III/5" : ["motorman", "oiler"].includes(job.rankCode) ? "III/4" : "";
     const vesselFacts = [job.vesselType, job.vesselDwt ? job.vesselDwt.toLocaleString(localeCodes[language()] || "tr-TR") + " DWT" : "", job.vesselGt ? job.vesselGt.toLocaleString(localeCodes[language()] || "tr-TR") + " GT" : "", job.vesselFlag].filter(Boolean).join(" · ");
     const highlights = job.hasOperationalDetails ? `<div class="maritime-job-highlights"><strong>${escapeHtml(job.salary || "-")}</strong><span>${escapeHtml(text("minimumExperience"))}: ${escapeHtml(String(job.experienceMonths))} ${escapeHtml(text("months"))}</span><span>${escapeHtml(text("joiningDate"))}: ${escapeHtml(job.joiningDate ? dateLabel(job.joiningDate) : "-")}</span></div>` : "";
     const metadata = job.hasOperationalDetails
@@ -540,7 +543,7 @@
       : `<div class="maritime-job-meta"><span><b>${escapeHtml(text("department"))}</b>${escapeHtml(departmentLabel(job.department))}</span><span><b>${escapeHtml(text("contract"))}</b>${escapeHtml(job.contract)}</span><span><b>${escapeHtml(text("route"))}</b>${escapeHtml(job.location)}</span></div>`;
     const matched = session && candidateMatches.find((match) => match.job_id === job.smartJobId && match.rank_compatible === true);
     return `<article class="maritime-job-card" data-job-id="${escapeHtml(job.id)}" data-department="${escapeHtml(job.department)}">
-      <div class="maritime-job-head"><div class="maritime-job-title"><span class="maritime-reference">${escapeHtml(job.reference)}</span><h3>${escapeHtml(job.title)}</h3></div><div class="maritime-job-badges">${matched ? `<span class="maritime-match-badge">${escapeHtml(text("rankCompatible"))}</span>` : ""}<span class="maritime-verified-badge"><i class="fa-solid fa-circle-check" aria-hidden="true"></i>${escapeHtml(text("verifiedCompany"))}</span></div></div>
+      <div class="maritime-job-head"><div class="maritime-job-title"><span class="maritime-reference">${escapeHtml(job.reference)}</span><h3>${escapeHtml(job.title)}</h3>${engineRatingCode ? `<span class="maritime-reference">STCW ${engineRatingCode}</span>` : ""}</div><div class="maritime-job-badges">${matched ? `<span class="maritime-match-badge">${escapeHtml(text("rankCompatible"))}</span>` : ""}<span class="maritime-verified-badge"><i class="fa-solid fa-circle-check" aria-hidden="true"></i>${escapeHtml(text("verifiedCompany"))}</span></div></div>
       ${highlights}
       <p class="maritime-job-description">${escapeHtml(job.summary)}</p>
       ${metadata}

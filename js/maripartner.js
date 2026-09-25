@@ -23,7 +23,7 @@
     master: "Kaptan", chief_officer: "Baş Zabit", second_officer: "İkinci Zabit", third_officer: "Üçüncü Zabit", deck_cadet: "Güverte Kadeti",
     bosun: "Reis / Güverte Lostromosu", able_seaman: "Usta Gemici", ordinary_seaman: "Gemici", deck_boy: "Miço / Güverte Tayfası",
     chief_engineer: "Baş Mühendis", second_engineer: "İkinci Mühendis", third_engineer: "Üçüncü Mühendis", fourth_engineer: "Dördüncü Mühendis", engine_cadet: "Makine Kadeti",
-    engine_bosun: "Makine Lostromosu", able_engine_rating: "Usta Yağcı / Usta Makine Tayfası (STCW III/5)", motorman: "Motorman / Motorcu", oiler: "Yağcı", wiper: "Silici / Makine Tayfası",
+    engine_bosun: "Makine Lostromosu", able_engine_rating: "Usta Yağcı / Usta Makine Tayfası (STCW III/5)", motorman: "Motorman / Motorcu (STCW III/4)", oiler: "Yağcı", wiper: "Silici / Makine Tayfası",
     fitter: "Fitter", welder: "Kaynakçı", eto: "Elektro-Teknik Zabiti (ETO)", electro_technical_rating: "Elektro-Teknik Tayfa (ETR)", pumpman: "Pompaman / Pumpman",
     chief_cook: "Baş Aşçı", cook: "Aşçı", steward: "Kamarot / Steward", electrician: "Elektro-Teknik Zabiti (eski kayıt)"
   });

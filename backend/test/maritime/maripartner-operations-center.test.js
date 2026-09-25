@@ -227,6 +227,16 @@ test("smart job presentation never exposes vessel identity and converts experien
   assert.doesNotMatch(JSON.stringify(result), /Gizli Gemi|9389370/);
 });
 
+test("public engine rating jobs visibly distinguish STCW III/4 from III/5", () => {
+  const vessel = { vessel_type: "Genel Kargo" };
+  const motorman = buildMariPartnerJobPresentation({ rank_code: "motorman" }, vessel);
+  const ableRating = buildMariPartnerJobPresentation({ rank_code: "able_engine_rating" }, vessel);
+  assert.match(motorman.title, /III\/4/);
+  assert.match(ableRating.title, /III\/5/);
+  assert.notEqual(motorman.title, ableRating.title);
+  assert.match(read("js/allona-maritime-portal.js"), /job\.rankCode === "able_engine_rating"[\s\S]*?"III\/5"[\s\S]*?"motorman"[\s\S]*?"III\/4"/);
+});
+
 test("automatic publication is deny-by-default unless vessel, route and company confirmation are safe", () => {
   const input = {
     current_position_confirmed: true,
