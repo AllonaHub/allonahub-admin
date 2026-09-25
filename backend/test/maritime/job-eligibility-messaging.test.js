@@ -149,7 +149,7 @@ test("manual submissions check saved rank and explicit document consent on the s
 });
 
 test("database firewall permits consented manual rank matches without relaxing automatic matching", async () => {
-  const migration = await readFile(new URL("../../../supabase/migrations/20260925023000_allow_rank_matched_manual_maritime_applications.sql", import.meta.url), "utf8");
+  const migration = await readFile(new URL("../../../supabase/migrations/20260925200000_allow_rank_matched_manual_maritime_applications.sql", import.meta.url), "utf8");
   assert.match(migration, /matching_source' = 'maritime_cv_rank'/);
   assert.match(migration, /documents_share_confirmed' is distinct from 'true'/);
   assert.match(migration, /cv_rank <> job_rank/);
