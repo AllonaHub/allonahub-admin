@@ -86,7 +86,8 @@ test("job gate directs candidates with no documents to document upload", async (
   assert.equal(gate.disabled, false);
   const action = window.__jobApplicationAction({ id: "listing" }, gate);
   assert.match(action, /<button[^>]+data-apply-job="listing"/);
-  assert.match(action, /Başvur ve belgelerimi bu firmayla paylaş<\/button>/);
+  assert.match(action, /aria-label="Başvur ve belgelerimi bu firmayla paylaş"/);
+  assert.match(action, />Başvur<\/button>/);
   assert.doesNotMatch(action, /maritime-documents\.html/);
   assert.match(window.__applicationDialogMarkup(), /<dialog[^>]+data-application-dialog/);
   assert.doesNotMatch(source, /Uygunluk doğrulanamadı/);

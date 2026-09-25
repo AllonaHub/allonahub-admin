@@ -384,6 +384,10 @@ body.maritime-portal-page[data-theme="white"] .maritime-match-counter {
 .maritime-job-card .maritime-job-description {
   font-size: 12px;
   line-height: 1.45;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
 .maritime-job-card .maritime-job-meta span {
@@ -393,6 +397,28 @@ body.maritime-portal-page[data-theme="white"] .maritime-match-counter {
 .maritime-job-card .maritime-job-highlights > * {
   min-height: 36px;
   padding: 6px 8px;
+}
+
+.maritime-job-card .maritime-job-meta {
+  gap: 5px;
+}
+
+.maritime-job-card .maritime-job-meta span {
+  min-height: 0;
+  padding: 6px 8px;
+}
+
+.maritime-job-card .maritime-job-action-group {
+  width: auto;
+}
+
+.maritime-job-card .maritime-job-action-group .maritime-button {
+  width: auto;
+  min-width: 105px;
+  min-height: 40px;
+  padding: 7px 14px;
+  font-size: 12px;
+  white-space: nowrap;
 }
 
 .maritime-job-head,

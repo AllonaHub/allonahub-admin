@@ -522,8 +522,8 @@
 
   function jobApplicationAction(job, gate) {
     const icon = gate.applied ? "fa-check" : "fa-paper-plane";
-    const content = `<i class="fa-solid ${icon}" aria-hidden="true"></i>${escapeHtml(text(gate.applied ? gate.label : "shareDocumentsConsent"))}`;
-    return `<button class="maritime-button maritime-button--primary" type="button" data-apply-job="${escapeHtml(job.id)}" ${gate.applied ? "disabled" : ""}>${content}</button>`;
+    const content = `<i class="fa-solid ${icon}" aria-hidden="true"></i>${escapeHtml(text(gate.applied ? gate.label : "apply"))}`;
+    return `<button class="maritime-button maritime-button--primary" type="button" data-apply-job="${escapeHtml(job.id)}" aria-label="${escapeHtml(text(gate.applied ? gate.label : "shareDocumentsConsent"))}" ${gate.applied ? "disabled" : ""}>${content}</button>`;
   }
 
   function jobCard(job) {
