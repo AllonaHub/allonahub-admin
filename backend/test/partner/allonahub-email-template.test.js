@@ -8,6 +8,9 @@ test("shared email template keeps welcome copy readable without animation", () =
   assert.match(html, /allonahub-welcome\.gif/);
   assert.match(html, /https:\/\/allonahub.com\/pages\/account\/user.html/);
   assert.match(html, /background:#08243d/);
+  assert.match(html, /border-top:2px solid #10bde8/);
+  assert.match(html, /https:\/\/www\.instagram\.com\/allonahub/);
+  assert.doesNotMatch(html, /https:\/\/www\.linkedin\.com\/company\/allonahub/);
 });
 
 test("shared email template escapes user values and rejects unsafe action URLs", () => {
