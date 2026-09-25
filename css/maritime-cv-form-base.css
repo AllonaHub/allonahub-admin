@@ -370,6 +370,10 @@ textarea:focus{
   box-shadow:inset 0 0 0 1px rgba(21,151,255,.28);
 }
 
+.cvPhotoFrame:has(img:not([hidden])){
+  aspect-ratio:auto;
+}
+
 .photoCell img,
 .emptyPhoto{
   position:absolute;
@@ -383,6 +387,14 @@ textarea:focus{
   object-position:center;
   background:#fff;
   display:block;
+}
+
+.cvPhotoFrame img:not([hidden]){
+  position:static;
+  width:100%;
+  height:auto;
+  max-height:260px;
+  object-fit:contain;
 }
 
 .emptyPhoto{
@@ -530,13 +542,16 @@ textarea:focus{
   }
 
   .photoCell{
-    width:72px;
-    max-width:24vw;
+    width:104px;
+    max-width:32vw;
   }
 
   .cvPhotoFrame{
     width:100%;
-    max-height:100px;
+  }
+
+  .cvPhotoFrame img:not([hidden]){
+    max-height:140px;
   }
 }
 
@@ -671,8 +686,12 @@ body{
 .cvPhotoFrame{
 
     width:38mm!important;
-    aspect-ratio:3 / 4!important;
+    aspect-ratio:auto!important;
 
+}
+
+.cvPhotoFrame img:not([hidden]){
+    max-height:52mm!important;
 }
 
 .cvBrand img{

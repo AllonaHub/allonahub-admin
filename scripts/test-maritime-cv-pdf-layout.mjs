@@ -13,6 +13,21 @@ try {
   await page.route("**/v1/maritime/cv-profile**", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, cv: null, profile_status: "draft", identity_lock: { locked: false, fields: [] } }) }));
   await page.goto(target, { waitUntil: "networkidle" });
   await page.waitForFunction(() => document.body.dataset.maritimeCvReady === "true");
+  for (const width of [320, 390, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.evaluate(() => {
+      const photo = document.getElementById("cv_photo");
+      photo.src = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="450"><rect width="300" height="450" fill="blue"/></svg>');
+      photo.hidden = false;
+      document.getElementById("emptyPhoto").hidden = true;
+    });
+    await page.locator("#cv_photo").evaluate(image => image.decode());
+    const dimensions = await page.locator(".cvPhotoFrame").evaluate(frame => {
+      const photo = frame.querySelector("img");
+      return { frameHeight: frame.getBoundingClientRect().height, photoHeight: photo.getBoundingClientRect().height };
+    });
+    assert.ok(Math.abs(dimensions.frameHeight - dimensions.photoHeight) < 2, `Photo frame has empty height at ${width}px`);
+  }
   await page.evaluate(() => {
     window.validateMaritimeCV = () => true;
     window.AllonaMaritimeCommerce = { authorizeOrCheckout: async () => true };
