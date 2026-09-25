@@ -1,15 +1,15 @@
 const BRAND = "AllonaHub";
 const SOCIAL_LINKS = [
-  ["WhatsApp", "WA", "https://wa.me/905427781868"],
-  ["Instagram", "IG", "https://www.instagram.com/allonahub"],
-  ["X", "X", "https://x.com/allonahub"],
-  ["YouTube", "▶", "https://www.youtube.com/@allonahub"],
-  ["Nsosyal", "N", "https://nsosyal.com/allonahub"],
-  ["TikTok", "♪", "https://www.tiktok.com/@allonahub"]
+  ["WhatsApp", "whatsapp", "https://wa.me/905427781868"],
+  ["Instagram", "instagram", "https://www.instagram.com/allonahub"],
+  ["X", "x", "https://x.com/allonahub"],
+  ["YouTube", "youtube", "https://www.youtube.com/@allonahub"],
+  ["Nsosyal", "nsosyal", "https://nsosyal.com/allonahub"],
+  ["TikTok", "tiktok", "https://www.tiktok.com/@allonahub"]
 ];
 
 export function renderAllonaHubSocialFooter() {
-  return `<div style="border-top:2px solid #10bde8;padding-top:15px;margin-top:24px;text-align:center"><p style="margin:0 0 12px;color:#496176;font-size:12px">AllonaHub sosyal hesapları</p>${SOCIAL_LINKS.map(([label, symbol, url]) => `<a href="${url}" aria-label="${label}" title="${label}" style="display:inline-block;min-width:30px;margin:0 3px 7px;padding:7px 4px;background:#075f9e;color:#ffffff;text-align:center;text-decoration:none;font:bold 12px Arial;border-radius:4px">${symbol}</a>`).join("")}</div>`;
+  return `<div style="border-top:2px solid #10bde8;padding-top:15px;margin-top:24px;text-align:center"><p style="margin:0 0 12px;color:#496176;font-size:12px">AllonaHub sosyal hesapları</p>${SOCIAL_LINKS.map(([label, asset, url]) => `<a href="${url}" aria-label="${label}" title="${label}" style="display:inline-block;margin:0 3px 7px;text-decoration:none"><img src="https://allonahub.com/images/email/social/${asset}.png" alt="${label}" width="32" height="32" style="display:block;width:32px;height:32px;border:0;border-radius:6px"></a>`).join("")}</div>`;
 }
 
 export function escapeEmailHtml(value) {

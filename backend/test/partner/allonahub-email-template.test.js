@@ -10,6 +10,8 @@ test("shared email template keeps welcome copy readable without animation", () =
   assert.match(html, /background:#08243d/);
   assert.match(html, /border-top:2px solid #10bde8/);
   assert.match(html, /https:\/\/www\.instagram\.com\/allonahub/);
+  assert.match(html, /images\/email\/social\/instagram\.png/);
+  assert.match(html, /images\/email\/social\/nsosyal\.png/);
   assert.doesNotMatch(html, /https:\/\/www\.linkedin\.com\/company\/allonahub/);
 });
 
