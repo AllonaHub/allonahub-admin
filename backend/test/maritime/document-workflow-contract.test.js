@@ -20,12 +20,12 @@ const dockerfileUrl = new URL("../../Dockerfile", import.meta.url);
 const deployUrl = new URL("../../../deploy/maritime/apply-maritime-migrations.sh", import.meta.url);
 const schemaCheckUrl = new URL("../../../deploy/maritime/check-maritime-hiring-core.sh", import.meta.url);
 
-test("photo preparation preserves portrait pixels when background is white or segmentation fails", async () => {
+test("photo preparation fits the complete portrait without cropping or segmentation", async () => {
   const source = await readFile(photoUiUrl, "utf8");
   const prepare = source.slice(source.indexOf("async function prepare(file)"), source.indexOf("window.AllonaMaritimePhoto"));
-  assert.match(prepare, /Math\.min\(border\.red, border\.green, border\.blue\) < 238/);
-  assert.doesNotMatch(prepare, /whitenConnectedBackground\(/);
-  assert.match(prepare, /backgroundMethod = "original_preserved"/);
+  assert.match(prepare, /Math\.min\(OUTPUT_WIDTH \/ image\.naturalWidth, OUTPUT_HEIGHT \/ image\.naturalHeight\)/);
+  assert.doesNotMatch(source, /portraitCrop|whitenWithPersonMask|whitenConnectedBackground/);
+  assert.match(prepare, /background_method: "original_preserved"/);
 });
 
 test("document storage and extracted records remain private until explicit confirmation", async () => {

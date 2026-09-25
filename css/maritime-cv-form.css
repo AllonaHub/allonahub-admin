@@ -38,6 +38,8 @@ body.cv-form-page.pdf-capture .cvPage {
   width: 900px !important;
   min-height: 1270px !important;
   padding: 34px !important;
+  height: auto !important;
+  overflow: visible !important;
 }
 
 body.cv-form-page .cv-toolbar button:disabled {

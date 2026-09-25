@@ -684,7 +684,7 @@ body{
 
 .noteBox{
 
-    min-height:190mm!important;
+    min-height:0!important;
 
 }
 

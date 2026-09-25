@@ -111,15 +111,19 @@
         if (index > 0) pdf.addPage();
         const pageWidth = pdf.internal.pageSize.getWidth();
         const pageHeight = pdf.internal.pageSize.getHeight();
-        pdf.addImage(imageData, "JPEG", 0, 0, pageWidth, pageHeight, undefined, "FAST");
+        const imageRatio = canvas.height / canvas.width;
+        const pageRatio = pageHeight / pageWidth;
+        const renderedWidth = imageRatio > pageRatio ? pageHeight / imageRatio : pageWidth;
+        const renderedHeight = imageRatio > pageRatio ? pageHeight : pageWidth * imageRatio;
+        pdf.addImage(imageData, "JPEG", (pageWidth - renderedWidth) / 2, 0, renderedWidth, renderedHeight, undefined, "FAST");
         const pageRect = pages[index].getBoundingClientRect();
         if (pageRect.width > 0 && pageRect.height > 0) {
           pages[index].querySelectorAll("a.cv-service-document-link[href]").forEach(anchor => {
             const rect = anchor.getBoundingClientRect();
-            const x = Math.max(0, (rect.left - pageRect.left) * pageWidth / pageRect.width);
-            const y = Math.max(0, (rect.top - pageRect.top) * pageHeight / pageRect.height);
-            const width = Math.min(pageWidth - x, Math.max(2, rect.width * pageWidth / pageRect.width));
-            const height = Math.min(pageHeight - y, Math.max(2, rect.height * pageHeight / pageRect.height));
+            const x = Math.max(0, (pageWidth - renderedWidth) / 2 + (rect.left - pageRect.left) * renderedWidth / pageRect.width);
+            const y = Math.max(0, (rect.top - pageRect.top) * renderedHeight / pageRect.height);
+            const width = Math.min(pageWidth - x, Math.max(2, rect.width * renderedWidth / pageRect.width));
+            const height = Math.min(pageHeight - y, Math.max(2, rect.height * renderedHeight / pageRect.height));
             if (/^https:\/\/allonahub\.com\//i.test(anchor.href)) pdf.link(x, y, width, height, { url: anchor.href });
           });
         }

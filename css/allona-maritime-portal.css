@@ -3440,7 +3440,9 @@ body.maritime-documents-page[data-theme="white"] :where(.maritime-global-passpor
 .maritime-cv-avatar img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center;
+  background: #ffffff;
 }
 
 .maritime-cv-sidebar-brand {
@@ -5021,7 +5023,7 @@ body.maritime-smart-account-page.maritime-pdf-capture .maritime-cv-layout--v4 {
 }
 
 .maritime-cv-profile-head .maritime-cv-avatar img {
-  object-position: center 22%;
+  object-position: center;
 }
 
 .maritime-cv-profile-head .maritime-cv-head {

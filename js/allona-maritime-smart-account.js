@@ -954,13 +954,12 @@
     const candidates = Array.from(layout.querySelectorAll([
       ".maritime-cv-profile-head",
       ".maritime-cv-v4-section",
-      ".maritime-cv-v4-grid",
       ".maritime-cv-record",
       ".maritime-cv-service-row",
       ".maritime-cv-v4-notes"
     ].join(","))).map(function (element) {
       const rect = element.getBoundingClientRect();
-      return Math.round((rect.bottom - layoutRect.top) * scale);
+      return Math.round((rect.top - layoutRect.top) * scale);
     }).filter(function (value) {
       return value > 0 && value < layoutRect.height * scale;
     });
@@ -979,7 +978,7 @@
 
     while (start < canvas.height) {
       const target = Math.min(canvas.height, start + maximumSliceHeight);
-      const minimumUsefulBreak = start + Math.floor(maximumSliceHeight * 0.55);
+      const minimumUsefulBreak = start + Math.floor(maximumSliceHeight * 0.68);
       const safeBreaks = breakpoints.filter(function (point) { return point > minimumUsefulBreak && point <= target; });
       const end = target === canvas.height ? target : (safeBreaks.at(-1) || target);
       const sliceHeight = Math.max(1, end - start);
