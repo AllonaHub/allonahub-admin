@@ -594,7 +594,13 @@ async function partnerDashboard(partnerId, userId) {
       }
     };
   });
-  const matchRows = (assertDb(matches, "Eşleşmeler okunamadı.") || []).filter((match) => match.hard_gate_status === "passed" && match.metadata?.eligible === true && (!match.stale_after || new Date(match.stale_after).getTime() > Date.now()) && roomRows.some((room) => room.seafarer_user_id === match.seafarer_user_id && (!match.job_id || room.job_id === match.job_id)));
+  const currentMatches = (assertDb(matches, "Eşleşmeler okunamadı.") || []).filter((match) => match.hard_gate_status === "passed" && match.metadata?.eligible === true && (!match.stale_after || new Date(match.stale_after).getTime() > Date.now()));
+  const matchRows = currentMatches.filter((match) => roomRows.some((room) => room.seafarer_user_id === match.seafarer_user_id && room.job_id === match.job_id));
+  const matchSummaries = jobRows.filter((job) => job.status === "open").map((job) => ({
+    job_id: job.id,
+    eligible_count: new Set(currentMatches.filter((match) => match.job_id === job.id).map((match) => match.seafarer_user_id)).size,
+    authorized_count: new Set(matchRows.filter((match) => match.job_id === job.id).map((match) => match.seafarer_user_id)).size
+  }));
   const slaRows = (assertDb(slas, "Süreç süreleri okunamadı.") || []).map((item) => ({ ...item, status: slaStatus({ dueAt: item.extended_until || item.due_at, completedAt: item.completed_at, now }) }));
   const passRows = (assertDb(passes, "İnceleme geçişleri okunamadı.") || []).map((item) => ({ ...item, status: reviewerPassState(item) }));
   const refreshRequestRows = assertDb(refreshRequests, "Aday güncelleme yanıtları okunamadı.") || [];
@@ -646,6 +652,7 @@ async function partnerDashboard(partnerId, userId) {
     vessels: vesselRows,
     candidate_rooms: safeRooms,
     matches: matchRows,
+    match_summaries: matchSummaries,
     applications,
     interviews,
     offers,
@@ -671,7 +678,7 @@ async function partnerDashboard(partnerId, userId) {
     metric_snapshots: assertDb(metricsResult, "Değer ölçümleri okunamadı.") || [],
     live_metrics: [
       { metric_key: "authorized_candidate_count", metric_value: safeRooms.length, explanation: "Aktif ve süresi dolmamış özel aday odaları" },
-      { metric_key: "eligible_match_count", metric_value: matchRows.length, explanation: "Güncel hard-gate kurallarını geçen eşleşmeler" },
+      { metric_key: "eligible_match_count", metric_value: matchSummaries.reduce((total, item) => total + item.eligible_count, 0), explanation: "Güncel hard-gate kurallarını geçen eşleşmeler" },
       { metric_key: "approved_employer_reference_count", metric_value: referenceRows.filter((item) => item.status === "approved").length, explanation: "Moderasyon ve gerekiyorsa ikinci inceleme tamamlanmış referanslar" },
       { metric_key: "overdue_sla_count", metric_value: overdueSteps, explanation: "Sunucu saatine göre hedefi geçmiş açık süreç adımları" }
     ],
@@ -686,7 +693,7 @@ async function partnerDashboard(partnerId, userId) {
     counters: {
       open_jobs: jobRows.filter((item) => item.status === "open").length,
       authorized_candidates: safeRooms.length,
-      eligible_matches: matchRows.length,
+      eligible_matches: matchSummaries.reduce((total, item) => total + item.eligible_count, 0),
       ready_to_join: readyToJoin,
       active_pipeline: activePipeline,
       pending_interviews: pendingInterviews,

@@ -5,7 +5,7 @@
   const t = (source) => I18n?.t(source) || source;
   const applyI18n = (root) => { I18n?.apply(root || document.body); };
   const state = { session: null, data: null, partnerId: "", activePanel: "", panelOrigin: "", lastFocus: null, pendingLogoPath: null, finance: null, selectedRoomId: "", routeSync: false, candidateFilters: {}, privateCandidates: [], privateImport: null };
-  const titles = { jobs: "Şirket İlanları", "job-create": "Yeni İlan Oluştur", "job-bulk-create": "Toplu İlan Oluştur", vessels: "Gemilerim", "vessel-create": "Gemi Ekle", joining: "Yerleştirme", candidates: "Yetkili Adaylar", "private-pool": "Aday Havuzu", "candidate-detail": "Aday Detayı", applications: "Başvurular ve İşe Alım Dosyaları", notifications: "Şirket Bildirimleri", finance: "Finans ve Faturalandırma", company: "Şirket Hesabı", verification: "Doğrulama Şartları", refresh: "Havuzu Güncelle", evidence: "Kanıt Kontrolü", sla: "Süreç Süreleri", handover: "Dosya Devri", review: "Güvenli İnceleme", references: "Doğrulanmış Referans", governance: "Karar ve Değer Merkezi", "ready-pool": "Hazır Aday Havuzu", matches: "Akıllı Eşleşmeler", urgent: "Acil Personel ve Replacement", pending: "Bekleyen İşlemler", pipeline: "Hiring Pipeline", interviews: "Görüşmeler", offers: "Teklifler ve Kontratlar", "active-crew": "Aktif Mürettebat", relief: "Relief ve Rehire" };
+  const titles = { jobs: "Şirket İlanları", "job-create": "Yeni İlan Oluştur", "job-bulk-create": "Toplu İlan Oluştur", vessels: "Gemilerim", "vessel-create": "Gemi Ekle", joining: "Yerleştirme", candidates: "Yetkili Adaylar", "private-pool": "Aday Havuzu", "candidate-detail": "Aday Detayı", applications: "Başvurular ve İşe Alım Dosyaları", notifications: "Şirket Bildirimleri", finance: "Finans ve Faturalandırma", company: "Şirket Hesabı", verification: "Doğrulama Şartları", refresh: "Havuzu Güncelle", evidence: "Kanıt Kontrolü", sla: "Süreç Süreleri", handover: "Dosya Devri", review: "Güvenli İnceleme", references: "Doğrulanmış Referans", governance: "Karar ve Değer Merkezi", "ready-pool": "Hazır Aday Havuzu", matches: "Akıllı Eşleşmeler", urgent: "Acil Personel ve Replacement", pending: "Bekleyen İşlemler", pipeline: "Başvuran Adaylar", interviews: "Görüşmeler", offers: "Teklifler ve Kontratlar", "active-crew": "Aktif Mürettebat", relief: "Relief ve Rehire" };
   const templates = { jobs: "mpJobsTemplate", "job-create": "mpJobCreateTemplate", "job-bulk-create": "mpJobBulkTemplate", vessels: "mpVesselsTemplate", "vessel-create": "mpVesselCreateTemplate", joining: "mpJoiningTemplate", candidates: "mpCandidatesTemplate", "private-pool": "mpPrivatePoolTemplate", "candidate-detail": "mpPersonnelDataTemplate", applications: "mpApplicationsTemplate", notifications: "mpNotificationsTemplate", finance: "mpFinanceTemplate", company: "mpCompanyTemplate", verification: "mpVerificationTemplate", refresh: "mpRefreshTemplate", evidence: "mpEvidenceTemplate", sla: "mpSlaTemplate", handover: "mpHandoverTemplate", review: "mpReviewTemplate", references: "mpReferencesTemplate", governance: "mpGovernanceTemplate", "ready-pool": "mpReadyPoolTemplate", matches: "mpPersonnelDataTemplate", pending: "mpPersonnelDataTemplate", pipeline: "mpPersonnelDataTemplate", interviews: "mpPersonnelDataTemplate", offers: "mpPersonnelDataTemplate", "active-crew": "mpPersonnelDataTemplate", relief: "mpPersonnelDataTemplate", urgent: "mpUrgentTemplate" };
   const standalonePanels = new Set(["jobs", "job-create", "job-bulk-create", "vessels", "vessel-create", "joining", "candidates", "private-pool", "applications", "notifications", "finance", "company", "verification"]);
   const legacyViewAliases = Object.freeze({ hiring: "pipeline", "smart-matches": "matches", candidates: "ready-pool", "urgent-crew": "urgent", "crew-matrix": "active-crew", "crew-pool": "ready-pool", interviews: "interviews", "offers-contracts": "offers", "active-crew": "active-crew", "relief-rehire": "relief", references: "references", verification: "verification", team: "company", analytics: "governance" });
@@ -490,7 +490,7 @@
       }
       const documentPane = $("[data-mp-candidate-pane='documents']", target);
       documentPane.innerHTML = `<p class="mp-note">Adayın başvuru sırasında verdiği belge izni veya sonradan onayladığı erişim geçerli olmalıdır. Bağlantılar kısa süreli ve erişimler kayıtlıdır.</p><div class="mp-history-actions"><button type="button" data-mp-candidate-documents="${escape(room.id)}">Belgeleri Gör</button><button type="button" data-mp-document-request="${escape(room.id)}">Belge İzni İste</button></div><div data-mp-document-list role="status" aria-live="polite"></div>`;
-      $$(".mp-history-actions", target).at(-1).insertAdjacentHTML("beforeend", `<button type="button" data-mp-candidate-chat="${escape(room.id)}">Mesaj Gönder</button>`);
+      $$(".mp-history-actions", target).at(-1).insertAdjacentHTML("beforeend", `<button type="button" data-mp-candidate-chat="${escape(room.id)}">MarSoh'ta Sohbet Et</button>`);
       return;
     }
     if (panel === "ready-pool") {
@@ -500,17 +500,18 @@
     }
     if (panel === "matches") {
       const rows = (state.data.matches || []).map((match) => ({ match, room: roomForUser(match.seafarer_user_id, match.job_id) })).filter((item) => item.room);
-      target.innerHTML = `<h3>Açıklanabilir eşleşmeler</h3>${rows.length ? rows.map(({ room, match }) => personnelCandidateCard(room, match)).join("") : personnelEmpty("Güncel kuralları geçen yetkili eşleşme bulunmuyor.")}`;
+      const summaries = (state.data.match_summaries || []).filter((item) => item.eligible_count > 0);
+      target.innerHTML = `<h3>İlanlarınıza uygun adaylar</h3><p class="mp-note">Başvuru yapmamış adayların kimlik ve belgeleri paylaşılmaz. Başvurular ayrı bölümde görünür.</p>${summaries.length ? summaries.map((item) => { const job = (state.data.jobs || []).find((row) => row.id === item.job_id); return historyCard(job?.job_title || "İlan", `${item.eligible_count} uygun aday`, `${item.authorized_count} izinli başvuru`); }).join("") : personnelEmpty("Henüz ilanlarınıza uygun güncel aday eşleşmesi bulunmuyor.")}${rows.length ? `<h3>İzinli eşleşmeler</h3>${rows.map(({ room, match }) => personnelCandidateCard(room, match)).join("")}` : ""}`;
       return;
     }
     if (panel === "pipeline") {
       const applications = state.data.applications || [];
-      target.innerHTML = `<h3>İncelemedeki adaylar (${applications.length})</h3>${applications.length ? applications.map((application) => {
+      target.innerHTML = `<h3>Başvuran adaylar (${applications.length})</h3>${applications.length ? applications.map((application) => {
         const room = (state.data.candidate_rooms || []).find((item) => item.application_id === application.id);
         if (!room) return historyCard("Başvuru", "Aday erişimi için paylaşım onayı bekleniyor.", dateTime(application.created_at));
         const candidate = room.candidate || {};
         const job = (state.data.jobs || []).find((item) => item.id === application.job_id);
-        return `<article class="mp-candidate-card mp-applicant-card"><div><strong>${escape(candidate.full_name || candidate.public_id || "Aday")}</strong><span>${escape(candidate.rank || "Rütbe belirtilmedi")}</span><div class="mp-candidate-card__facts">${[job?.job_title, ...candidateFacts(room)].filter(Boolean).map((fact) => `<span>${escape(fact)}</span>`).join("")}</div></div><div class="mp-candidate-card__actions"><button type="button" data-mp-candidate-profile="${escape(room.id)}">Profili Gör</button><button type="button" data-mp-candidate-cv="${escape(room.id)}">CV'sini Gör</button><button type="button" data-mp-candidate-documents="${escape(room.id)}">Belgeleri Gör</button></div><div class="mp-applicant-card__result" data-mp-profile-preview role="status" aria-live="polite"></div><div class="mp-applicant-card__result" data-mp-cv-preview role="status" aria-live="polite"></div><div class="mp-applicant-card__result" data-mp-document-list role="status" aria-live="polite"></div></article>`;
+        return `<article class="mp-candidate-card mp-applicant-card"><div><strong>${escape(candidate.full_name || candidate.public_id || "Aday")}</strong><span>${escape(candidate.rank || "Rütbe belirtilmedi")}</span><div class="mp-candidate-card__facts">${[job?.job_title, ...candidateFacts(room)].filter(Boolean).map((fact) => `<span>${escape(fact)}</span>`).join("")}</div></div><div class="mp-candidate-card__actions"><button type="button" data-mp-candidate-profile="${escape(room.id)}">Profili Gör</button><button type="button" data-mp-candidate-cv="${escape(room.id)}">CV'sini Gör</button><button type="button" data-mp-candidate-documents="${escape(room.id)}">Belgeleri Gör</button><button type="button" data-mp-candidate-chat="${escape(room.id)}">MarSoh'ta Sohbet Et</button></div><div class="mp-applicant-card__result" data-mp-profile-preview role="status" aria-live="polite"></div><div class="mp-applicant-card__result" data-mp-cv-preview role="status" aria-live="polite"></div><div class="mp-applicant-card__result" data-mp-document-list role="status" aria-live="polite"></div></article>`;
       }).join("") : personnelEmpty("İncelemede aday bulunmuyor.")}`;
       return;
     }
@@ -953,13 +954,14 @@
     const target = $("[data-mp-match-list]");
     const jobId = $("[data-mp-job-filter]").value;
     const matches = (state.data.matches || []).filter((item) => !jobId || item.job_id === jobId);
+    const summaries = (state.data.match_summaries || []).filter((item) => item.eligible_count > 0 && (!jobId || item.job_id === jobId));
     const rooms = state.data.candidate_rooms || [];
     const safe = matches.filter((match) => rooms.some((room) => room.seafarer_user_id === match.seafarer_user_id && (!match.job_id || room.job_id === match.job_id)));
-    target.innerHTML = safe.length ? safe.map((match) => {
+    target.innerHTML = `${summaries.map((item) => { const job = (state.data.jobs || []).find((row) => row.id === item.job_id); return `<article class="mp-match"><div><h3>${escape(job?.job_title || "İlan")}</h3><p>${escape(item.eligible_count)} uygun aday · ${escape(item.authorized_count)} izinli başvuru</p></div></article>`; }).join("")}${safe.length ? safe.map((match) => {
       const room = rooms.find((item) => item.seafarer_user_id === match.seafarer_user_id && (!match.job_id || item.job_id === match.job_id));
       const job = (state.data.jobs || []).find((item) => item.id === match.job_id);
       return `<article class="mp-match"><div><h3>${escape(room?.candidate?.full_name || room?.candidate?.public_id || "Aday")}</h3><p>${escape(job?.job_title || "Genel aday havuzu")}</p><button type="button" data-mp-candidate-inspect="${escape(room.id)}">CV ve başvuruyu incele</button></div><span class="mp-match__score" aria-label="Eşleşme puanı yüzde ${escape(Math.round(Number(match.preference_score || 0)))}">${escape(Math.round(Number(match.preference_score || 0)))}</span></article>`;
-    }).join("") : '<div class="mp-empty">Bu kapsamda güvenli eşleşme bulunmuyor. Yalnız yetkili aday ilişkileri burada gösterilir.</div>';
+    }).join("") : summaries.length ? "" : '<div class="mp-empty">Bu kapsamda uygun aday eşleşmesi bulunmuyor.</div>'}`;
   }
 
   function render() {
