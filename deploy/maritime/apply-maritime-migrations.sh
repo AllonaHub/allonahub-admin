@@ -48,6 +48,7 @@ MIGRATIONS=(
   "$ROOT_DIR/supabase/migrations/20260925160000_maritime_submitted_application_rooms.sql"
   "$ROOT_DIR/supabase/migrations/20260925193000_maritime_private_chat_read_cursors.sql"
   "$ROOT_DIR/supabase/migrations/20260925194500_marsoh_rejected_audit_idx.sql"
+  "$ROOT_DIR/supabase/migrations/20260925210000_marsoh_violation_evidence.sql"
 )
 
 if [ -z "$DB_URL" ]; then

@@ -1054,6 +1054,7 @@
     "maripartner-management": ["MariPartner Yönetimi", "Denizcilik şirketleri, aday havuzu, kanıt, SLA, devir ve güvenli inceleme kontrolü"],
     "maritime-pending-jobs": ["Onay Bekleyen İş İlanları", "Denizcilik ilanlarını inceleyin ve yayın kararını verin"],
     "marsoh-moderation": ["MarSoh Yönetimi", "Odalar, günlük konu, mesajlar, bildirimler ve güvenlik kararları"],
+    "marsoh-violations": ["MarSoh İhlaller", "Reddedilen, incelemeye alınan ve yayından kaldırılan mesajlar"],
     audit: ["Audit Log", "Append-only kritik işlem kayıtları"]
   };
 
@@ -1852,6 +1853,20 @@
     ].join(""));
   }
 
+  async function loadOwnerMarsohViolations() {
+    ownerLoading("MarSoh İhlaller");
+    const payload = await api("/v1/admin/marsoh/violations?limit=200");
+    const items = payload.items || [];
+    const statusLabel = { rejected: "Gönderilmedi", quarantined: "Sistem denetiminde", moderator_rejected: "Yönetici reddetti / kaldırdı" };
+    const rows = items.map((item) => ownerLine(
+      `${escape(item.public_id || item.sender_user_id || "Kimlik bulunamadı")} · ${escape(statusLabel[item.status] || item.status)}`,
+      `${escape(item.body || "Mesaj metni bulunamadı")}<br><em>${escape(item.rule_code || "-")} / ${escape(item.category || "-")} / ${escape(item.language || "-")} / ${formatDate(item.created_at)}</em>`,
+      item.sender_user_id ? `Kullanıcı ID: ${escape(item.sender_user_id)}` : "",
+      item.status === "rejected" ? "critical" : "high"
+    ));
+    ownerSetOutput(marsohPanel("MarSoh İhlal Kayıtları", `${formatNumber(items.length)} son kayıt. Bu alan yalnız süper admin tarafından görüntülenir.`, rows.join("") || ownerEmpty("İhlal kaydı bulunmuyor.")));
+  }
+
   async function runMarsohAdminAction(button) {
     const action = button.dataset.marsohAdminAction;
     const messageId = button.dataset.messageId;
@@ -2258,6 +2273,7 @@
       else if (view === "maripartner-management") await loadOwnerMariPartner();
       else if (view === "maritime-pending-jobs") await loadOwnerPendingJobs(params);
       else if (view === "marsoh-moderation") await loadOwnerMarsohModeration();
+      else if (view === "marsoh-violations") await loadOwnerMarsohViolations();
       else if (view === "audit") await loadOwnerAudit();
     } catch (error) {
       ownerSetOutput(ownerLine("Erişim engellendi", escape(publicError(error, "Süper Admin verisi alınamadı.")), "", "critical"));

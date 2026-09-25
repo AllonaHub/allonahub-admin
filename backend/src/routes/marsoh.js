@@ -621,6 +621,15 @@ export function registerMarsohRoutes(app) {
       classification = classifyMarsohSequenceLocal([...recent.reverse().map((row) => row.body), moderationBody]) || classification;
     }
     if (classification.recommended_action === "reject") {
+      assertDb(await supabaseAdmin.from("marsoh_rejected_evidence").insert({
+        sender_user_id: ctx.user.id,
+        channel_id: channel.id,
+        body: body.slice(0, 2000),
+        language: input.language,
+        category: classification.category,
+        rule_code: classification.rule_code,
+        content_hash: normalizedHash
+      }), "İhlal kaydı oluşturulamadı.");
       await marsohAudit({ request, ctx, action: "marsoh.message.rejected", resourceType: "marsoh_channel", resourceId: channel.id, contentHash: normalizedHash, metadata: { category: classification.category, rule_code: classification.rule_code } });
       throw httpError(MARSOH_PUBLIC_REJECTION[classification.rule_code] || "Gönderilemedi — topluluk kurallarına aykırı ifade", 422, classification.rule_code);
     }
@@ -765,6 +774,32 @@ export function registerMarsohRoutes(app) {
     const blockedUserId = uuidSchema.parse(request.params?.userId);
     assertDb(await supabaseAdmin.from("marsoh_user_blocks").delete().eq("blocker_user_id", ctx.user.id).eq("blocked_user_id", blockedUserId), "Kullanıcı engeli kaldırılamadı.");
     return { ok: true, blocked: false };
+  });
+
+  app.get("/v1/admin/marsoh/violations", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (request) => {
+    const ctx = await requireModerator(request, "marsoh.violations.list");
+    if (!hasRole(ctx.profile, "super_admin")) throw httpError("Yalnız süper admin erişebilir.", 403, "MARSOH_OWNER_REQUIRED");
+    const limit = Math.max(1, Math.min(Number(request.query?.limit) || 100, 200));
+    const [rejectedResult, decisionsResult] = await Promise.all([
+      supabaseAdmin.from("marsoh_rejected_evidence").select("id,sender_user_id,channel_id,body,language,category,rule_code,created_at").order("created_at", { ascending: false }).limit(limit),
+      supabaseAdmin.from("marsoh_moderation_decisions").select("message_id,category,rule_code,language,decision,created_at").neq("decision", "published").order("created_at", { ascending: false }).limit(limit)
+    ]);
+    const rejected = assertDb(rejectedResult, "Reddedilen mesajlar okunamadı.") || [];
+    const decisions = assertDb(decisionsResult, "İnceleme kayıtları okunamadı.") || [];
+    const decisionIds = decisions.map((row) => row.message_id);
+    const messages = decisionIds.length ? assertDb(await supabaseAdmin.from("marsoh_messages").select("id,sender_user_id,channel_id,body").in("id", decisionIds), "Mesaj kayıtları okunamadı.") || [] : [];
+    const messageById = new Map(messages.map((row) => [row.id, row]));
+    const userIds = [...new Set([...rejected.map((row) => row.sender_user_id), ...messages.map((row) => row.sender_user_id)])];
+    const profiles = userIds.length ? assertDb(await supabaseAdmin.from("profiles").select("id,public_id").in("id", userIds), "Kullanıcı kimlikleri okunamadı.") || [] : [];
+    const publicIdByUser = new Map(profiles.map((row) => [row.id, row.public_id]));
+    const items = [
+      ...rejected.map((row) => ({ ...row, status: "rejected", public_id: publicIdByUser.get(row.sender_user_id) || null })),
+      ...decisions.map((row) => {
+        const message = messageById.get(row.message_id) || {};
+        return { ...row, id: row.message_id, sender_user_id: message.sender_user_id || null, public_id: publicIdByUser.get(message.sender_user_id) || null, channel_id: message.channel_id || null, body: message.body || null, status: row.decision === "rejected" ? "moderator_rejected" : row.decision };
+      })
+    ].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))).slice(0, limit);
+    return { ok: true, items };
   });
 
   app.get("/v1/admin/marsoh/management", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (request) => {
