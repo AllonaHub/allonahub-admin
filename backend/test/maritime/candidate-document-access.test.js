@@ -51,3 +51,15 @@ test("applications expose actionable CV, consented documents and the scoped comp
   assert.match(chat, /document-permissions\/\$\{encodeURIComponent\(request\.candidate_room_id\)\}/);
   assert.match(chatRoute, /const unread = Number\(unreadResult\.count \|\| 0\) > 0 \|\| Boolean\(pendingPermission\)/);
 });
+
+test("a submitted application is never moved back to candidate approval by a repeat invitation", () => {
+  const route = readFileSync(new URL("../../src/routes/maritime-partner-center.js", import.meta.url), "utf8");
+  const partner = readFileSync(new URL("../../../js/maripartner.js", import.meta.url), "utf8");
+  const guard = route.indexOf('if (current && !["drafted", "awaiting_candidate_approval"].includes(current.status))');
+  const update = route.indexOf('status: "awaiting_candidate_approval", last_stage_changed_at');
+  assert.ok(guard > 0 && guard < update);
+  assert.match(route, /already_applied: true/);
+  assert.match(route, /already_invited: true/);
+  assert.match(route, /CANDIDATE_INVITE_STATUS_DENIED/);
+  assert.match(partner, /application \? "Başvuru Alındı" : "Davet Et"/);
+});

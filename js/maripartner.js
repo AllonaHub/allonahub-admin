@@ -402,7 +402,13 @@
     const job = (state.data.jobs || []).find((item) => item.id === (match?.job_id || room.job_id));
     const score = match?.preference_score === null || match?.preference_score === undefined ? "" : `${Math.round(Number(match.preference_score))}% eşleşme`;
     const favorite = (state.data.favorite_candidates || []).some((item) => item.seafarer_user_id === room.seafarer_user_id);
-    return `<article class="mp-candidate-card"><div><strong>${escape(room.candidate?.full_name || room.candidate?.public_id || "Aday")}</strong><span>${escape(job?.job_title || room.candidate?.rank || "Denizcilik adayı")}</span><div class="mp-candidate-card__facts">${[...candidateFacts(room), score].filter(Boolean).map((fact) => `<span>${escape(fact)}</span>`).join("")}</div></div><div class="mp-candidate-card__actions"><button type="button" data-mp-candidate-inspect="${escape(room.id)}">Adayı İncele</button><button type="button" data-mp-candidate-invite="${escape(room.id)}" data-job-id="${escape(match?.job_id || room.job_id || "")}" ${match?.job_id || room.job_id ? "" : "disabled"}>Davet Et</button><details class="mp-more"><summary aria-label="Aday için diğer işlemleri aç">⋮</summary><div role="menu"><button type="button" role="menuitem" data-mp-candidate-inspect="${escape(room.id)}">Eşleşme Nedenini Gör</button><button type="button" role="menuitem" data-mp-candidate-favorite="${escape(room.id)}" ${favorite ? "disabled" : ""}>${favorite ? "Favorilerde" : "Favoriye Ekle"}</button><button type="button" role="menuitem" data-mp-panel="references">Firma Referanslarını Gör</button></div></details></div></article>`;
+    return `<article class="mp-candidate-card"><div><strong>${escape(room.candidate?.full_name || room.candidate?.public_id || "Aday")}</strong><span>${escape(job?.job_title || room.candidate?.rank || "Denizcilik adayı")}</span><div class="mp-candidate-card__facts">${[...candidateFacts(room), score].filter(Boolean).map((fact) => `<span>${escape(fact)}</span>`).join("")}</div></div><div class="mp-candidate-card__actions"><button type="button" data-mp-candidate-inspect="${escape(room.id)}">Adayı İncele</button>${candidateInviteButton(room, match?.job_id || room.job_id)}<details class="mp-more"><summary aria-label="Aday için diğer işlemleri aç">⋮</summary><div role="menu"><button type="button" role="menuitem" data-mp-candidate-inspect="${escape(room.id)}">Eşleşme Nedenini Gör</button><button type="button" role="menuitem" data-mp-candidate-favorite="${escape(room.id)}" ${favorite ? "disabled" : ""}>${favorite ? "Favorilerde" : "Favoriye Ekle"}</button><button type="button" role="menuitem" data-mp-panel="references">Firma Referanslarını Gör</button></div></details></div></article>`;
+  }
+
+  function candidateInviteButton(room, jobId) {
+    const application = (state.data.applications || []).find((item) => item.id === room.application_id);
+    const label = application?.status === "awaiting_candidate_approval" ? "Davet Gönderildi" : application ? "Başvuru Alındı" : "Davet Et";
+    return `<button type="button" data-mp-candidate-invite="${escape(room.id)}" data-job-id="${escape(jobId || "")}" ${!jobId || application ? "disabled" : ""}>${label}</button>`;
   }
 
   function normalizeSearchValue(value) {
@@ -451,6 +457,12 @@
       const tabs = [["overview", "Genel Bakış"], ["eligibility", "Uygunluk"], ["documents", "Belgeler"], ["service", "Deniz Hizmeti"], ["references", "Firma Referansları"], ["interviews", "Görüşmeler"], ["offers", "Teklifler"], ["history", "İşlem Geçmişi"]];
       const cards = (rows, title) => rows.length ? rows.map((item) => historyCard(title, statusLabel(item.status || item.offer_status), dateTime(item.created_at || item.scheduled_start))).join("") : personnelEmpty(`${title} kaydı bulunmuyor.`);
       target.innerHTML = `<section class="mp-candidate-detail"><div class="mp-history-card-head"><div><strong>${escape(room.candidate?.full_name || room.candidate?.public_id || "Aday")}</strong><span>${escape(room.candidate?.rank || "Yeterlilik bilgisi bekleniyor")}</span></div><span class="mp-status-pill is-${escape(room.status)}">${escape(statusLabel(room.status))}</span></div><div class="mp-candidate-tabs" role="tablist" aria-label="Aday detay bölümleri">${tabs.map(([key, label], index) => `<button type="button" role="tab" data-mp-candidate-tab="${key}" aria-selected="${index === 0}">${label}</button>`).join("")}</div><div data-mp-candidate-pane="overview"><div class="mp-candidate-card__facts">${candidateFacts(room).map((fact) => `<span>${escape(fact)}</span>`).join("")}</div><p class="mp-note">Bu görünüm yalnız aktif ve süreli şirket-aday ilişkisi kapsamındaki güvenli özeti gösterir.</p></div><div data-mp-candidate-pane="eligibility" hidden>${match ? historyCard(`${Math.round(Number(match.preference_score || 0))}% açıklanabilir eşleşme`, statusLabel(match.hard_gate_status), `Kural sürümü: ${match.metadata?.rule_version || "kayıtlı sürüm"}`) : personnelEmpty("Bu aday için güncel eşleşme sonucu bulunmuyor.")}</div><div data-mp-candidate-pane="documents" hidden>${historyCard("Belge hazırlığı", statusLabel(room.candidate?.readiness_level), "Hassas belge erişimi ayrıca amaç, süre ve audit kontrolü gerektirir.")}</div><div data-mp-candidate-pane="service" hidden>${historyCard("Deniz hizmeti özeti", `${room.candidate?.sea_service_days || 0} gün · ${room.candidate?.sea_service_count || 0} kayıt`, (room.candidate?.vessel_types || []).join(", ") || "Gemi türü kaydı yok")}</div><div data-mp-candidate-pane="references" hidden>${personnelEmpty("Firmalara özel referanslar yalnız doğrulanmış iş ilişkisi ve audit kaydıyla Güven bölümünde açılır.")}</div><div data-mp-candidate-pane="interviews" hidden>${cards(interviews, "Görüşme")}</div><div data-mp-candidate-pane="offers" hidden>${cards(offers, "Teklif / kontrat")}</div><div data-mp-candidate-pane="history" hidden>${cards(applications, "İşe alım işlemi")}</div><div class="mp-history-actions"><button type="button" data-mp-candidate-cv="${escape(room.id)}">CV ve Hizmet Belgeleri</button><button type="button" data-mp-candidate-invite="${escape(room.id)}" data-job-id="${escape(room.job_id || "")}" ${room.job_id ? "" : "disabled"}>Davet Et</button><button type="button" data-mp-candidate-favorite="${escape(room.id)}" ${favorite ? "disabled" : ""}>${favorite ? "Favorilerde" : "Favoriye Ekle"}</button></div><div data-mp-cv-preview role="status" aria-live="polite"></div></section>`;
+      const existingApplication = applications.find((item) => item.id === room.application_id);
+      const detailInvite = $("[data-mp-candidate-invite]", target);
+      if (existingApplication && detailInvite) {
+        detailInvite.disabled = true;
+        detailInvite.textContent = existingApplication.status === "awaiting_candidate_approval" ? "Davet Gönderildi" : "Başvuru Alındı";
+      }
       const documentPane = $("[data-mp-candidate-pane='documents']", target);
       documentPane.innerHTML = `<p class="mp-note">Adayın başvuru sırasında verdiği belge izni veya sonradan onayladığı erişim geçerli olmalıdır. Bağlantılar kısa süreli ve erişimler kayıtlıdır.</p><div class="mp-history-actions"><button type="button" data-mp-candidate-documents="${escape(room.id)}">Belgeleri Gör</button><button type="button" data-mp-document-request="${escape(room.id)}">Belge İzni İste</button></div><div data-mp-document-list role="status" aria-live="polite"></div>`;
       $$(".mp-history-actions", target).at(-1).insertAdjacentHTML("beforeend", `<button type="button" data-mp-candidate-chat="${escape(room.id)}">Mesaj Gönder</button>`);
@@ -1431,9 +1443,13 @@
 
   async function inviteCandidate(button) {
     if (!button.dataset.jobId) throw new Error("Adayı davet etmek için önce bir ilan seçilmelidir.");
-    await api("/v1/maritime/partner-center/candidate-invitations", { method: "POST", body: { partner_id: state.partnerId, candidate_room_id: button.dataset.mpCandidateInvite, job_id: button.dataset.jobId } });
+    button.disabled = true;
+    let result;
+    try {
+      result = await api("/v1/maritime/partner-center/candidate-invitations", { method: "POST", body: { partner_id: state.partnerId, candidate_room_id: button.dataset.mpCandidateInvite, job_id: button.dataset.jobId } });
+    } finally { button.disabled = false; }
     await load(state.partnerId);
-    alert("Adaya güvenli sistem daveti gönderildi.", "success");
+    alert(result.already_applied ? "Adayın başvurusu zaten alınmış. Başvuru ve belgelerini inceleyebilirsiniz." : result.already_invited ? "Aday daveti zaten gönderilmiş." : "Adaya güvenli sistem daveti gönderildi.", "success");
   }
 
   async function favoriteCandidate(button) {

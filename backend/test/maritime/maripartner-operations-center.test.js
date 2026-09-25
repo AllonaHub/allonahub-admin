@@ -58,9 +58,11 @@ test("candidate cards keep two visible actions and preserve privileged operation
   const script = read("js/maripartner.js");
   const candidateCard = script.match(/function personnelCandidateCard[\s\S]*?\n  }/)?.[0] || "";
   const visibleActions = candidateCard.match(/mp-candidate-card__actions\">([\s\S]*?)<details/)?.[1] || "";
-  assert.equal((visibleActions.match(/<button/g) || []).length, 2);
+  assert.equal((visibleActions.match(/<button/g) || []).length, 1);
+  assert.match(visibleActions, /candidateInviteButton\(room, match\?\.job_id \|\| room\.job_id\)/);
+  assert.match(script, /function candidateInviteButton\(room, jobId\)/);
   assert.match(candidateCard, /Adayı İncele/);
-  assert.match(candidateCard, /Davet Et/);
+  assert.match(script, /application \? "Başvuru Alındı" : "Davet Et"/);
   assert.match(candidateCard, /class="mp-more"/);
   assert.match(candidateCard, /Eşleşme Nedenini Gör/);
   assert.match(script, /candidate-invitations/);

@@ -1180,6 +1180,15 @@ export function registerMaritimePartnerCenterRoutes(app) {
     const job = assertDb(await supabaseAdmin.from("maritime_jobs").select("id,status").eq("id", body.job_id).eq("partner_id", body.partner_id).maybeSingle(), "İlan doğrulanamadı.");
     if (!job || job.status !== "open") throw httpError("Aday daveti yalnız yayındaki ilanlar için gönderilebilir.", 409, "CANDIDATE_INVITE_JOB_CLOSED");
     const current = assertDb(await supabaseAdmin.from("maritime_hiring_applications").select("id,status,metadata").eq("partner_id", body.partner_id).eq("job_id", body.job_id).eq("seafarer_user_id", room.seafarer_user_id).maybeSingle(), "Aday daveti kontrol edilemedi.");
+    if (current && !["drafted", "awaiting_candidate_approval"].includes(current.status)) {
+      if (["submitted", "shortlisted", "interviewing", "offer_sent", "offer_accepted", "hired"].includes(current.status)) {
+        return reply.code(200).send({ ok: true, already_applied: true, application: { id: current.id, job_id: body.job_id, seafarer_user_id: room.seafarer_user_id, status: current.status } });
+      }
+      throw httpError("Bu başvurunun mevcut durumu yeni davete izin vermiyor.", 409, "CANDIDATE_INVITE_STATUS_DENIED");
+    }
+    if (current?.status === "awaiting_candidate_approval") {
+      return reply.code(200).send({ ok: true, already_invited: true, application: { id: current.id, job_id: body.job_id, seafarer_user_id: room.seafarer_user_id, status: current.status } });
+    }
     const application = current
       ? assertDb(await supabaseAdmin.from("maritime_hiring_applications").update({ status: "awaiting_candidate_approval", last_stage_changed_at: new Date().toISOString(), metadata: { ...(current.metadata || {}), invitation_source: "maripartner", candidate_action_required: true } }).eq("id", current.id).eq("partner_id", body.partner_id).select("id,job_id,seafarer_user_id,status,last_stage_changed_at").single(), "Aday daveti güncellenemedi.")
       : assertDb(await supabaseAdmin.from("maritime_hiring_applications").insert({ partner_id: body.partner_id, job_id: body.job_id, seafarer_user_id: room.seafarer_user_id, status: "awaiting_candidate_approval", metadata: { invitation_source: "maripartner", candidate_action_required: true } }).select("id,job_id,seafarer_user_id,status,last_stage_changed_at").single(), "Aday daveti oluşturulamadı.");
