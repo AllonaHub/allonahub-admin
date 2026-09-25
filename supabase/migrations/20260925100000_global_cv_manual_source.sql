@@ -21,6 +21,8 @@ declare
     raise exception 'saved Maritime CV required' using errcode = 'P0001';
   end if;$new$;
 begin
+  -- Production already accepts a saved Maritime CV or confirmed documents.
+  if strpos(definition, 'confirmed maritime CV or documents required') > 0 then return; end if;
   if strpos(definition, new_guard) > 0 then return; end if;
   if strpos(definition, old_guard) = 0 then
     raise exception 'Unexpected Global CV source guard; review before applying migration';
