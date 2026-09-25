@@ -467,6 +467,16 @@ async function documentPermission(room) {
   return application;
 }
 
+function safePartnerAvatar(value) {
+  const source = String(value || "").trim();
+  if (/^data:image\/(?:png|jpeg|webp);base64,[a-z0-9+/=]+$/i.test(source) && source.length <= 300000) return source;
+  try {
+    const url = new URL(source);
+    if (url.protocol === "https:" && (url.hostname === "allonahub.com" || url.hostname.endsWith(".allonahub.com") || url.hostname.endsWith(".supabase.co"))) return source;
+  } catch { /* Invalid or unapproved profile image. */ }
+  return "";
+}
+
 async function staffRows(partnerId) {
   const business = assertDb(await supabaseAdmin.from("partner_businesses").select("owner_id").eq("id", partnerId).single(), "Şirket sahibi okunamadı.");
   const staff = assertDb(await supabaseAdmin.from("partner_staff").select("user_id,full_name,staff_role,status").eq("partner_id", partnerId).eq("status", "active"), "Şirket ekibi okunamadı.") || [];
@@ -1002,6 +1012,44 @@ export function registerMaritimePartnerCenterRoutes(app) {
     if (signed.error || !signed.data?.signedUrl) throw httpError("Belge bağlantısı oluşturulamadı.", 503, "MARITIME_DOCUMENT_SIGNING_FAILED");
     await logAction(request, access.ctx, "maripartner.candidate_document_viewed", "maritime_document_intake", document.id, { partner_id: partnerId, candidate_room_id: room.id });
     return { ok: true, url: signed.data.signedUrl, expires_in_seconds: 300 };
+  });
+
+  app.get("/v1/maritime/partner-center/candidate-rooms/:roomId/profile", { config: { rateLimit: { max: 40, timeWindow: "5 minutes" } } }, async (request) => {
+    const roomId = uuid.parse(request.params.roomId);
+    const partnerId = uuid.parse(request.query?.partner_id);
+    const access = await requirePartner(request, "candidate_cv.read", partnerId);
+    await ensureHiringAuthority(access);
+    const room = await candidateRoom(partnerId, roomId);
+    await activeApplicationForRoom(room);
+    const [profileResult, cvResult, workspaceResult] = await Promise.all([
+      supabaseAdmin.from("profiles").select("full_name,public_id,avatar_url").eq("id", room.seafarer_user_id).maybeSingle(),
+      supabaseAdmin.from("maritime_cv_profiles").select("profile_payload").eq("seafarer_user_id", room.seafarer_user_id).maybeSingle(),
+      supabaseAdmin.from("maritime_seafarer_workspaces").select("current_work_status,availability_status,readiness_level").eq("user_id", room.seafarer_user_id).maybeSingle()
+    ]);
+    const profile = assertDb(profileResult, "Aday profili okunamadı.") || {};
+    const payload = (assertDb(cvResult, "Aday yeterliliği okunamadı.") || {}).profile_payload || {};
+    const workspace = assertDb(workspaceResult, "Aday uygunluğu okunamadı.") || {};
+    let avatarUrl = safePartnerAvatar(profile.avatar_url);
+    if (!avatarUrl) {
+      const signed = await supabaseAdmin.storage.from(MARITIME_PROFILE_PHOTO_BUCKET)
+        .createSignedUrl(`users/${room.seafarer_user_id}/profile.webp`, 300);
+      avatarUrl = signed.error ? "" : safePartnerAvatar(signed.data?.signedUrl);
+    }
+    await logAction(request, access.ctx, "maripartner.candidate_profile_viewed", "maritime_private_candidate_room", room.id, { partner_id: partnerId });
+    const summary = reviewerCandidateFromProfilePayload(payload);
+    return { ok: true, profile: {
+      full_name: String(profile.full_name || summary.display_name || "Aday").slice(0, 160),
+      public_id: String(profile.public_id || "").slice(0, 32),
+      avatar_url: avatarUrl,
+      rank: summary.rank,
+      nationality: String(payload.nationality || "").slice(0, 80),
+      professional_summary: String(payload.professional_summary || "").slice(0, 1000),
+      sea_service_summary: summary.sea_service_summary,
+      certificate_count: summary.certificate_status.total,
+      current_work_status: workspace.current_work_status || "unknown",
+      availability_status: workspace.availability_status || "unknown",
+      readiness_level: workspace.readiness_level || "unverified"
+    } };
   });
 
   app.get("/v1/maritime/partner-center/candidate-rooms/:roomId/cv", { config: { rateLimit: { max: 40, timeWindow: "5 minutes" } } }, async (request) => {

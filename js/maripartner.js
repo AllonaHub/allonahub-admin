@@ -510,7 +510,7 @@
         if (!room) return historyCard("Başvuru", "Aday erişimi için paylaşım onayı bekleniyor.", dateTime(application.created_at));
         const candidate = room.candidate || {};
         const job = (state.data.jobs || []).find((item) => item.id === application.job_id);
-        return `<article class="mp-candidate-card mp-applicant-card"><div><strong>${escape(candidate.full_name || candidate.public_id || "Aday")}</strong><span>${escape(candidate.rank || "Rütbe belirtilmedi")}</span><div class="mp-candidate-card__facts">${[job?.job_title, ...candidateFacts(room)].filter(Boolean).map((fact) => `<span>${escape(fact)}</span>`).join("")}</div></div><div class="mp-candidate-card__actions"><button type="button" data-mp-candidate-cv="${escape(room.id)}">CV'sini Gör</button><button type="button" data-mp-candidate-documents="${escape(room.id)}">Belgeleri Gör</button></div><div class="mp-applicant-card__result" data-mp-cv-preview role="status" aria-live="polite"></div><div class="mp-applicant-card__result" data-mp-document-list role="status" aria-live="polite"></div></article>`;
+        return `<article class="mp-candidate-card mp-applicant-card"><div><strong>${escape(candidate.full_name || candidate.public_id || "Aday")}</strong><span>${escape(candidate.rank || "Rütbe belirtilmedi")}</span><div class="mp-candidate-card__facts">${[job?.job_title, ...candidateFacts(room)].filter(Boolean).map((fact) => `<span>${escape(fact)}</span>`).join("")}</div></div><div class="mp-candidate-card__actions"><button type="button" data-mp-candidate-profile="${escape(room.id)}">Profili Gör</button><button type="button" data-mp-candidate-cv="${escape(room.id)}">CV'sini Gör</button><button type="button" data-mp-candidate-documents="${escape(room.id)}">Belgeleri Gör</button></div><div class="mp-applicant-card__result" data-mp-profile-preview role="status" aria-live="polite"></div><div class="mp-applicant-card__result" data-mp-cv-preview role="status" aria-live="polite"></div><div class="mp-applicant-card__result" data-mp-document-list role="status" aria-live="polite"></div></article>`;
       }).join("") : personnelEmpty("İncelemede aday bulunmuyor.")}`;
       return;
     }
@@ -1669,6 +1669,20 @@
         alert(result.status === "accepted" ? "Adayın belge izni zaten açık." : "Belge izni talebi adaya gönderildi. Yanıtı Firma Mesajları bölümünde görebilirsiniz.", "success");
       } catch (error) { alert(error.message || "Belge izni istenemedi."); }
       finally { requestDocuments.disabled = false; }
+      return;
+    }
+    const candidateProfile = event.target.closest("[data-mp-candidate-profile]");
+    if (candidateProfile) {
+      const preview = candidateProfile.closest(".mp-applicant-card")?.querySelector("[data-mp-profile-preview]");
+      if (!preview) return;
+      candidateProfile.disabled = true;
+      preview.textContent = "Profil yükleniyor…";
+      try {
+        const result = await api(`/v1/maritime/partner-center/candidate-rooms/${encodeURIComponent(candidateProfile.dataset.mpCandidateProfile)}/profile?partner_id=${encodeURIComponent(state.partnerId)}`);
+        const profile = result.profile || {};
+        preview.innerHTML = `<section class="mp-candidate-profile">${profile.avatar_url ? `<img src="${escape(profile.avatar_url)}" alt="Aday profil fotoğrafı" loading="lazy">` : `<span class="mp-candidate-profile__initials" aria-hidden="true">${escape(initials(profile.full_name || "Aday"))}</span>`}<div><h4>${escape(profile.full_name || "Aday")}</h4><p>${escape([profile.rank, profile.nationality, profile.public_id].filter(Boolean).join(" · "))}</p><p>${escape(profile.professional_summary || profile.sea_service_summary || "Mesleki özet henüz eklenmedi.")}</p><div class="mp-candidate-card__facts">${[profile.sea_service_summary, profile.certificate_count ? `${profile.certificate_count} sertifika` : null, profile.current_work_status === "available_now" ? "Katılıma hazır" : null].filter(Boolean).map((fact) => `<span>${escape(fact)}</span>`).join("")}</div></div></section>`;
+      } catch (error) { preview.textContent = error.message || "Aday profili açılamadı."; }
+      finally { candidateProfile.disabled = false; }
       return;
     }
     const candidateDocuments = event.target.closest("[data-mp-candidate-documents]");

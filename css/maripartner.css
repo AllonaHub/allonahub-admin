@@ -461,6 +461,11 @@ body.mp-body[data-theme] .mp-main article { color: var(--mp-ink) !important; }
 .mp-candidate-card__actions button { min-height: 40px; padding: 7px 10px; }
 .mp-applicant-card__result { grid-column: 1 / -1; min-width: 0; overflow-wrap: anywhere; }
 .mp-applicant-card__result:empty { display: none; }
+.mp-candidate-profile { display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: 14px; align-items: start; border-top: 1px solid var(--mp-line); padding-top: 14px; }
+.mp-candidate-profile > img, .mp-candidate-profile__initials { width: 88px; height: 88px; border-radius: 50%; object-fit: cover; background: #dceef3; }
+.mp-candidate-profile__initials { display: grid; place-items: center; font-weight: 700; color: #075d82; }
+.mp-candidate-profile h4 { margin: 0 0 4px; }
+.mp-candidate-profile p { margin: 5px 0; overflow-wrap: anywhere; }
 .mp-more { position: relative; }
 .mp-more summary { width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid var(--mp-line); border-radius: 5px; color: var(--mp-navy); background: #fff; font-size: 21px; font-weight: 900; cursor: pointer; list-style: none; }
 .mp-more summary::-webkit-details-marker { display: none; }

@@ -107,6 +107,18 @@ test("authorized partner review includes uploaded PDFs and a photo CV PDF viewer
   assert.match(read("js/maritime-cv-controls.js"), /renderMaritimeCvPdfBlob/);
 });
 
+test("candidate profile photo and professional summary require an authorized application room", () => {
+  const route = read("backend/src/routes/maritime-partner-center.js");
+  const script = read("js/maripartner.js");
+  assert.match(route, /candidate-rooms\/:roomId\/profile/);
+  assert.match(route, /await activeApplicationForRoom\(room\)/);
+  assert.match(route, /select\("full_name,public_id,avatar_url"\)/);
+  assert.match(route, /safePartnerAvatar\(profile\.avatar_url\)/);
+  assert.match(route, /maripartner\.candidate_profile_viewed/);
+  assert.match(script, /data-mp-candidate-profile/);
+  assert.match(script, /Aday profil fotoğrafı/);
+});
+
 test("MariPartner keeps URL state, a locked light theme and responsive safeguards", () => {
   const html = read("pages/partner/maripartner.html");
   const script = read("js/maripartner.js");
@@ -115,7 +127,7 @@ test("MariPartner keeps URL state, a locked light theme and responsive safeguard
   assert.match(html, /data-platform-controls-slot="home"/);
   assert.match(html, /js\/platform\.js/);
   assert.match(html, /data-theme="white" data-partner-theme-locked="true"/);
-  assert.match(html, /css\/maripartner\.css\?v=20260925-original-cv1/);
+  assert.match(html, /css\/maripartner\.css\?v=20260925-candidate-profile1/);
   assert.match(html, /js\/platform\.js\?v=20260920-partner-light1/);
   assert.match(html, /js\/maripartner-i18n\.js\?v=20260920-maripartner-job6/);
   assert.match(script, /searchParams\.set\("view"/);
