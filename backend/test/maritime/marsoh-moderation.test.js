@@ -1,7 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  classifyMarsohMessage,
   classifyMarsohMessageLocal,
+  classifyMarsohSequenceLocal,
   containsHiddenPhone,
   normalizedModerationText,
   sanitizeMarsohText
@@ -31,6 +33,10 @@ test("email, URL, and social contact directions are rejected", () => {
   assert.equal(classifyMarsohMessageLocal("crew (at) example (dot) com").rule_code, "CONTACT_EMAIL");
   assert.equal(classifyMarsohMessageLocal("www.example.com adresine bak").rule_code, "CONTACT_URL");
   assert.equal(classifyMarsohMessageLocal("Telegram üzerinden bana yaz").rule_code, "CONTACT_SOCIAL");
+  assert.equal(classifyMarsohMessageLocal("t.me/crew hesabına geç").rule_code, "CONTACT_URL");
+  assert.equal(classifyMarsohMessageLocal("crew (at) example (dot) com").rule_code, "CONTACT_EMAIL");
+  assert.equal(containsHiddenPhone("пять три два один один один два два три три"), true);
+  assert.equal(containsHiddenPhone("+٩٠ ٥٣٢ ١١١ ٢٢ ٣٣"), true);
 });
 
 test("salary discussion is not mistaken for a job advertisement", () => {
@@ -44,6 +50,31 @@ test("position, salary, joining, vessel, and contact call are quarantined", () =
   assert.equal(result.recommended_action, "quarantine");
   assert.equal(result.rule_code, "RECRUITMENT_CONTEXT_HIGH");
   assert.ok(result.confidence >= 0.9);
+});
+
+test("staged recruitment is quarantined while ordinary salary talk stays visible", () => {
+  assert.equal(classifyMarsohSequenceLocal([
+    "Kaptan", "aranıyor", "3.500 USD, tanker gemisi, yarın katılım."
+  ])?.rule_code, "RECRUITMENT_STAGED");
+  assert.equal(classifyMarsohSequenceLocal([
+    "Kaptan maaşları neden azaldı?", "Bu konuda tecrübeniz nedir?"
+  ]), null);
+});
+
+test("clear multilingual abuse and authority impersonation are stopped", () => {
+  assert.equal(classifyMarsohMessageLocal("сука").recommended_action, "reject");
+  assert.equal(classifyMarsohMessageLocal("AllonaHub destek şifrenizi gönderin").recommended_action, "quarantine");
+  assert.equal(classifyMarsohMessageLocal("Kapitän gesucht, 3500 USD, morgen join tanker").recommended_action, "quarantine");
+});
+
+test("local translation flags foreign abuse for review without auto-rejecting", async () => {
+  const result = await classifyMarsohMessage("Bu Azerbaycan dilinde bir mesajdır", {
+    sourceLanguage: "az",
+    localTranslationUrl: "http://local-translator/translate",
+    fetchImpl: async () => ({ ok: true, json: async () => ({ ok: true, translated_text: "siktir" }) })
+  });
+  assert.equal(result.recommended_action, "quarantine");
+  assert.equal(result.rule_code, "MULTILINGUAL_REVIEW");
 });
 
 test("Unicode normalization removes invisible bypass characters", () => {

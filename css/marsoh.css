@@ -175,6 +175,13 @@ html[dir="rtl"] .marsoh-info { border-left: 0; border-right: 1px solid var(--mar
 html[dir="rtl"] .marsoh-message.is-own { margin-left: 0; margin-right: auto; }
 html[dir="rtl"] .marsoh-translation { border-left: 0; border-right: 3px solid var(--marsoh-turquoise); }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; scroll-behavior: auto !important; transition: none !important; } }
+.marsoh-message.is-evaporating .marsoh-bubble { animation: marsoh-evaporate .38s ease-in forwards; }
+.marsoh-message.is-rejected .marsoh-bubble { max-width: min(100%, 350px); border-color: var(--marsoh-danger); background: var(--marsoh-panel); color: var(--marsoh-danger); font-size: 12px; }
+.marsoh-evaporation { position: absolute; inset: 0; pointer-events: none; }
+.marsoh-evaporation i { position: absolute; top: 50%; width: 4px; height: 4px; background: #63e8ff; box-shadow: 0 0 6px #57dfff; transform: rotate(45deg); animation: marsoh-spark .38s ease-out forwards; }
+@keyframes marsoh-evaporate { 65% { opacity: .75; transform: scale(.98); } 100% { opacity: 0; transform: scale(.92); } }
+@keyframes marsoh-spark { to { opacity: 0; transform: translate(var(--spark-drift), -11px) rotate(45deg) scale(.25); } }
+@media (prefers-reduced-motion: reduce) { .marsoh-message.is-evaporating .marsoh-bubble, .marsoh-evaporation i { animation: none !important; } }
 
 /* Chat-only appearance choices keep the platform shell and its controls intact. */
 .marsoh-conversation { position: relative; isolation: isolate; }

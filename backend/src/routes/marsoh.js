@@ -4,6 +4,7 @@ import { config } from "../config.js";
 import {
   MARSOH_PUBLIC_REJECTION,
   classifyMarsohMessage,
+  classifyMarsohSequenceLocal,
   containsHiddenPhone,
   normalizedModerationText,
   sanitizeMarsohText
@@ -357,6 +358,11 @@ async function enforceSendLimits(request, ctx, channel, member, bodyHash) {
   const createdAt = Date.parse(ctx.user.created_at || 0);
   const newAccount = Number.isFinite(createdAt) && now - createdAt < 7 * 86400000;
   const max = newAccount ? config.marsoh.newAccountRatePerMinute : config.marsoh.sendRatePerMinute;
+  const rejected = await supabaseAdmin.from("marsoh_audit_events")
+    .select("id", { count: "exact", head: true }).eq("actor_user_id", ctx.user.id)
+    .eq("action", "marsoh.message.rejected").gte("created_at", new Date(now - 600000).toISOString());
+  assertDb(rejected, "MarSoh güvenlik sınırı denetlenemedi.");
+  if ((rejected.count || 0) >= 3) throw httpError("Çok sayıda kural ihlali algılandı. Lütfen daha sonra yeniden deneyin.", 429, "MARSOH_POLICY_COOLDOWN");
   const ip = requestIp(request);
   const ipHash = ip ? opaqueHash(ip) : null;
   const sessionHash = opaqueHash(ctx.jwtClaims?.session_id || ctx.jwtClaims?.sub || ctx.user.id);
@@ -597,12 +603,23 @@ export function registerMarsohRoutes(app) {
     }
     const normalizedHash = sha256(normalizedModerationText(body));
     await enforceSendLimits(request, ctx, channel, member, normalizedHash);
-    const classification = await classifyMarsohMessage(moderationBody, {
+    let classification = await classifyMarsohMessage(moderationBody, {
       apiKey: config.marsoh.classifierApiKey,
       baseUrl: config.marsoh.classifierBaseUrl,
       model: config.marsoh.classifierModel,
-      timeoutMs: config.marsoh.providerTimeoutMs
+      timeoutMs: config.marsoh.providerTimeoutMs,
+      sourceLanguage: input.language,
+      localTranslationUrl: config.marsoh.translationLocalUrl,
+      localTranslationSecret: config.marsoh.translationLocalSecret,
+      localTranslationTimeoutMs: config.marsoh.translationLocalTimeoutMs
     });
+    if (classification.recommended_action === "publish") {
+      const recent = assertDb(await supabaseAdmin.from("marsoh_messages")
+        .select("body").eq("sender_user_id", ctx.user.id).eq("channel_id", channel.id)
+        .gte("accepted_at", new Date(Date.now() - 300000).toISOString())
+        .order("accepted_at", { ascending: false }).limit(3), "Mesaj dizisi denetlenemedi.") || [];
+      classification = classifyMarsohSequenceLocal([...recent.reverse().map((row) => row.body), moderationBody]) || classification;
+    }
     if (classification.recommended_action === "reject") {
       await marsohAudit({ request, ctx, action: "marsoh.message.rejected", resourceType: "marsoh_channel", resourceId: channel.id, contentHash: normalizedHash, metadata: { category: classification.category, rule_code: classification.rule_code } });
       throw httpError(MARSOH_PUBLIC_REJECTION[classification.rule_code] || "Gönderilemedi — topluluk kurallarına aykırı ifade", 422, classification.rule_code);

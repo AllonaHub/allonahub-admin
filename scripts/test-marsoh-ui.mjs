@@ -31,6 +31,10 @@ try {
       else if (url.includes("/reactions")) body = { ok: true, active: true, count: 1 };
       else if (url.endsWith("/v1/maritime/marsoh/messages") && route.request().method() === "POST") {
         const sent = JSON.parse(route.request().postData() || "{}");
+        if (sent.body === "siktir") {
+          await route.fulfill({ status: 422, contentType: "application/json", body: JSON.stringify({ ok: false, error: "ABUSE_PROFANITY_THREAT", message: "Gönderilemedi — topluluk kurallarına aykırı ifade" }) });
+          return;
+        }
         body = { ok: true, accepted: true, message: { id: "91111111-1111-4111-8111-111111111111", channel_id: sent.channel_id, body: sent.body, language: sent.language, sender: { id: "11111111-1111-4111-8111-111111111111", display_name: "Denizci" }, time: new Date().toISOString(), own: true } };
       }
       else if (url.includes("/bootstrap")) body = {
@@ -158,6 +162,16 @@ try {
     await page.locator('[data-marsoh-emoji-grid] button[aria-label*="🚢"]').click();
     assert.match(await page.locator("[data-marsoh-input]").inputValue(), /🚢/);
     assert.match(await page.locator("[data-marsoh-character-count]").textContent(), /\/ 2000/);
+    if (width === 390) {
+      await page.locator("[data-marsoh-input]").fill("siktir");
+      await page.locator("[data-marsoh-send]").click();
+      await page.locator(".marsoh-message.is-rejected").waitFor();
+      assert.equal(await page.locator(".marsoh-message.is-rejected .marsoh-bubble-body").innerText(), "Gönderilemedi — topluluk kurallarına aykırı ifade");
+      assert.equal(await page.locator(".marsoh-message.is-rejected .marsoh-bubble-body").innerText().then((text) => text.includes("siktir")), false);
+      await page.locator(".marsoh-message.is-rejected .marsoh-message-status").click();
+      assert.ok(await page.getByRole("button", { name: "Düzenle" }).isVisible());
+      await page.getByRole("button", { name: "Sil" }).click();
+    }
 
     await page.selectOption("[data-marsoh-language]", "ar");
     assert.equal(await page.locator("html").getAttribute("dir"), "rtl");

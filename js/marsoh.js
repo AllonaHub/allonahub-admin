@@ -483,7 +483,7 @@
       const currentDate = dateKey(message.time || message.created_at);
       if (currentDate && currentDate !== lastDate) { const divider = document.createElement("div"); divider.className = "marsoh-date-divider"; divider.textContent = currentDate; target.append(divider); lastDate = currentDate; }
       const article = document.createElement("article");
-      article.className = `marsoh-message${message.own ? " is-own" : ""}${message.local_status === "failed" ? " is-failed" : ""}`;
+      article.className = `marsoh-message${message.own ? " is-own" : ""}${message.local_status === "failed" ? " is-failed" : ""}${message.evaporating ? " is-evaporating" : ""}${message.evaporated ? " is-rejected" : ""}`;
       article.dataset.messageId = message.id || message.idempotency_key;
       const head = document.createElement("div"); head.className = "marsoh-message-head";
       const avatar = document.createElement("span"); avatar.className = "marsoh-message-avatar";
@@ -497,7 +497,17 @@
       if (message.sender?.badge) { const badge = document.createElement("span"); badge.className = "marsoh-verified"; badge.textContent = message.sender.badge === "verified_company" ? "◆" : "✓"; badge.title = message.sender.badge === "verified_company" ? t("verifiedCompany") : t("verifiedSeafarer"); head.append(badge); }
       const time = document.createElement("time"); time.dateTime = message.time || message.created_at || ""; time.textContent = timeLabel(time.dateTime); article.append(head);
       const bubble = document.createElement("div"); bubble.className = "marsoh-bubble";
-      const body = document.createElement("span"); body.className = "marsoh-bubble-body"; renderMessageBody(body, message.body); bubble.append(body);
+      const body = document.createElement("span"); body.className = "marsoh-bubble-body";
+      if (message.evaporated) body.textContent = message.error_message || t("communityFailed");
+      else renderMessageBody(body, message.body);
+      bubble.append(body);
+      if (message.evaporating) {
+        const sparks = document.createElement("span"); sparks.className = "marsoh-evaporation"; sparks.setAttribute("aria-hidden", "true");
+        for (let index = 0; index < 7; index += 1) {
+          const spark = document.createElement("i"); spark.style.left = `${12 + index * 12}%`; spark.style.setProperty("--spark-drift", `${(index - 3) * 3}px`); sparks.append(spark);
+        }
+        bubble.append(sparks);
+      }
       attachReplySwipe(bubble, message);
       if (message.id && !message.local_status) {
         const reply = document.createElement("button"); reply.type = "button"; reply.className = "marsoh-reply-action"; reply.textContent = "↩"; reply.title = t("reply"); reply.setAttribute("aria-label", t("reply")); reply.addEventListener("click", (event) => { event.stopPropagation(); startReply(message); }); article.append(reply);
@@ -532,7 +542,7 @@
 
   async function loadOutboxForChannel(channelId) {
     const rows = (await allOutbox()).filter((item) => item.channel_id === channelId);
-    for (const item of rows) upsertMessage({ ...item, own: true, time: item.created_at, sender: state.bootstrap.user });
+    for (const item of rows) upsertMessage({ ...item, evaporating: false, evaporated: item.failure_type === "policy", own: true, time: item.created_at, sender: state.bootstrap.user });
   }
 
   async function loadMessages(before) {
@@ -617,7 +627,15 @@
       item.local_status = "failed";
       item.failure_type = policyError(error) ? "policy" : "network";
       item.error_message = policyError(error) ? policyMessage(error) : (error.code === "NETWORK_ERROR" ? t("networkFailed") : error.message || t("failed"));
+      item.evaporating = item.failure_type === "policy" && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      item.evaporated = item.failure_type === "policy" && !item.evaporating;
       await putOutbox(item); upsertMessage({ ...item, own: true, sender: state.bootstrap.user, time: item.created_at }); renderMessages({ preserveBottom: true });
+      if (item.evaporating) window.setTimeout(async () => {
+        item.evaporating = false; item.evaporated = true;
+        await putOutbox(item);
+        upsertMessage({ ...item, own: true, sender: state.bootstrap.user, time: item.created_at });
+        renderMessages({ preserveBottom: true });
+      }, 380);
     }
   }
 

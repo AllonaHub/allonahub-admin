@@ -1,3 +1,5 @@
+import { translateMarsohTextDetailed } from "./marsoh-translation.js";
+
 const ZERO_WIDTH = /[\u200B-\u200D\u2060\uFEFF]/gu;
 const CONTROL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/gu;
 const CONFUSABLES = Object.freeze({
@@ -10,19 +12,23 @@ const NUMBER_WORDS = new Map([
   ["one", "1"], ["bir", "1"], ["two", "2"], ["iki", "2"], ["three", "3"], ["uc", "3"], ["üç", "3"],
   ["four", "4"], ["dort", "4"], ["dörd", "4"], ["dört", "4"], ["five", "5"], ["bes", "5"], ["beş", "5"],
   ["six", "6"], ["alti", "6"], ["altı", "6"], ["seven", "7"], ["yedi", "7"], ["seven", "7"],
-  ["eight", "8"], ["sekiz", "8"], ["nine", "9"], ["dokuz", "9"]
+  ["eight", "8"], ["sekiz", "8"], ["nine", "9"], ["dokuz", "9"],
+  ["ноль", "0"], ["один", "1"], ["два", "2"], ["три", "3"], ["четыре", "4"], ["пять", "5"], ["шесть", "6"], ["семь", "7"], ["восемь", "8"], ["девять", "9"],
+  ["null", "0"], ["eins", "1"], ["zwei", "2"], ["drei", "3"], ["vier", "4"], ["funf", "5"], ["fünf", "5"], ["sechs", "6"], ["sieben", "7"], ["acht", "8"], ["neun", "9"]
 ]);
 
 const PROFANITY = [
   /\b(?:amk|aq|orospu|pic|piç|siktir|sikik|fuck|fucking|bitch|motherfucker)\b/iu,
-  /\b(?:geber|oldururum|öldürürüm|kill\s+you|i\s+will\s+kill|seni\s+bulurum)\b/iu
+  /\b(?:geber|oldururum|öldürürüm|kill\s+you|i\s+will\s+kill|seni\s+bulurum|scheiße|scheisse|fick\s+dich)\b/iu,
+  /(?:^|[^\p{L}])(?:сука|блядь|блять|пошел\s+нахуй|пошёл\s+нахуй)(?=$|[^\p{L}])/iu,
+  /(?:تباً لك|اللعنة عليك|سأقتلك)/u
 ];
 const HATE_OR_HARASSMENT = /\b(?:aptal|gerizekali|gerizekalı|salak|idiot|stupid|alçak|alcak)\b/iu;
-const POSITION_TERMS = /\b(?:kaptan|captain|master|chief\s+officer|second\s+officer|2\.?\s*zabit|muhendis|mühendis|engineer|oiler|motorman|matros|able\s+seaman|ordinary\s+seaman|aşpaz|aspaz|cook|welder|fitter|crew|murettebat|mürettebat|denizci)\b/iu;
+const POSITION_TERMS = /(?:^|[^\p{L}])(?:kaptan|captain|master|chief\s+officer|second\s+officer|2\.?\s*zabit|muhendis|mühendis|engineer|oiler|motorman|matros|able\s+seaman|ordinary\s+seaman|aşpaz|aspaz|cook|welder|fitter|crew|murettebat|mürettebat|denizci|капитан|матрос|механик|kapitän|ingenieur)(?=$|[^\p{L}])/iu;
 const SALARY_TERMS = /(?:\b(?:maas|maaş|salary|wage|ucret|ücret|usd|eur|dollar|dolar|avro)\b|[$€£]\s*\d|\d[\d.,]*\s*(?:usd|eur|dolar|avro))/iu;
 const JOIN_TERMS = /\b(?:katilim|katılım|join(?:ing)?|yarin|yarın|tomorrow|acil|urgent|hemen|derhal|sign[ -]?on)\b/iu;
 const VESSEL_TERMS = /\b(?:gemi|vessel|ship|tanker|bulk|cargo|kargo|container|konteyner|ro-?ro|lng|lpg)\b/iu;
-const RECRUITMENT_CALL = /\b(?:araniyor|aranıyor|wanted|required|needed|basvur|başvur|apply|eleman|personel|crew\s+needed|ise\s+alim|işe\s+alım)\b/iu;
+const RECRUITMENT_CALL = /(?:^|[^\p{L}])(?:araniyor|aranıyor|axtarılır|axtarilir|lazımdır|lazimdir|wanted|required|needed|basvur|başvur|apply|eleman|personel|crew\s+needed|ise\s+alim|işe\s+alım|требуется|ищем|вакансия|gesucht|stellenangebot)(?=$|[^\p{L}])/iu;
 const MONEY_REQUEST = /\b(?:para\s+gonder|para\s+gönder|odeme\s+yap|ödeme\s+yap|komisyon|kapora|deposit|send\s+money|pay\s+me|crypto|bitcoin|usdt|iban)\b/iu;
 
 function foldDiacritics(value) {
@@ -54,7 +60,8 @@ export function normalizedModerationText(value) {
 }
 
 function numberWordsToDigits(value) {
-  return String(value).replace(/[\p{L}]+/gu, (word) => NUMBER_WORDS.get(word.toLocaleLowerCase("tr-TR")) || word);
+  return String(value).replace(/[٠-٩۰-۹]/gu, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit) >= 0 ? "٠١٢٣٤٥٦٧٨٩".indexOf(digit) : "۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+    .replace(/[\p{L}]+/gu, (word) => NUMBER_WORDS.get(word.toLocaleLowerCase("tr-TR")) || word);
 }
 
 export function containsHiddenPhone(value) {
@@ -75,13 +82,18 @@ function containsEmail(value) {
 }
 
 function containsUrl(value) {
-  return /(?:https?:\/\/|www\.|\b[a-z0-9-]{2,63}\.(?:com|net|org|io|co|me|app|ru|tr|az)\b)/iu.test(value);
+  const compact = value.replace(/\s*(?:\[|\()?\s*(?:dot|nokta)\s*(?:\]|\))?\s*/giu, ".");
+  return /(?:https?:\/\/|www\.|\b(?:t|wa)\.me\b|\b[a-z0-9-]{2,63}\.(?:com|net|org|io|co|me|app|ru|tr|az|ly|gg)\b)/iu.test(compact);
 }
 
 function containsSocialHandle(value) {
   return /(?:^|\s)@[a-z0-9_.]{2,32}\b/iu.test(value)
-    || /\b(?:whats?app|telegram|instagram|facebook|tiktok|signal)\b.{0,36}\b(?:yaz|mesaj|dm|ulaş|ulas|contact|add)\b/iu.test(value)
-    || /\b(?:yaz|mesaj|dm|ulaş|ulas|contact|add)\b.{0,36}\b(?:whats?app|telegram|instagram|facebook|tiktok|signal)\b/iu.test(value);
+    || /\b(?:whats?app|telegram|instagram|facebook|tiktok|signal|w\s*\.?\s*p|t\s*\.?\s*g)\b.{0,36}\b(?:yaz|mesaj|dm|ulaş|ulas|contact|add|напиши|пиши|schreib)\b/iu.test(value)
+    || /\b(?:yaz|mesaj|dm|ulaş|ulas|contact|add|напиши|пиши|schreib)\b.{0,36}\b(?:whats?app|telegram|instagram|facebook|tiktok|signal)\b/iu.test(value);
+}
+
+function containsImpersonation(value) {
+  return /(?:^|[^\p{L}])(?:allonahub|allona\s*hub|admin|yönetim|yonetim|support|destek)(?=$|[^\p{L}]).{0,90}(?:^|[^\p{L}])(?:şifre|sifre|password|kod|code|otp|ödeme|odeme|payment|para|iban)/iu.test(value);
 }
 
 function languageOf(value) {
@@ -113,7 +125,8 @@ export function classifyMarsohMessageLocal(value) {
   if (containsEmail(original)) return result("contact_information", 0.99, "CONTACT_EMAIL", language, "E-posta adresi veya gizlenmiş e-posta örüntüsü algılandı.", "reject", ["email"]);
   if (containsHiddenPhone(original)) return result("contact_information", 0.98, "CONTACT_PHONE", language, "Telefon numarası veya sayı sözcükleriyle gizlenmiş numara algılandı.", "reject", ["phone"]);
   if (containsUrl(original)) return result("contact_information", 0.98, "CONTACT_URL", language, "Harici bağlantı algılandı.", "reject", ["url"]);
-  if (PROFANITY.some((pattern) => pattern.test(normalized))) return result("abuse", 0.97, "ABUSE_PROFANITY_THREAT", language, "Küfür, ağır argo veya tehdit örüntüsü algılandı.", "reject", ["abuse"]);
+  if (containsImpersonation(original)) return result("impersonation", 0.9, "FRAUD_IMPERSONATION", language, "Yönetim kimliğiyle şifre, kod veya ödeme talebi sinyali algılandı.", "quarantine", ["impersonation"]);
+  if (PROFANITY.some((pattern) => pattern.test(normalized) || pattern.test(original))) return result("abuse", 0.97, "ABUSE_PROFANITY_THREAT", language, "Küfür, ağır argo veya tehdit örüntüsü algılandı.", "reject", ["abuse"]);
   if (HATE_OR_HARASSMENT.test(normalized)) return result("harassment", 0.91, "ABUSE_HARASSMENT", language, "Hakaret veya taciz ifadesi algılandı.", "reject", ["harassment"]);
 
   const signals = [];
@@ -139,6 +152,17 @@ export function classifyMarsohMessageLocal(value) {
     return result("recruitment", 0.63, "RECRUITMENT_CONTEXT_REVIEW", language, "İşe alım çağrısı bağlamsal inceleme gerektiriyor.", "quarantine", signals);
   }
   return result("safe_conversation", questionOnly ? 0.94 : 0.9, "SAFE_CONVERSATION", language, "Topluluk sohbeti olarak değerlendirildi.", "publish", signals);
+}
+
+export function classifyMarsohSequenceLocal(messages) {
+  const parts = messages.map((message) => sanitizeMarsohText(message, 2000)).filter(Boolean).slice(-4);
+  if (parts.length < 2) return null;
+  const combined = parts.join(" ");
+  const signals = [POSITION_TERMS.test(combined), SALARY_TERMS.test(combined), JOIN_TERMS.test(combined), VESSEL_TERMS.test(combined)];
+  if (RECRUITMENT_CALL.test(combined) && signals.filter(Boolean).length >= 3) {
+    return result("recruitment", 0.88, "RECRUITMENT_STAGED", languageOf(combined), "İşe alım çağrısı ve ilan ayrıntıları kısa mesaj dizisine bölünmüş.", "quarantine", ["staged_recruitment"]);
+  }
+  return null;
 }
 
 function responseText(payload) {
@@ -190,6 +214,35 @@ async function remoteClassification(text, options) {
 export async function classifyMarsohMessage(value, options = {}) {
   const local = classifyMarsohMessageLocal(value);
   if (local.recommended_action !== "publish") return local;
+  const selectedLanguage = String(options.sourceLanguage || "").toLowerCase();
+  const sourceLanguage = /[\u0600-\u06ff]/u.test(value) ? "ar"
+    : /[\u0400-\u04ff]/u.test(value) && !["ru", "kk", "ky"].includes(selectedLanguage) ? "ru"
+      : selectedLanguage;
+  if (options.localTranslationUrl && ["az", "de", "ru", "ar", "kk", "uz", "ky"].includes(sourceLanguage) && /\p{L}/u.test(value)) {
+    try {
+      const translated = await translateMarsohTextDetailed(sanitizeMarsohText(value, 2000), "tr", {
+        sourceLanguage,
+        provider: "local",
+        localUrl: options.localTranslationUrl,
+        localSecret: options.localTranslationSecret,
+        localTimeoutMs: Math.min(options.localTranslationTimeoutMs || 6000, 6000),
+        fetchImpl: options.fetchImpl
+      });
+      const secondPass = classifyMarsohMessageLocal(translated.translated_text);
+      if (secondPass.recommended_action !== "publish") {
+        return {
+          ...secondPass,
+          recommended_action: "quarantine",
+          rule_code: "MULTILINGUAL_REVIEW",
+          language: sourceLanguage,
+          explanation: "Yerel çeviride olası kural ihlali; insan incelemesi gerekli.",
+          classifier_version: "marsoh-local-translation-review-v1"
+        };
+      }
+    } catch {
+      // Translation failure must not fabricate a moderation result.
+    }
+  }
   try {
     const remote = await remoteClassification(sanitizeMarsohText(value, 4000), options);
     if (!remote) return local;
