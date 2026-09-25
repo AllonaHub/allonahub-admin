@@ -1,4 +1,9 @@
 (function () {
+  if (window.location.hostname === "allonahub.github.io" && /^\/allonahub-admin(?:\/|$)/.test(window.location.pathname)) {
+    const path = window.location.pathname.slice("/allonahub-admin".length) || "/";
+    window.location.replace(`https://allonahub.com${path}${window.location.search}${window.location.hash}`);
+    return;
+  }
   const App = window.Allona = window.Allona || {};
 
   const legacyRoutes = {

@@ -1,4 +1,9 @@
 (function () {
+  if (window.location.hostname === "allonahub.github.io" && /^\/allonahub-admin(?:\/|$)/.test(window.location.pathname)) {
+    const path = window.location.pathname.slice("/allonahub-admin".length) || "/";
+    window.location.replace(`https://allonahub.com${path}${window.location.search}${window.location.hash}`);
+    return;
+  }
   window.Allona = window.Allona || {};
 
   const localPreviewHost = /^(localhost|127\.0\.0\.1)$/i.test(window.location.hostname);
