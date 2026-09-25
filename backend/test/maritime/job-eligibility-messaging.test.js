@@ -66,7 +66,7 @@ test("job gate directs candidates with no documents to document upload", async (
     "notEligibleForPosition", "notEligibleReason", "refreshEligibility", "refreshEligibilityReason",
     "listingRequirementsPending", "listingRequirementsPendingReason", "eligibilityUnavailable", "eligibilityUnavailableReason",
     "applicationBlockedTitle", "applicationDialogClose", "qualificationMismatchTemplate", "automaticApplicationSubmitted",
-    "autoSaving", "autoSaveFailed"
+    "autoSaving", "autoSaveFailed", "shareDocumentsCheckbox", "shareDocumentsRequired", "shareDocumentsRequiredTitle"
   ]) {
     assert.equal(window.__portalCopyRows[key].length, 9, `${key} must include all nine languages`);
     assert.ok(window.__portalCopyRows[key].every((value) => String(value).trim()), `${key} contains an empty translation`);
@@ -86,8 +86,11 @@ test("job gate directs candidates with no documents to document upload", async (
   assert.equal(gate.disabled, false);
   const action = window.__jobApplicationAction({ id: "listing" }, gate);
   assert.match(action, /<button[^>]+data-apply-job="listing"/);
-  assert.match(action, /aria-label="Başvur ve belgelerimi bu firmayla paylaş"/);
   assert.match(action, />Başvur<\/button>/);
+  assert.match(action, /<input type="checkbox" data-job-share-consent="listing">/);
+  assert.match(action, /Belgelerimin ve bilgilerimin bu firmayla paylaşılmasına izin veriyorum/);
+  assert.match(source, /if \(!consent \|\| !consent\.checked\)/);
+  assert.doesNotMatch(source, /window\.confirm\(text\("shareDocumentsConfirm"\)\)/);
   assert.doesNotMatch(action, /maritime-documents\.html/);
   assert.match(window.__applicationDialogMarkup(), /<dialog[^>]+data-application-dialog/);
   assert.doesNotMatch(source, /Uygunluk doğrulanamadı/);

@@ -140,6 +140,9 @@
     applicationConfirm: ["CV'niz bu ilana uygundur. Başvuruyu doğrulanmış firmaya göndermek istiyor musunuz?", "CV-niz bu elana uyğundur. Müraciəti təsdiqlənmiş şirkətə göndərmək istəyirsiniz?", "CV осы орынға сәйкес. Өтінімді расталған компанияға жібересіз бе?", "CV bu eʼlonga mos. Arizani tasdiqlangan kompaniyaga yuborasizmi?", "CV бул жарыяга туура келет. Арызды текшерилген компанияга жөнөтөсүзбү?", "Your CV matches this listing. Submit the application to the verified company?", "Ihr CV passt zu dieser Stelle. Bewerbung an das verifizierte Unternehmen senden?", "Ваш CV подходит. Отправить заявку проверенной компании?", "سيرتك مطابقة. هل تريد إرسال الطلب إلى الشركة الموثقة؟"],
     matchedJobs: ["Eşleşen ilanlar", "Uyğun elanlar", "Сәйкес хабарландырулар", "Mos eʼlonlar", "Дал келген жарыялар", "Matched jobs", "Passende Stellen", "Подходящие вакансии", "الوظائف المطابقة"],
     shareDocumentsConsent: ["Başvur ve belgelerimi bu firmayla paylaş", "Müraciət et və sənədlərimi bu şirkətlə paylaş", "Өтініш беріп, құжаттарымды осы компаниямен бөлісу", "Ariza berish va hujjatlarimni kompaniyaga ulashish", "Арыз берүү жана документтеримди компанияга бөлүшүү", "Apply and share my documents with this company", "Bewerben und Dokumente mit diesem Unternehmen teilen", "Подать заявку и поделиться документами с компанией", "تقديم الطلب ومشاركة مستنداتي مع الشركة"],
+    shareDocumentsCheckbox: ["Belgelerimin ve bilgilerimin bu firmayla paylaşılmasına izin veriyorum.", "Sənədlərimin və məlumatlarımın bu şirkətlə paylaşılmasına icazə verirəm.", "Құжаттарым мен мәліметтерімді осы компаниямен бөлісуге келісемін.", "Hujjatlarim va maʼlumotlarimni ushbu kompaniya bilan ulashishga roziman.", "Документтеримди жана маалыматтарымды бул компания менен бөлүшүүгө уруксат берем.", "I allow my documents and information to be shared with this company.", "Ich stimme zu, dass meine Dokumente und Angaben mit diesem Unternehmen geteilt werden.", "Разрешаю передать мои документы и данные этой компании.", "أوافق على مشاركة مستنداتي وبياناتي مع هذه الشركة."],
+    shareDocumentsRequired: ["Başvurmak için önce belge ve bilgi paylaşımına izin verin.", "Müraciət etmək üçün əvvəlcə sənəd və məlumat paylaşımına icazə verin.", "Өтініш беру үшін алдымен құжаттар мен деректерді бөлісуге келісіңіз.", "Ariza berish uchun avval hujjat va maʼlumotlarni ulashishga rozilik bering.", "Арыз берүү үчүн адегенде документ жана маалымат бөлүшүүгө уруксат бериңиз.", "To apply, first allow your documents and information to be shared.", "Stimmen Sie vor der Bewerbung der Weitergabe Ihrer Dokumente und Angaben zu.", "Для отклика сначала разрешите передачу документов и данных.", "للتقديم، وافق أولاً على مشاركة مستنداتك وبياناتك."],
+    shareDocumentsRequiredTitle: ["Paylaşım izni gerekli", "Paylaşım icazəsi lazımdır", "Бөлісуге келісім қажет", "Ulashishga rozilik kerak", "Бөлүшүүгө уруксат керек", "Sharing permission required", "Zustimmung zur Weitergabe erforderlich", "Нужно согласие на передачу", "مطلوب إذن المشاركة"],
     shareDocumentsConfirm: ["Bu ilana başvurarak Maritime CV'nizin ve yüklediğiniz belgelerin yalnızca bu doğrulanmış firmadaki yetkili kişilerce görüntülenmesine izin veriyorsunuz. Devam edilsin mi?", "Bu elana müraciət edərək Maritime CV-nizin və yüklədiyiniz sənədlərin yalnız bu təsdiqlənmiş şirkətin səlahiyyətli şəxslərinə görünməsinə icazə verirsiniz. Davam edilsin?", "Осы жұмысқа өтініш беру арқылы Maritime CV және құжаттарыңызды тек расталған компания өкілдеріне көрсетесіз. Жалғастырасыз ба?", "Ariza bilan Maritime CV va hujjatlaringiz faqat tasdiqlangan kompaniya vakillariga ko‘rinadi. Davom etilsinmi?", "Бул орунга арыз берип, Maritime CV жана документтериңизди текшерилген компаниянын ыйгарым укуктуу өкүлдөрүнө көрсөтүүгө уруксат бересиз. Улантасызбы?", "By applying, you allow authorized people at this verified company to view your Maritime CV and uploaded documents for this job only. Continue?", "Mit der Bewerbung erlauben Sie den Berechtigten dieses verifizierten Unternehmens, Ihr Maritime CV und Ihre Dokumente nur für diese Stelle einzusehen. Fortfahren?", "Подавая заявку, вы разрешаете уполномоченным представителям этой проверенной компании просматривать ваше Maritime CV и документы только для этой вакансии. Продолжить?", "بتقديم الطلب، تسمح للمخولين لدى هذه الشركة الموثقة بعرض سيرتك البحرية ومستنداتك لهذه الوظيفة فقط. هل تتابع؟"],
     applicationSending: ["Uygunluk doğrulanıyor ve başvuru gönderiliyor...", "Uyğunluq yoxlanılır və müraciət göndərilir...", "Сәйкестік тексеріліп, өтінім жіберілуде...", "Moslik tekshirilib, ariza yuborilmoqda...", "Шайкештик текшерилип, арыз жөнөтүлүүдө...", "Checking eligibility and submitting...", "Eignung wird geprüft und Bewerbung gesendet...", "Проверяем соответствие и отправляем заявку...", "جارٍ التحقق من الأهلية وإرسال الطلب..."],
     applicationFailed: ["Başvuru gönderilemedi. Global CV eşleşmenizi yenileyip tekrar deneyin.", "Müraciət göndərilmədi. Global CV uyğunluğunu yeniləyib yenidən cəhd edin.", "Өтінім жіберілмеді. Global CV сәйкестігін жаңартып көріңіз.", "Ariza yuborilmadi. Global CV mosligini yangilab qayta urinib ko‘ring.", "Арыз жөнөтүлгөн жок. Global CV шайкештигин жаңыртып кайталаңыз.", "Application could not be submitted. Refresh your Global CV match and try again.", "Bewerbung konnte nicht gesendet werden. Aktualisieren Sie Ihren Global-CV-Abgleich.", "Заявка не отправлена. Обновите сопоставление Global CV.", "تعذر إرسال الطلب. حدّث مطابقة Global CV وحاول مجدداً."],
@@ -523,7 +526,8 @@
   function jobApplicationAction(job, gate) {
     const icon = gate.applied ? "fa-check" : "fa-paper-plane";
     const content = `<i class="fa-solid ${icon}" aria-hidden="true"></i>${escapeHtml(text(gate.applied ? gate.label : "apply"))}`;
-    return `<button class="maritime-button maritime-button--primary" type="button" data-apply-job="${escapeHtml(job.id)}" aria-label="${escapeHtml(text(gate.applied ? gate.label : "shareDocumentsConsent"))}" ${gate.applied ? "disabled" : ""}>${content}</button>`;
+    const consent = gate.applied ? "" : `<label class="maritime-job-consent"><input type="checkbox" data-job-share-consent="${escapeHtml(job.id)}"><span>${escapeHtml(text("shareDocumentsCheckbox"))}</span></label>`;
+    return `<button class="maritime-button maritime-button--primary" type="button" data-apply-job="${escapeHtml(job.id)}" ${gate.applied ? "disabled" : ""}>${content}</button>${consent}`;
   }
 
   function jobCard(job) {
@@ -559,7 +563,7 @@
     if (!dialog) return;
     const message = dialog.querySelector("[data-application-dialog-message]");
     const title = dialog.querySelector("#maritimeApplicationDialogTitle");
-    if (title) title.textContent = text("applicationBlockedTitle");
+    if (title) title.textContent = gate.title || text("applicationBlockedTitle");
     const action = dialog.querySelector("[data-application-dialog-action]");
     if (message) message.textContent = gate.reason || text("applicationFailed");
     if (action) {
@@ -615,7 +619,11 @@
       showApplicationDialog(gate);
       return;
     }
-    if (!window.confirm(text("shareDocumentsConfirm"))) return;
+    const consent = Array.from(document.querySelectorAll("[data-job-share-consent]")).find(function (input) { return input.dataset.jobShareConsent === jobId; });
+    if (!consent || !consent.checked) {
+      showApplicationDialog({ title: text("shareDocumentsRequiredTitle"), reason: text("shareDocumentsRequired") });
+      return;
+    }
     if (notice) { notice.textContent = text("applicationSending"); notice.className = "maritime-notice is-visible"; }
     try {
       let draft = smartDraftFor(job);

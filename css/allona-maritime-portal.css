@@ -421,6 +421,31 @@ body.maritime-portal-page[data-theme="white"] .maritime-match-counter {
   white-space: nowrap;
 }
 
+.maritime-job-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: 290px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--maritime-muted, #526574);
+  cursor: pointer;
+  text-align: start;
+}
+
+.maritime-job-consent input {
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  margin: 0;
+  accent-color: #087fca;
+}
+
+.maritime-job-consent input:focus-visible {
+  outline: 2px solid #087fca;
+  outline-offset: 3px;
+}
+
 .maritime-job-head,
 .maritime-record-head {
   display: flex;
