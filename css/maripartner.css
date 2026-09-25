@@ -167,6 +167,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .mp-history article span, .mp-history article small { margin-top: 5px; color: var(--mp-muted); }
 .mp-history-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
 .mp-cv-review { margin-top: 14px; padding: 14px 0 0; border-top: 1px solid var(--mp-line); overflow-wrap: anywhere; }
+.mp-cv-review__photo { float: right; width: 104px; height: 132px; object-fit: contain; margin: 0 0 12px 16px; background: #fff; }
+.mp-cv-review__details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 14px; clear: both; }
+.mp-cv-review__details div { border-bottom: 1px solid #dce7eb; padding: 4px 0; min-width: 0; }
+.mp-cv-review__details dt { color: #526a74; font-size: 11px; }
+.mp-cv-review__details dd { margin: 0; overflow-wrap: anywhere; }
 .mp-cv-review h3, .mp-cv-review h4 { margin: 12px 0 7px; color: var(--mp-navy); }
 .mp-cv-review ul { display: grid; gap: 6px; margin: 0; padding-left: 20px; }
 .mp-cv-review li { line-height: 1.45; }

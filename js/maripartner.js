@@ -380,6 +380,31 @@
     ].filter(Boolean);
   }
 
+  async function openCandidatePdf(cv, opened) {
+    if (!cv.saved_maritime_cv) throw new Error("Adayın kayıtlı Maritime CV'si bulunmuyor.");
+    if (!opened) throw new Error("PDF penceresi açılamadı. Tarayıcınızda açılır pencerelere izin verin.");
+    const frame = document.createElement("iframe");
+    frame.setAttribute("aria-hidden", "true");
+    frame.style.cssText = "position:fixed;left:-10000px;top:0;width:1000px;height:1400px;border:0";
+    frame.src = `${location.origin}/pages/ecosystem/maritime-cv.html?partnerReview=1`;
+    document.body.append(frame);
+    try {
+      await new Promise((resolve, reject) => {
+        frame.addEventListener("load", resolve, { once: true });
+        frame.addEventListener("error", () => reject(new Error("CV şablonu açılamadı.")), { once: true });
+      });
+      const page = frame.contentWindow;
+      if (!page?.applyMaritimeCVData || !page.renderMaritimeCvPdfBlob) throw new Error("CV şablonu hazır değil.");
+      page.applyMaritimeCVData(cv.saved_maritime_cv);
+      if (cv.photo_url) page.setMaritimeCvPhoto(cv.photo_url);
+      const blob = await page.renderMaritimeCvPdfBlob();
+      const url = URL.createObjectURL(blob);
+      opened.opener = null;
+      opened.location.replace(url);
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } finally { frame.remove(); }
+  }
+
   function historyCard(title, detail, meta, className, action) {
     return `<article class="${escape(className || "")}"><strong>${escape(title)}</strong><span>${escape(detail || "")}</span><small>${escape(meta || "")}</small>${action || ""}</article>`;
   }
@@ -1673,6 +1698,16 @@
     }
     const inspectCv = event.target.closest("[data-mp-candidate-cv]");
     if (inspectCv) {
+      if (inspectCv.closest(".mp-applicant-card")) {
+        const opened = window.open("", "_blank");
+        inspectCv.disabled = true;
+        try {
+          const result = await api(`/v1/maritime/partner-center/candidate-rooms/${encodeURIComponent(inspectCv.dataset.mpCandidateCv)}/cv?partner_id=${encodeURIComponent(state.partnerId)}`);
+          await openCandidatePdf(result.cv || {}, opened);
+        } catch (error) { opened?.close(); alert(error.message || "CV PDF açılamadı."); }
+        finally { inspectCv.disabled = false; }
+        return;
+      }
       const preview = inspectCv.closest(".mp-applicant-card, .mp-candidate-detail")?.querySelector("[data-mp-cv-preview]");
       if (!preview) return;
       inspectCv.disabled = true;
@@ -1681,15 +1716,28 @@
         const result = await api(`/v1/maritime/partner-center/candidate-rooms/${encodeURIComponent(inspectCv.dataset.mpCandidateCv)}/cv?partner_id=${encodeURIComponent(state.partnerId)}`);
         const cv = result.cv || {};
         const items = (rows, formatter, fallback) => rows?.length ? `<ul>${rows.map((item) => `<li>${escape(formatter(item))}</li>`).join("")}</ul>` : `<p>${escape(fallback)}</p>`;
-        preview.innerHTML = `<section class="mp-cv-review"><h3>${escape(cv.display_name || "Aday CV")}</h3><p>${escape([cv.rank || "Rütbe belirtilmedi", cv.nationality, cv.sea_service_summary].filter(Boolean).join(" · "))}</p>
+        preview.innerHTML = `<section class="mp-cv-review">${cv.photo_url ? `<img class="mp-cv-review__photo" src="${escape(cv.photo_url)}" alt="Aday fotoğrafı" crossorigin="anonymous">` : ""}<h3>${escape(cv.display_name || "Aday CV")}</h3><p>${escape([cv.rank || "Rütbe belirtilmedi", cv.nationality, cv.sea_service_summary].filter(Boolean).join(" · "))}</p>
           ${cv.professional_summary ? `<p>${escape(cv.professional_summary)}</p>` : ""}
+          <h4>Kişisel ve mesleki bilgiler</h4>${(cv.details || []).length ? `<dl class="mp-cv-review__details">${cv.details.map((item) => `<div><dt>${escape(item.label)}</dt><dd>${escape(item.value)}</dd></div>`).join("")}</dl>` : "<p>Kaydedilmiş ayrıntı bulunmuyor.</p>"}
           <h4>Sertifikalar</h4>${items(cv.certificates, (item) => [item.name, item.code, item.expiry_date].filter(Boolean).join(" · "), "Sertifika kaydı bulunmuyor.")}
           <h4>Deniz hizmeti</h4>${items(cv.vessel_experience, (item) => [item.vessel_name, item.company_name, item.rank, item.sign_on_date, item.sign_off_date].filter(Boolean).join(" · "), "Deniz hizmeti kaydı bulunmuyor.")}
           <h4>Eğitim</h4>${items(cv.education, (item) => [item.institution, item.qualification, item.start_date, item.end_date].filter(Boolean).join(" · "), "Eğitim kaydı bulunmuyor.")}
           <h4>Dil ve beceriler</h4>${items(cv.languages, (item) => [item.language, item.level].filter(Boolean).join(" · "), "Dil kaydı bulunmuyor.")}${items(cv.skills, (item) => item, "Beceri kaydı bulunmuyor.")}
-          <h4>İzinli hizmet belgeleri</h4>${(result.documents || []).length ? `<ul>${result.documents.map((item) => `<li><button type="button" data-mp-service-document="${escape(item.id)}">${escape(item.name || "Hizmet belgesini aç")}</button></li>`).join("")}</ul>` : `<p>Paylaşılmış hizmet belgesi bulunmuyor.</p>`}</section>`;
+          <h4>İzinli hizmet belgeleri</h4>${(result.documents || []).length ? `<ul>${result.documents.map((item) => `<li><button type="button" data-mp-service-document="${escape(item.id)}">${escape(item.name || "Hizmet belgesini aç")}</button></li>`).join("")}</ul>` : `<p>Paylaşılmış hizmet belgesi bulunmuyor.</p>`}</section><button type="button" data-mp-candidate-pdf="${escape(inspectCv.dataset.mpCandidateCv)}">Orijinal AllonaHub CV PDF'ini Gör</button>`;
       } catch (error) { preview.textContent = error.message || "CV şu anda açılamadı."; }
       finally { inspectCv.disabled = false; }
+      return;
+    }
+    const candidatePdf = event.target.closest("[data-mp-candidate-pdf]");
+    if (candidatePdf) {
+      const opened = window.open("", "_blank");
+      candidatePdf.disabled = true;
+      try {
+        const result = await api(`/v1/maritime/partner-center/candidate-rooms/${encodeURIComponent(candidatePdf.dataset.mpCandidatePdf)}/cv?partner_id=${encodeURIComponent(state.partnerId)}`);
+        await openCandidatePdf(result.cv || {}, opened);
+      }
+      catch (error) { opened?.close(); alert(error.message || "CV PDF açılamadı."); }
+      finally { candidatePdf.disabled = false; }
       return;
     }
     const serviceDocument = event.target.closest("[data-mp-service-document]");

@@ -5,6 +5,7 @@ import { isValidImoNumber, normalizeImoNumber } from "../lib/maritime-vessel-pro
 import { MARSOH_SUPPORTED_LANGUAGES, translateMarsohTextDetailed } from "../lib/marsoh-translation.js";
 import { matchVerifiedFormerWorkers, parsePrivatePoolFile, validatePoolRows } from "../lib/maritime-private-pool.js";
 import { canViewCandidateDocuments } from "../lib/maritime-candidate-document-access.js";
+import { MARITIME_PROFILE_PHOTO_BUCKET } from "../lib/maritime-document-doctor.js";
 import {
   MARIPARTNER_REFERENCE_CATEGORIES,
   MARIPARTNER_REFERENCE_QUESTIONS,
@@ -978,7 +979,7 @@ export function registerMaritimePartnerCenterRoutes(app) {
     const rows = assertDb(await supabaseAdmin.from("maritime_document_intakes")
       .select("id,original_file_name,document_type,created_at")
       .eq("seafarer_user_id", room.seafarer_user_id)
-      .in("status", ["user_confirmed", "verification_pending", "verified"])
+      .in("status", ["uploaded", "analysis_failed", "pending_user_confirmation", "user_confirmed", "verification_pending", "verified"])
       .order("created_at", { ascending: false }).limit(100), "Aday belgeleri okunamadı.") || [];
     await logAction(request, access.ctx, "maripartner.candidate_documents_listed", "maritime_private_candidate_room", room.id, { count: rows.length });
     return { ok: true, documents: rows.map(({ id, original_file_name, document_type, created_at }) => ({ id, name: original_file_name, type: document_type, created_at })) };
@@ -995,7 +996,7 @@ export function registerMaritimePartnerCenterRoutes(app) {
     const document = assertDb(await supabaseAdmin.from("maritime_document_intakes")
       .select("id,original_file_name,storage_bucket,storage_path,status").eq("id", documentId)
       .eq("seafarer_user_id", room.seafarer_user_id)
-      .in("status", ["user_confirmed", "verification_pending", "verified"]).maybeSingle(), "Belge okunamadı.");
+      .in("status", ["uploaded", "analysis_failed", "pending_user_confirmation", "user_confirmed", "verification_pending", "verified"]).maybeSingle(), "Belge okunamadı.");
     if (!document) throw httpError("Belge bulunamadı.", 404, "MARITIME_DOCUMENT_NOT_FOUND");
     const signed = await supabaseAdmin.storage.from(document.storage_bucket).createSignedUrl(document.storage_path, 300);
     if (signed.error || !signed.data?.signedUrl) throw httpError("Belge bağlantısı oluşturulamadı.", 503, "MARITIME_DOCUMENT_SIGNING_FAILED");
@@ -1047,8 +1048,29 @@ export function registerMaritimePartnerCenterRoutes(app) {
       language: text(item.language, 80), level: text(item.level, 80)
     }));
     const skills = (Array.isArray(payload.skills) ? payload.skills : []).slice(0, 30).map((item) => text(item.name, 120)).filter(Boolean);
+    const manual = payload.manual_cv?.fields || {};
+    const detailLabels = {
+      firstName: "Ad", familyName: "Soyad", fatherName: "Baba adı", birthDate: "Doğum tarihi", birthPlace: "Doğum yeri",
+      nationality: "Vatandaşlık", position: "Rütbe", gender: "Cinsiyet", marital: "Medeni durum", address: "Adres",
+      airport: "Yakın havalimanı", email: "E-posta", mobile: "Telefon", passportNo: "Pasaport numarası",
+      passportCountry: "Pasaport ülkesi", passportIssued: "Pasaport veriliş tarihi", passportValid: "Pasaport bitiş tarihi",
+      seamanBookNo: "Gemiadamı cüzdanı", seamanBookValid: "Cüzdan bitiş tarihi", medicalFitness: "Sağlık uygunluğu",
+      medicalExpiry: "Sağlık belgesi bitişi", competencyCertificate: "Yeterlilik belgesi", competencyClass: "Yeterlilik sınıfı"
+    };
+    const details = Object.entries(detailLabels).map(([key, label]) => ({ label, value: text(manual[key], 240) })).filter((item) => item.value);
+    const photo = await supabaseAdmin.storage.from(MARITIME_PROFILE_PHOTO_BUCKET)
+      .createSignedUrl(`users/${room.seafarer_user_id}/profile.webp`, 300);
     return { ok: true, cv: { ...summary, certificates, education, languages, skills,
-      professional_summary: text(payload.professional_summary, 1500), nationality: text(payload.nationality, 80) },
+      professional_summary: text(payload.professional_summary, 1500), nationality: text(payload.nationality, 80),
+      photo_url: photo.error ? null : photo.data?.signedUrl || null, details,
+      saved_maritime_cv: payload.manual_cv ? {
+        lang: payload.manual_cv.lang,
+        summaryMode: payload.manual_cv.summaryMode,
+        fields: payload.manual_cv.fields,
+        additionalData: payload.manual_cv.additionalData,
+        stcwData: payload.manual_cv.stcwData,
+        seaData: payload.manual_cv.seaData
+      } : null },
       documents: documentRows.map((row) => ({ id: row.id, name: row.original_file_name })) };
   });
 

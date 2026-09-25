@@ -60,6 +60,31 @@
     }));
   }
 
+  async function renderMaritimeCvPdfBlob() {
+    if (new URLSearchParams(location.search).get("partnerReview") !== "1") throw new Error("CV inceleme modu kapalı.");
+    const pages = Array.from(document.querySelectorAll(".cvPage"));
+    if (!pages.length || !window.html2canvas || !window.jspdf?.jsPDF) throw new Error("CV PDF şablonu yüklenemedi.");
+    document.body.classList.add("pdf-capture");
+    try {
+      await new Promise((resolve) => window.requestAnimationFrame(resolve));
+      await waitForPdfAssets(document.querySelector(".previewWrap") || document.body);
+      const pdf = new window.jspdf.jsPDF("p", "mm", "a4");
+      for (let index = 0; index < pages.length; index += 1) {
+        const canvas = await window.html2canvas(pages[index], { scale: 2.5, useCORS: true, backgroundColor: "#ffffff", imageTimeout: 15000, logging: false });
+        if (index) pdf.addPage();
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const ratio = canvas.height / canvas.width;
+        const renderedWidth = ratio > pageHeight / pageWidth ? pageHeight / ratio : pageWidth;
+        const renderedHeight = ratio > pageHeight / pageWidth ? pageHeight : pageWidth * ratio;
+        pdf.addImage(canvas.toDataURL("image/jpeg", 1), "JPEG", (pageWidth - renderedWidth) / 2, 0, renderedWidth, renderedHeight, undefined, "FAST");
+      }
+      return pdf.output("blob");
+    } finally { document.body.classList.remove("pdf-capture"); }
+  }
+
+  window.renderMaritimeCvPdfBlob = renderMaritimeCvPdfBlob;
+
   async function downloadPDF() {
     if (pdfDownloadInProgress) return;
     if (typeof window.validateMaritimeCV === "function" && !window.validateMaritimeCV()) return;

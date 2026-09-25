@@ -319,6 +319,7 @@
   }
 
   async function load() {
+    if (/[?&]partnerReview=1(?:&|$)/.test(window.location?.search || "")) return;
     session = App.auth && App.auth.getSession ? await App.auth.getSession() : null;
     if (!session) {
       showLoginPrompt();

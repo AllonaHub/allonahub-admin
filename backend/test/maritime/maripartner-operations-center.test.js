@@ -93,6 +93,20 @@ test("operations control migration is server-only and idempotency-backed", () =>
   assert.match(route, /\.eq\("recipient_user_id", access\.ctx\.user\.id\)/);
 });
 
+test("authorized partner review includes uploaded PDFs and a photo CV PDF viewer", () => {
+  const route = read("backend/src/routes/maritime-partner-center.js");
+  const script = read("js/maripartner.js");
+  const html = read("pages/partner/maripartner.html");
+  assert.match(route, /await documentPermission\(room\)/);
+  assert.match(route, /"uploaded", "analysis_failed", "pending_user_confirmation", "user_confirmed"/);
+  assert.match(route, /MARITIME_PROFILE_PHOTO_BUCKET/);
+  assert.match(script, /data-mp-candidate-pdf/);
+  assert.match(script, /data-mp-candidate-documents/);
+  assert.match(script, /openCandidatePdf/);
+  assert.match(script, /maritime-cv\.html\?partnerReview=1/);
+  assert.match(read("js/maritime-cv-controls.js"), /renderMaritimeCvPdfBlob/);
+});
+
 test("MariPartner keeps URL state, a locked light theme and responsive safeguards", () => {
   const html = read("pages/partner/maripartner.html");
   const script = read("js/maripartner.js");
@@ -101,7 +115,7 @@ test("MariPartner keeps URL state, a locked light theme and responsive safeguard
   assert.match(html, /data-platform-controls-slot="home"/);
   assert.match(html, /js\/platform\.js/);
   assert.match(html, /data-theme="white" data-partner-theme-locked="true"/);
-  assert.match(html, /css\/maripartner\.css\?v=20260925-pipeline-candidates/);
+  assert.match(html, /css\/maripartner\.css\?v=20260925-original-cv1/);
   assert.match(html, /js\/platform\.js\?v=20260920-partner-light1/);
   assert.match(html, /js\/maripartner-i18n\.js\?v=20260920-maripartner-job6/);
   assert.match(script, /searchParams\.set\("view"/);

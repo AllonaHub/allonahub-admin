@@ -2366,6 +2366,7 @@ function getCVData(){
 }
 
 function persistCV(){
+  if(/[?&]partnerReview=1(?:&|$)/.test(window.location?.search || "")) return false;
   return Boolean(cvDraftStore && cvDraftStore.write(getCVData()));
 }
 
@@ -2761,7 +2762,7 @@ document.addEventListener("DOMContentLoaded", function(){
     langSelect.value = currentLang;
   }
 
-  loadCV();
+  if(!/[?&]partnerReview=1(?:&|$)/.test(window.location?.search || "")) loadCV();
 
   const requestedImo = new URLSearchParams(window.location.search).get("imo");
   if(validImo(requestedImo)){
