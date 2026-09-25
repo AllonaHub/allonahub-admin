@@ -1,17 +1,9 @@
 import { createHash } from "node:crypto";
 import { config } from "../config.js";
+import { renderAllonaHubEmail } from "./allonahub-email-template.js";
 
 function clean(value, maxLength = 300) {
   return String(value ?? "").trim().replace(/\s+/g, " ").slice(0, maxLength);
-}
-
-function escapeHtml(value) {
-  return clean(value, 2000)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
 }
 
 function normalizeCodes(value) {
@@ -57,37 +49,39 @@ export function maritimeReferenceFingerprint(input) {
   return createHash("sha256").update(JSON.stringify(stableReferencePayload(input))).digest("hex");
 }
 
-function row(label, value) {
-  const content = clean(value, 1000) || "Belirtilmedi";
-  return `<tr><th style="padding:8px 10px;text-align:left;border-bottom:1px solid #dbe7ef;color:#264653;width:38%">${escapeHtml(label)}</th><td style="padding:8px 10px;border-bottom:1px solid #dbe7ef;color:#102a43">${escapeHtml(content)}</td></tr>`;
-}
-
 export function buildMaritimeReferenceNotification(input) {
   const payload = stableReferencePayload(input);
   const exp = payload.experience;
   const summary = payload.cv_summary;
   const subject = `Referans doğrulaması gerekiyor · ${payload.public_id} · ${exp.vessel || exp.company || "Deniz hizmeti"}`.slice(0, 240);
   const rows = [
-    row("Aday", payload.candidate_name),
-    row("Allona ID", payload.public_id),
-    row("Güncel pozisyon", summary.current_position),
-    row("Gemi", exp.vessel),
-    row("IMO", exp.imo),
-    row("Şirket", exp.company),
-    row("Gemi tipi / bayrak", [exp.vessel_type, exp.flag].filter(Boolean).join(" / ")),
-    row("DWT / GRT", [exp.dwt && `DWT ${exp.dwt}`, exp.grt && `GRT ${exp.grt}`].filter(Boolean).join(" / ")),
-    row("Görev", exp.rank),
-    row("Hizmet tarihleri", [exp.sign_on, exp.sign_off].filter(Boolean).join(" - ")),
-    row("Referans yetkilisi", exp.reference_name),
-    row("Şirket e-postası", exp.reference_company_email),
-    row("Şirket telefonu", exp.reference_company_phone),
-    row("Yetkili telefonu", exp.reference_phone),
-    row("Hizmet belgesi kaydı", exp.service_document_id),
-    row("Yeterlilik", [summary.competency_class, summary.competency_certificate].filter(Boolean).join(" / ")),
-    row("Temel sertifikalar", summary.certificate_codes.join(", ")),
-    row("Sağlık belgesi bitişi", summary.medical_expiry)
-  ].join("");
-  const html = `<!doctype html><html lang="tr"><body style="margin:0;background:#f4f8fb;font-family:Arial,sans-serif;color:#102a43"><div style="max-width:720px;margin:0 auto;padding:24px"><div style="background:#062b3a;color:#fff;padding:20px;border-top:4px solid #00d9ff"><h1 style="margin:0 0 8px;font-size:22px">Referans doğrulaması gerekiyor</h1><p style="margin:0;color:#cdeffc">Bir denizci yeni deniz hizmeti ve referans kaydı oluşturdu.</p></div><div style="background:#fff;padding:18px"><table style="width:100%;border-collapse:collapse;font-size:14px">${rows}</table><p style="margin:18px 0 0;color:#526d7a;font-size:12px">Bu bildirim yalnız referans doğrulaması için gerekli sınırlı CV özetini içerir. Kimlik belgesi numarası, doğum tarihi ve adres gibi hassas alanlar e-postaya eklenmemiştir.</p></div></div></body></html>`;
+    ["Aday", payload.candidate_name],
+    ["Allona ID", payload.public_id],
+    ["Güncel pozisyon", summary.current_position],
+    ["Gemi", exp.vessel],
+    ["IMO", exp.imo],
+    ["Şirket", exp.company],
+    ["Gemi tipi / bayrak", [exp.vessel_type, exp.flag].filter(Boolean).join(" / ")],
+    ["DWT / GRT", [exp.dwt && `DWT ${exp.dwt}`, exp.grt && `GRT ${exp.grt}`].filter(Boolean).join(" / ")],
+    ["Görev", exp.rank],
+    ["Hizmet tarihleri", [exp.sign_on, exp.sign_off].filter(Boolean).join(" - ")],
+    ["Referans yetkilisi", exp.reference_name],
+    ["Şirket e-postası", exp.reference_company_email],
+    ["Şirket telefonu", exp.reference_company_phone],
+    ["Yetkili telefonu", exp.reference_phone],
+    ["Hizmet belgesi kaydı", exp.service_document_id],
+    ["Yeterlilik", [summary.competency_class, summary.competency_certificate].filter(Boolean).join(" / ")],
+    ["Temel sertifikalar", summary.certificate_codes.join(", ")],
+    ["Sağlık belgesi bitişi", summary.medical_expiry]
+  ].map(([label, value]) => [label, clean(value, 1000)]);
+  const html = renderAllonaHubEmail({
+    variant: "notification",
+    eyebrow: "DENİZCİLİK REFERANS BİLDİRİMİ",
+    title: "Referans doğrulaması gerekiyor",
+    message: "Bir denizci yeni deniz hizmeti ve referans kaydı oluşturdu.",
+    details: rows,
+    lines: ["Bu bildirim yalnız gerekli sınırlı CV özetini içerir. Kimlik belgesi numarası, doğum tarihi ve adres e-postaya eklenmemiştir."]
+  });
   const text = [
     "REFERANS DOĞRULAMASI GEREKİYOR",
     `Aday: ${payload.candidate_name}`,
