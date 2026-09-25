@@ -205,6 +205,35 @@
     }
   };
   for (const language of SUPPORTED) Object.assign(COPY[language], EXTRAS[language]);
+  const CHAT_COPY = {
+    tr: ["Yanıtla", "Yanıtlanan:", "Yanıt çok uzun. Mesajı kısaltın.", "Sorun / ihlal bildir", "Şikâyet et", "Sohbet görünümü", "Sohbet teması", "Deniz", "Deniz haritası", "Sade", "Orijinali göster"],
+    az: ["Cavab ver", "Cavablanan:", "Cavab çox uzundur. Mesajı qısaldın.", "Problem / pozuntu bildir", "Şikayət et", "Söhbət görünüşü", "Söhbət mövzusu", "Dəniz", "Dəniz xəritəsi", "Sadə", "Orijinalı göstər"],
+    en: ["Reply", "Replying to:", "Reply is too long. Shorten the message.", "Report a problem / violation", "Complain", "Chat appearance", "Chat theme", "Ocean", "Sea chart", "Plain", "Show original"],
+    de: ["Antworten", "Antwort an:", "Antwort zu lang. Kürzen Sie die Nachricht.", "Problem / Verstoß melden", "Beschwerde", "Chatansicht", "Chatdesign", "Meer", "Seekarte", "Schlicht", "Original anzeigen"],
+    ru: ["Ответить", "Ответ на:", "Ответ слишком длинный. Сократите сообщение.", "Сообщить о нарушении", "Пожаловаться", "Вид чата", "Тема чата", "Море", "Морская карта", "Простой", "Показать оригинал"],
+    ar: ["رد", "الرد على:", "الرد طويل جدًا. اختصر الرسالة.", "الإبلاغ عن مشكلة أو مخالفة", "تقديم شكوى", "مظهر الدردشة", "سمة الدردشة", "البحر", "الخريطة البحرية", "بسيط", "عرض النص الأصلي"],
+    kk: ["Жауап беру", "Жауап:", "Жауап тым ұзын. Қысқартыңыз.", "Мәселе / бұзушылық туралы хабарлау", "Шағымдану", "Чат көрінісі", "Чат тақырыбы", "Теңіз", "Теңіз картасы", "Қарапайым", "Түпнұсқаны көрсету"],
+    uz: ["Javob berish", "Javob:", "Javob juda uzun. Xabarni qisqartiring.", "Muammo / qoidabuzarlik haqida xabar berish", "Shikoyat qilish", "Chat ko‘rinishi", "Chat mavzusi", "Dengiz", "Dengiz xaritasi", "Oddiy", "Aslini ko‘rsatish"],
+    ky: ["Жооп берүү", "Жооп:", "Жооп өтө узун. Билдирүүнү кыскартыңыз.", "Көйгөй / эреже бузуу жөнүндө билдирүү", "Даттануу", "Чат көрүнүшү", "Чат темасы", "Деңиз", "Деңиз картасы", "Жөнөкөй", "Түп нускасын көрсөтүү"]
+  };
+  const CHAT_KEYS = ["reply", "replyTo", "replyTooLong", "reportProblem", "complaint", "chatAppearance", "chatTheme", "themeOcean", "themeChart", "themeClear", "showOriginal"];
+  for (const language of SUPPORTED) CHAT_KEYS.forEach((key, index) => { COPY[language][key] = CHAT_COPY[language][index]; });
+  const MODE_COPY = {
+    tr: ["Renk modu", "Açık", "Koyu"], az: ["Rəng rejimi", "Açıq", "Tünd"],
+    en: ["Color mode", "Light", "Dark"], de: ["Farbmodus", "Hell", "Dunkel"],
+    ru: ["Цветовой режим", "Светлый", "Тёмный"], ar: ["نمط الألوان", "فاتح", "داكن"],
+    kk: ["Түс режимі", "Ашық", "Қою"], uz: ["Rang rejimi", "Yorug‘", "Qorong‘i"],
+    ky: ["Түс режими", "Ачык", "Караңгы"]
+  };
+  for (const language of SUPPORTED) ["chatMode", "modeLight", "modeDark"].forEach((key, index) => { COPY[language][key] = MODE_COPY[language][index]; });
+  const SWITCH_COPY = {
+    tr: ["Açık temaya geç", "Koyu temaya geç"], az: ["Açıq rejimə keç", "Tünd rejimə keç"],
+    en: ["Switch to light mode", "Switch to dark mode"], de: ["Zum hellen Modus wechseln", "Zum dunklen Modus wechseln"],
+    ru: ["Переключить на светлую тему", "Переключить на тёмную тему"], ar: ["التبديل إلى الوضع الفاتح", "التبديل إلى الوضع الداكن"],
+    kk: ["Ашық режимге ауысу", "Қою режимге ауысу"], uz: ["Yorug‘ rejimga o‘tish", "Qorong‘i rejimga o‘tish"],
+    ky: ["Ачык режимге өтүү", "Караңгы режимге өтүү"]
+  };
+  for (const language of SUPPORTED) ["switchToLight", "switchToDark"].forEach((key, index) => { COPY[language][key] = SWITCH_COPY[language][index]; });
 
   function normalize(language) {
     const normalized = String(language || "").trim().toLowerCase().split("-")[0];

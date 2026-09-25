@@ -14,6 +14,7 @@ import {
   translateMarsohTextDetailed
 } from "../lib/marsoh-translation.js";
 import { auditEvent, authContext, hasMfa, hasRole, supabaseAdmin } from "../lib/supabase.js";
+import { MARITIME_PROFILE_PHOTO_BUCKET } from "../lib/maritime-document-doctor.js";
 
 const uuidSchema = z.string().uuid();
 const marsohLanguages = ["tr", "az", "en", "de", "ru", "ar", "kk", "uz", "ky"];
@@ -22,7 +23,8 @@ const sendSchema = z.object({
   channel_id: uuidSchema,
   idempotency_key: uuidSchema,
   body: z.string().min(1).max(4000),
-  language: languageSchema
+  language: languageSchema,
+  mention_ids: z.array(uuidSchema).max(5).optional().default([])
 }).strict();
 const translationSchema = z.object({ target_language: languageSchema }).strict();
 const reactionSchema = z.object({ emoji: z.enum(["👍", "❤️", "👏", "⚓", "🌊", "💪", "🙏", "🫡", "🚢", "🧭", "✨", "😊"]) }).strict();
@@ -419,6 +421,28 @@ function publicMessage(row, own = false) {
   };
 }
 
+function safeChatAvatar(value) {
+  const source = String(value || "").trim();
+  if (/^data:image\/(?:png|jpeg|webp);base64,[a-z0-9+/=]+$/i.test(source) && source.length <= 300000) return source;
+  try {
+    const url = new URL(source);
+    if (url.protocol === "https:" && (url.hostname === "allonahub.com" || url.hostname.endsWith(".allonahub.com") || url.hostname.endsWith(".supabase.co"))) return source;
+  } catch { /* No public avatar URL. */ }
+  return "";
+}
+
+async function chatAvatars(userIds) {
+  const ids = [...new Set(userIds.filter(Boolean))].slice(0, 100);
+  if (!ids.length) return new Map();
+  const profiles = assertDb(await supabaseAdmin.from("profiles").select("id,avatar_url").in("id", ids), "Sohbet fotoğrafları okunamadı.") || [];
+  const result = new Map(profiles.map((row) => [row.id, safeChatAvatar(row.avatar_url)]));
+  await Promise.all(ids.filter((id) => !result.get(id)).map(async (id) => {
+    const signed = await supabaseAdmin.storage.from(MARITIME_PROFILE_PHOTO_BUCKET).createSignedUrl(`users/${id}/profile.webp`, 600);
+    if (!signed.error) result.set(id, safeChatAvatar(signed.data?.signedUrl));
+  }));
+  return result;
+}
+
 async function blockedIds(userId) {
   const rows = assertDb(await supabaseAdmin.from("marsoh_user_blocks").select("blocked_user_id").eq("blocker_user_id", userId), "Engellenen kullanıcılar okunamadı.") || [];
   return new Set(rows.map((row) => row.blocked_user_id));
@@ -444,6 +468,8 @@ async function listMessages(ctx, channelId, before, limit) {
   const own = (assertDb(ownResult, "Kendi mesajlarınız okunamadı.") || []).map((row) => publicMessage(row, true));
   const merged = [...published, ...own].sort((a, b) => new Date(b.time) - new Date(a.time));
   const page = merged.slice(0, limit);
+  const avatars = await chatAvatars(page.map((message) => message.sender.id));
+  for (const message of page) message.sender.avatar_url = avatars.get(message.sender.id) || "";
   const messageIds = page.map((message) => message.id);
   const reactions = messageIds.length ? assertDb(await supabaseAdmin.from("marsoh_message_reactions")
     .select("message_id,user_id,emoji").in("message_id", messageIds), "Mesaj tepkileri okunamadı.") || [] : [];
@@ -501,6 +527,7 @@ export function registerMarsohRoutes(app) {
     const language = languageSchema.catch("tr").parse(request.query?.language || "tr");
     const country = await verifiedCountry(ctx.user.id);
     const actor = await actorSnapshot(ctx, country);
+    actor.avatar_url = (await chatAvatars([ctx.user.id])).get(ctx.user.id) || "";
     const channels = await channelRowsWithUnread(ctx, await ensureChannels(ctx, country));
     const topic = assertDb(await supabaseAdmin.from("marsoh_topic_cards")
       .select("id,topic_date,title_i18n,body_i18n").eq("status", "active")
@@ -555,9 +582,22 @@ export function registerMarsohRoutes(app) {
       reply.code(202);
       return { ok: true, accepted: true, message: publicMessage(existing, true) };
     }
+    let moderationBody = body;
+    if (input.mention_ids.length) {
+      const ids = [...new Set(input.mention_ids)];
+      const mentioned = await Promise.all(ids.map(async (id) => assertDb(await supabaseAdmin.from("marsoh_published_messages")
+        .select("sender_user_id,sender_display_name").eq("channel_id", input.channel_id)
+        .eq("sender_user_id", id).limit(1).maybeSingle(), "Etiketlenen oda üyesi doğrulanamadı.")));
+      for (const id of ids) {
+        const person = mentioned.find((row) => row.sender_user_id === id);
+        const token = person?.sender_display_name && `@${person.sender_display_name}`;
+        if (!token || !body.includes(token)) throw httpError("Etiket yalnızca bu odada görünen bir kullanıcı için kullanılabilir.", 400, "MARSOH_MENTION_INVALID");
+        moderationBody = moderationBody.replaceAll(token, person.sender_display_name);
+      }
+    }
     const normalizedHash = sha256(normalizedModerationText(body));
     await enforceSendLimits(request, ctx, channel, member, normalizedHash);
-    const classification = await classifyMarsohMessage(body, {
+    const classification = await classifyMarsohMessage(moderationBody, {
       apiKey: config.marsoh.classifierApiKey,
       baseUrl: config.marsoh.classifierBaseUrl,
       model: config.marsoh.classifierModel,

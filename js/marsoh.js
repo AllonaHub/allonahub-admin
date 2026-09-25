@@ -40,12 +40,15 @@
     cursor: null,
     realtime: null,
     blocked: new Set(),
+    avatarCache: new Map(),
     speech: null,
     speechBase: "",
     outboxDb: null,
     modalTrigger: null,
     connectionState: "connecting",
     autoTranslate: localStorage.getItem("allona.marsoh.autoTranslate") !== "off",
+    replyTo: null,
+    mentionSelections: new Map(),
     autoTranslationCount: 0,
     autoTranslationWindowStarted: 0
   };
@@ -65,6 +68,22 @@
   const apiBase = () => String(App.config?.apiBaseUrl || "https://api.allonahub.com").replace(/\/$/, "");
 
   function setStatus(message) { const target = $("[data-marsoh-status]"); if (target) target.textContent = message || ""; }
+  function notifyPublished(row, own) {
+    if (own || !document.hidden || !("Notification" in window) || Notification.permission !== "granted") return;
+    const preference = state.currentChannel?.notification_preference || "all";
+    if (preference === "muted") return;
+    if (preference === "mentions" && !String(row.body || "").includes(`@${state.bootstrap.user.display_name}`)) return;
+    new Notification("AllonaHub · MarSoh", { body: `${row.sender_display_name || "Denizci"}: ${String(row.body || "").slice(0, 100)}`, tag: `marsoh-${row.channel_id}` });
+  }
+  async function refreshFirmUnread() {
+    const badge = $("[data-marsoh-firm-unread]");
+    if (!badge) return;
+    try {
+      const result = await api("/v1/maritime/connect-chat/threads");
+      const count = (result.threads || []).filter((thread) => thread.unread).length;
+      badge.hidden = !count; badge.textContent = count > 99 ? "99+" : String(count);
+    } catch { badge.hidden = true; }
+  }
   function setConnectionStatus(status) {
     state.connectionState = ["live", "offline", "connecting"].includes(status) ? status : "connecting";
     const target = $("[data-marsoh-connection]");
@@ -211,16 +230,13 @@
     return true;
   }
 
-  async function translateMessage(article, message, language, button, chooser, options) {
+  async function translateMessage(article, message, language, button, options) {
     message.translationPending = message.translationPending || new Set();
     if (message.translationPending.has(language)) return;
     message.translationPending.add(language);
-    const languageButtons = chooser.querySelectorAll("button");
-    languageButtons.forEach((item) => { item.disabled = true; });
     button.disabled = true;
     button.textContent = t("translating");
-    const oldBox = $(".marsoh-translation", article);
-    if (oldBox) oldBox.remove();
+    const body = $(".marsoh-bubble-body", article);
     try {
       message.translations = message.translations || {};
       let translated = message.translations[language];
@@ -232,32 +248,23 @@
         translated = payload.translated_text;
         message.translations[language] = translated;
       }
-      const box = document.createElement("div");
-      box.className = "marsoh-translation";
-      box.lang = language;
-      box.dir = language === "ar" ? "rtl" : "auto";
-      const text = document.createElement("span");
-      text.textContent = translated;
+      body.textContent = translated;
+      body.lang = language;
+      body.dir = language === "ar" ? "rtl" : "auto";
       const label = document.createElement("small");
+      label.className = "marsoh-translation-label";
       label.textContent = `${t("automaticTranslation")} · ${LANGUAGE_LABELS[language] || language.toUpperCase()}`;
-      box.append(text, label);
-      chooser.after(box);
-      chooser.hidden = true;
+      body.after(label);
       button.textContent = t("showOriginal");
-      button.setAttribute("aria-expanded", "true");
+      button.setAttribute("aria-pressed", "true");
     } catch {
       if (!options?.silentFailure) {
-        const box = document.createElement("div");
-        box.className = "marsoh-translation is-error";
-        box.textContent = t("translationUnavailable");
-        chooser.after(box);
+        setStatus(t("translationUnavailable"));
       }
-      chooser.hidden = true;
       button.textContent = t("translate");
-      button.setAttribute("aria-expanded", "false");
+      button.setAttribute("aria-pressed", "false");
     } finally {
       message.translationPending.delete(language);
-      languageButtons.forEach((item) => { item.disabled = false; });
       button.disabled = false;
     }
   }
@@ -268,52 +275,25 @@
     button.type = "button";
     button.className = "marsoh-translate";
     button.textContent = t("translate");
-    button.setAttribute("aria-expanded", "false");
-
-    const chooser = document.createElement("div");
-    chooser.className = "marsoh-translation-chooser";
-    chooser.hidden = true;
-    chooser.setAttribute("role", "group");
-    chooser.setAttribute("aria-label", t("translateTo"));
-    const chooserLabel = document.createElement("strong");
-    chooserLabel.textContent = t("translateTo");
-    chooser.append(chooserLabel);
-
-    const options = document.createElement("div");
-    options.className = "marsoh-translation-languages";
-    for (const language of I18n.SUPPORTED || ["tr", "az", "en"]) {
-      const languageButton = document.createElement("button");
-      languageButton.type = "button";
-      languageButton.lang = language;
-      languageButton.textContent = LANGUAGE_LABELS[language] || language.toUpperCase();
-      languageButton.classList.toggle("is-preferred", language === state.locale);
-      languageButton.addEventListener("click", () => translateMessage(article, message, language, button, chooser));
-      options.append(languageButton);
-    }
-    chooser.append(options);
+    button.setAttribute("aria-pressed", "false");
     button.addEventListener("click", () => {
-      const existing = $(".marsoh-translation", article);
-      if (existing && !existing.hidden) {
-        existing.hidden = true;
-        chooser.hidden = false;
+      if (button.getAttribute("aria-pressed") === "true") {
+        const body = $(".marsoh-bubble-body", article);
+        body.replaceChildren();
+        renderMessageBody(body, message.body);
+        body.removeAttribute("lang");
+        body.removeAttribute("dir");
+        $(".marsoh-translation-label", article)?.remove();
         button.textContent = t("translate");
-        button.setAttribute("aria-expanded", "true");
+        button.setAttribute("aria-pressed", "false");
         return;
       }
-      if (existing?.hidden) {
-        existing.remove();
-        chooser.hidden = false;
-        button.textContent = t("translate");
-        button.setAttribute("aria-expanded", "true");
-        return;
-      }
-      chooser.hidden = !chooser.hidden;
-      button.setAttribute("aria-expanded", String(!chooser.hidden));
+      translateMessage(article, message, state.locale, button);
     });
-    article.append(button, chooser);
+    $(".marsoh-message-meta", article)?.append(button);
     const sourceLanguage = String(message.language || "").toLowerCase();
     if (state.autoTranslate && sourceLanguage && sourceLanguage !== "und" && sourceLanguage !== state.locale && reserveAutomaticTranslation()) {
-      queueMicrotask(() => translateMessage(article, message, state.locale, button, chooser, { silentFailure: true }));
+      queueMicrotask(() => translateMessage(article, message, state.locale, button, { silentFailure: true }));
     }
   }
 
@@ -365,6 +345,12 @@
       button.addEventListener("click", (event) => { event.stopPropagation(); toggleReaction(message, emoji, button); });
       tray.append(button);
     }
+    const block = document.createElement("button");
+    block.type = "button";
+    block.className = "marsoh-reaction-block";
+    block.textContent = t("block");
+    block.addEventListener("click", (event) => { event.stopPropagation(); openMessageActions(message); });
+    tray.append(block);
     article.append(tray);
 
     const openTray = (event) => {
@@ -379,10 +365,106 @@
     bubble.tabIndex = 0;
     bubble.setAttribute("role", "button");
     bubble.setAttribute("aria-label", `${message.body}. ${t("tapForReaction")}`);
-    bubble.addEventListener("click", openTray);
+    let holdTimer;
+    let held = false;
+    bubble.addEventListener("pointerdown", (event) => {
+      if (event.target.closest("button")) return;
+      held = false;
+      holdTimer = window.setTimeout(() => { held = true; openTray(event); }, 480);
+    });
+    for (const type of ["pointerup", "pointercancel", "pointerleave"]) bubble.addEventListener(type, () => window.clearTimeout(holdTimer));
+    bubble.addEventListener("click", (event) => { if (held) { event.preventDefault(); held = false; return; } openTray(event); });
     bubble.addEventListener("keydown", (event) => {
       if (event.key === "Enter" || event.key === " ") { event.preventDefault(); openTray(event); }
     });
+    bubble.addEventListener("contextmenu", (event) => { event.preventDefault(); openTray(event); });
+  }
+
+  function attachReplySwipe(bubble, message) {
+    if (!message.id || message.local_status) return;
+    let startX = 0;
+    let startY = 0;
+    bubble.addEventListener("touchstart", (event) => { startX = event.touches[0]?.clientX || 0; startY = event.touches[0]?.clientY || 0; }, { passive: true });
+    bubble.addEventListener("touchend", (event) => {
+      const dx = (event.changedTouches[0]?.clientX || 0) - startX;
+      const dy = (event.changedTouches[0]?.clientY || 0) - startY;
+      if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+        event.preventDefault();
+        event.stopPropagation();
+        startReply(message);
+      }
+    });
+  }
+
+  function startReply(message) {
+    state.replyTo = { id: message.id, name: message.sender?.display_name || t("memberRoom"), body: message.body };
+    const preview = $("[data-marsoh-reply-preview]");
+    if (preview) {
+      $("strong", preview).textContent = `${t("replyTo")} ${state.replyTo.name}`;
+      $("span", preview).textContent = state.replyTo.body.slice(0, 120);
+      preview.hidden = false;
+    }
+    $("[data-marsoh-input]")?.focus();
+  }
+
+  function clearReply() {
+    state.replyTo = null;
+    const preview = $("[data-marsoh-reply-preview]");
+    if (preview) preview.hidden = true;
+  }
+
+  function updateMentions() {
+    const input = $("[data-marsoh-input]");
+    const suggestions = $("[data-marsoh-mentions]");
+    if (!input || !suggestions) return;
+    const before = input.value.slice(0, input.selectionStart);
+    const match = before.match(/(?:^|\s)@([\p{L}\p{M}]{1,40})$/u);
+    suggestions.replaceChildren();
+    if (!match) { suggestions.hidden = true; return; }
+    const query = match[1].toLocaleLowerCase(state.locale);
+    const names = [...new Map(state.messages.filter((item) => item.sender?.id && item.sender.id !== state.bootstrap?.user?.id && !state.blocked.has(item.sender.id))
+      .map((item) => [item.sender.id, item.sender.display_name]).filter((entry) => entry[1])).entries()]
+      .filter((entry) => entry[1].toLocaleLowerCase(state.locale).includes(query)).slice(0, 6);
+    for (const [id, name] of names) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = name;
+      button.addEventListener("click", () => {
+        const start = input.selectionStart - match[1].length - 1;
+        input.setRangeText(`@${name} `, start, input.selectionStart, "end");
+        state.mentionSelections.set(id, name);
+        suggestions.hidden = true;
+        input.focus();
+        resizeInput();
+      });
+      suggestions.append(button);
+    }
+    suggestions.hidden = !names.length;
+  }
+
+  function renderMessageBody(target, value) {
+    const raw = String(value || "");
+    const reply = raw.match(/^↩ ([^:\n]{1,80}): ([^\n]{1,100})\n([\s\S]+)$/u);
+    const content = reply ? reply[3] : raw;
+    if (reply) {
+      const quote = document.createElement("span");
+      quote.className = "marsoh-quoted";
+      const name = document.createElement("strong"); name.textContent = reply[1];
+      const excerpt = document.createElement("small"); excerpt.textContent = reply[2];
+      quote.append(name, excerpt);
+      target.append(quote);
+    }
+    const names = [...new Set(state.messages.map((item) => item.sender?.display_name).filter(Boolean))]
+      .sort((a, b) => b.length - a.length);
+    let offset = 0;
+    while (offset < content.length) {
+      const match = names.map((name) => ({ name, index: content.indexOf(`@${name}`, offset) }))
+        .filter((item) => item.index >= 0).sort((a, b) => a.index - b.index)[0];
+      if (!match) { target.append(document.createTextNode(content.slice(offset))); break; }
+      if (match.index > offset) target.append(document.createTextNode(content.slice(offset, match.index)));
+      const mention = document.createElement("span"); mention.className = "marsoh-mention"; mention.textContent = `@${match.name}`; target.append(mention);
+      offset = match.index + match.name.length + 1;
+    }
   }
 
   function renderMessages(options) {
@@ -404,16 +486,31 @@
       article.className = `marsoh-message${message.own ? " is-own" : ""}${message.local_status === "failed" ? " is-failed" : ""}`;
       article.dataset.messageId = message.id || message.idempotency_key;
       const head = document.createElement("div"); head.className = "marsoh-message-head";
+      const avatar = document.createElement("span"); avatar.className = "marsoh-message-avatar";
+      if (message.sender?.avatar_url) {
+        const img = document.createElement("img"); img.src = message.sender.avatar_url; img.alt = ""; img.loading = "lazy"; img.referrerPolicy = "no-referrer";
+        img.addEventListener("error", () => { img.remove(); avatar.textContent = (message.sender?.display_name || "D").trim().charAt(0).toUpperCase(); });
+        avatar.append(img);
+      } else avatar.textContent = (message.sender?.display_name || "D").trim().charAt(0).toUpperCase();
+      head.append(avatar);
       const name = document.createElement("strong"); name.textContent = message.sender?.display_name || state.bootstrap?.user?.display_name || "Denizci"; head.append(name);
       if (message.sender?.badge) { const badge = document.createElement("span"); badge.className = "marsoh-verified"; badge.textContent = message.sender.badge === "verified_company" ? "◆" : "✓"; badge.title = message.sender.badge === "verified_company" ? t("verifiedCompany") : t("verifiedSeafarer"); head.append(badge); }
-      if (message.sender?.country_code) { const country = document.createElement("span"); country.className = "marsoh-country"; country.textContent = message.sender.country_code; head.append(country); }
-      if (message.language && message.language !== "und" && message.language.toUpperCase() !== message.sender?.country_code) { const language = document.createElement("span"); language.className = "marsoh-message-language"; language.textContent = message.language.toUpperCase(); head.append(language); }
-      const time = document.createElement("time"); time.dateTime = message.time || message.created_at || ""; time.textContent = timeLabel(time.dateTime); head.append(time); article.append(head);
+      const time = document.createElement("time"); time.dateTime = message.time || message.created_at || ""; time.textContent = timeLabel(time.dateTime); article.append(head);
       const bubble = document.createElement("div"); bubble.className = "marsoh-bubble";
-      const body = document.createElement("span"); body.textContent = message.body; bubble.append(body);
-      if (!message.own || message.local_status === "failed") { const menu = document.createElement("button"); menu.type = "button"; menu.className = "marsoh-message-menu"; menu.textContent = "⋯"; menu.setAttribute("aria-label", t("actionTitle")); menu.addEventListener("click", (event) => { event.stopPropagation(); openMessageActions(message); }); bubble.append(menu); }
+      const body = document.createElement("span"); body.className = "marsoh-bubble-body"; renderMessageBody(body, message.body); bubble.append(body);
+      attachReplySwipe(bubble, message);
+      if (message.id && !message.local_status) {
+        const reply = document.createElement("button"); reply.type = "button"; reply.className = "marsoh-reply-action"; reply.textContent = "↩"; reply.title = t("reply"); reply.setAttribute("aria-label", t("reply")); reply.addEventListener("click", (event) => { event.stopPropagation(); startReply(message); }); article.append(reply);
+      }
+      if (!message.own || message.local_status === "failed") {
+        const menu = document.createElement("button"); menu.type = "button"; menu.className = "marsoh-message-menu"; menu.textContent = "!"; menu.setAttribute("aria-label", t("report"));
+        menu.addEventListener("click", (event) => { event.stopPropagation(); if (message.local_status === "failed") openFailedActions(message); else showReportMenu(article, message); });
+        article.append(menu);
+      }
       article.append(bubble);
-      if (message.own) { const status = document.createElement("button"); status.type = "button"; status.className = `marsoh-message-status${message.local_status === "failed" ? " is-error" : ""}`; status.textContent = `${message.local_status === "failed" ? "! " : ""}${statusLabel(message)}`; if (message.local_status === "failed") status.addEventListener("click", () => openFailedActions(message)); article.append(status); }
+      const meta = document.createElement("div"); meta.className = "marsoh-message-meta"; meta.append(time);
+      if (message.own) { const status = document.createElement("button"); status.type = "button"; status.className = `marsoh-message-status${message.local_status === "failed" ? " is-error" : ""}`; status.textContent = `${message.local_status === "failed" ? "! " : ""}${statusLabel(message)}`; if (message.local_status === "failed") status.addEventListener("click", () => openFailedActions(message)); meta.append(status); }
+      article.append(meta);
       addTranslationControls(article, message); addReactions(article, bubble, message); target.append(article);
     }
     const count = $("[data-marsoh-room-count]");
@@ -423,6 +520,10 @@
 
   function messageKey(message) { return message.id || message.idempotency_key; }
   function upsertMessage(message) {
+    if (message.sender?.id) {
+      if (message.sender.avatar_url) state.avatarCache.set(message.sender.id, message.sender.avatar_url);
+      else if (state.avatarCache.has(message.sender.id)) message.sender.avatar_url = state.avatarCache.get(message.sender.id);
+    }
     const key = messageKey(message);
     const index = state.messages.findIndex((item) => messageKey(item) === key || (message.id && (item.server_id === message.id || item.id === message.id)) || (message.idempotency_key && item.idempotency_key === message.idempotency_key));
     if (index >= 0) state.messages[index] = { ...state.messages[index], ...message };
@@ -464,8 +565,10 @@
         if (state.currentChannel?.id !== channelId || state.blocked.has(row.sender_user_id)) return;
         const wasNearBottom = nearBottom();
         const own = row.sender_user_id === state.bootstrap.user.id;
+        notifyPublished(row, own);
         upsertMessage({ id: row.message_id, server_id: row.message_id, channel_id: row.channel_id, sender: { id: row.sender_user_id, display_name: row.sender_display_name, badge: row.sender_badge, country_code: row.sender_country_code, actor_type: row.actor_type }, body: row.body, language: row.language, time: row.published_at, own, local_status: own ? "sent" : undefined });
         renderMessages({ preserveBottom: wasNearBottom });
+        if (!state.avatarCache.has(row.sender_user_id)) loadMessages(null).catch(() => {});
         if (!wasNearBottom) { $("[data-marsoh-unread-line]").hidden = false; $("[data-marsoh-jump-latest]").hidden = false; }
       })
       .on("postgres_changes", { event: "DELETE", schema: "public", table: "marsoh_published_messages" }, (payload) => {
@@ -482,6 +585,8 @@
 
   async function openChannel(channel) {
     state.currentChannel = channel;
+    state.mentionSelections.clear();
+    clearReply();
     state.messages = []; state.cursor = null; state.autoTranslationCount = 0; state.autoTranslationWindowStarted = Date.now(); renderChannels();
     $("[data-marsoh-channels-panel]")?.classList.remove("is-open");
     $("[data-marsoh-room-title]").textContent = localizeChannel(channel);
@@ -502,7 +607,7 @@
     item.local_status = "sending"; item.error_message = ""; await putOutbox(item); upsertMessage({ ...item, own: true, sender: state.bootstrap.user, time: item.created_at }); renderMessages({ preserveBottom: true });
     if (!navigator.onLine) return;
     try {
-      const payload = await api("/v1/maritime/marsoh/messages", { method: "POST", body: JSON.stringify({ channel_id: item.channel_id, idempotency_key: item.idempotency_key, body: item.body, language: item.language }) });
+      const payload = await api("/v1/maritime/marsoh/messages", { method: "POST", body: JSON.stringify({ channel_id: item.channel_id, idempotency_key: item.idempotency_key, body: item.body, language: item.language, mention_ids: item.mention_ids || [] }) });
       await deleteOutbox(item.idempotency_key);
       const accepted = { ...payload.message, idempotency_key: item.idempotency_key, server_id: payload.message.id, local_status: "sent", own: true };
       state.messages = state.messages.filter((message) => message.idempotency_key !== item.idempotency_key && message.id !== payload.message.id && message.server_id !== payload.message.id);
@@ -516,8 +621,8 @@
     }
   }
 
-  async function queueMessage(body) {
-    const item = { idempotency_key: uuid(), channel_id: state.currentChannel.id, body, language: state.locale, local_status: "sending", created_at: new Date().toISOString(), failure_type: "", error_message: "" };
+  async function queueMessage(body, mentionIds = []) {
+    const item = { idempotency_key: uuid(), channel_id: state.currentChannel.id, body, language: state.locale, mention_ids: mentionIds, local_status: "sending", created_at: new Date().toISOString(), failure_type: "", error_message: "" };
     await putOutbox(item); await transmit(item);
   }
 
@@ -554,14 +659,32 @@
     if (message.local_status === "failed") return openFailedActions(message);
     if (message.own) return;
     showActions(t("actionTitle"), [
-      { label: t("report"), run: () => openReport(message) },
+      { label: t("reply"), run: () => startReply(message) },
+      { label: t("reportProblem"), run: () => openReport(message) },
+      { label: t("complaint"), run: () => openReport(message) },
       { label: t("block"), danger: true, run: async () => { await api("/v1/maritime/marsoh/blocks", { method: "POST", body: JSON.stringify({ blocked_user_id: message.sender.id }) }); state.blocked.add(message.sender.id); state.messages = state.messages.filter((item) => item.sender?.id !== message.sender.id); renderMessages(); setStatus(t("blocked")); } }
     ]);
   }
 
-  function openReport(message) {
+  function showReportMenu(article, message) {
+    const existing = $(".marsoh-report-menu", article);
+    if (existing) { existing.remove(); return; }
+    $$(".marsoh-report-menu").forEach((item) => item.remove());
+    const menu = document.createElement("div");
+    menu.className = "marsoh-report-menu";
+    for (const [label, kind] of [[t("reportProblem"), "violation"], [t("complaint"), "complaint"]]) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = label;
+      button.addEventListener("click", () => { menu.remove(); openReport(message, kind); });
+      menu.append(button);
+    }
+    article.append(menu);
+  }
+
+  function openReport(message, kind = "violation") {
     const reasons = [["spam", "reasonSpam"], ["harassment", "reasonHarassment"], ["fraud", "reasonFraud"], ["recruitment", "reasonRecruitment"], ["contact_sharing", "reasonContact"], ["other", "reasonOther"]];
-    showActions(t("reportReason"), reasons.map(([reason, label]) => ({ label: t(label), run: async () => { await api(`/v1/maritime/marsoh/messages/${encodeURIComponent(message.id)}/report`, { method: "POST", body: JSON.stringify({ reason_code: reason }) }); setStatus(t("reportSaved")); } })));
+    showActions(kind === "complaint" ? t("complaint") : t("reportReason"), reasons.map(([reason, label]) => ({ label: t(label), run: async () => { await api(`/v1/maritime/marsoh/messages/${encodeURIComponent(message.id)}/report`, { method: "POST", body: JSON.stringify({ reason_code: reason, note: kind }) }); setStatus(t("reportSaved")); } })));
   }
 
   function resizeInput() {
@@ -644,7 +767,17 @@
 
   function renderTopic() {
     const topic = state.bootstrap?.topic; const target = $("[data-marsoh-topic]"); if (!target || !topic) return;
-    target.hidden = false; $("h2", target).textContent = I18n.localized(topic.title_i18n, state.locale) || t("todayTopic"); $("p", target).textContent = I18n.localized(topic.body_i18n, state.locale);
+    const subject = I18n.localized(topic.body_i18n, state.locale) || I18n.localized(topic.title_i18n, state.locale);
+    target.hidden = !subject; $("p", target).textContent = subject;
+  }
+
+  function setChatMode(value) {
+    if (!["light", "dark"].includes(value)) return;
+    document.body.dataset.chatMode = value;
+    localStorage.setItem("allona.marsoh.chatMode", value);
+    const select = $("[data-marsoh-chat-mode]"); if (select) select.value = value;
+    const button = $("[data-marsoh-mode-toggle]");
+    if (button) { button.setAttribute("aria-pressed", String(value === "dark")); button.setAttribute("aria-label", value === "dark" ? t("switchToLight") : t("switchToDark")); $("span", button).textContent = value === "dark" ? "☾" : "☼"; }
   }
 
   function bind() {
@@ -660,6 +793,7 @@
       state.locale = I18n.normalize(event.target.value);
       localStorage.setItem("allona.language", state.locale);
       I18n.apply(state.locale);
+      setChatMode(document.body.dataset.chatMode);
       state.speech?.setLanguage(state.locale);
       renderComposerEmojis(); renderChannels(); renderTopic(); renderMessages(); updateComposerMeta(); setConnectionStatus(state.connectionState);
       if (state.currentChannel) { $("[data-marsoh-room-title]").textContent = localizeChannel(state.currentChannel); $("[data-marsoh-pinned] p").textContent = localizePinned(state.currentChannel); }
@@ -684,9 +818,23 @@
       if (state.speech?.active) state.speech.stop();
       input.value = "";
       resizeInput();
-      await queueMessage(body);
+      const quoted = state.replyTo ? `↩ ${state.replyTo.name}: ${state.replyTo.body.replace(/\s+/g, " ").slice(0, 100)}\n${body}` : body;
+      clearReply();
+      if (quoted.length > composerLimit()) { input.value = body; setStatus(t("replyTooLong")); return; }
+      const mentionIds = [...state.mentionSelections].filter(([, name]) => quoted.includes(`@${name}`)).map(([id]) => id);
+      state.mentionSelections.clear();
+      await queueMessage(quoted, mentionIds);
     });
-    $("[data-marsoh-input]")?.addEventListener("input", resizeInput);
+    $("[data-marsoh-input]")?.addEventListener("input", () => { resizeInput(); updateMentions(); });
+    $("[data-marsoh-reply-cancel]")?.addEventListener("click", clearReply);
+    $(`[data-marsoh-chat-theme]`)?.addEventListener("change", (event) => { const value = event.target.value; if (!["ocean", "chart", "clear"].includes(value)) return; document.body.dataset.chatTheme = value; localStorage.setItem("allona.marsoh.chatTheme", value); });
+    $(`[data-marsoh-chat-mode]`)?.addEventListener("change", (event) => setChatMode(event.target.value));
+    $(`[data-marsoh-mode-toggle]`)?.addEventListener("click", () => setChatMode(document.body.dataset.chatMode === "dark" ? "light" : "dark"));
+    const browserNotify = $("[data-marsoh-browser-notify]");
+    if (browserNotify) {
+      if (!("Notification" in window) || Notification.permission !== "default") browserNotify.hidden = true;
+      browserNotify.addEventListener("click", async () => { if (!("Notification" in window)) return; const permission = await Notification.requestPermission(); browserNotify.hidden = true; setStatus(permission === "granted" ? "Tarayıcı bildirimleri açıldı." : "Tarayıcı bildirimi izni verilmedi."); });
+    }
     $("[data-marsoh-input]")?.addEventListener("keydown", (event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); $("[data-marsoh-composer]").requestSubmit(); } });
     $("[data-marsoh-emoji]")?.addEventListener("click", (event) => { event.stopPropagation(); const panel = $("[data-marsoh-emoji-panel]"); panel.hidden = !panel.hidden; });
     $("[data-marsoh-emoji-close]")?.addEventListener("click", () => { $("[data-marsoh-emoji-panel]").hidden = true; $("[data-marsoh-emoji]")?.focus(); });
@@ -697,6 +845,7 @@
     document.addEventListener("click", (event) => {
       if (!event.target.closest("[data-marsoh-emoji-panel], [data-marsoh-emoji]")) $("[data-marsoh-emoji-panel]").hidden = true;
       if (!event.target.closest(".marsoh-message")) $$(".marsoh-quick-reactions").forEach((item) => { item.hidden = true; item.closest(".marsoh-message")?.classList.remove("has-open-reactions"); });
+      if (!event.target.closest(".marsoh-message-menu, .marsoh-report-menu")) $$(".marsoh-report-menu").forEach((item) => item.remove());
     });
     window.addEventListener("online", async () => { setConnectionStatus("connecting"); if (state.currentChannel) subscribe(state.currentChannel.id); await flushOutbox(); });
     window.addEventListener("offline", () => setConnectionStatus("offline"));
@@ -706,14 +855,23 @@
   async function init() {
     if (!document.querySelector("[data-page='marsoh']")) return;
     state.locale = I18n.apply(state.locale); renderComposerEmojis(); bind(); setupSpeech(); updateComposerMeta();
+    const theme = localStorage.getItem("allona.marsoh.chatTheme");
+    document.body.dataset.chatTheme = ["ocean", "chart", "clear"].includes(theme) ? theme : "ocean";
+    if ($("[data-marsoh-chat-theme]")) $("[data-marsoh-chat-theme]").value = document.body.dataset.chatTheme;
+    const mode = localStorage.getItem("allona.marsoh.chatMode");
+    setChatMode(mode === "dark" ? "dark" : "light");
     try { state.outboxDb = await openOutbox(); } catch { state.outboxDb = null; }
     state.session = App.auth?.getSession ? await App.auth.getSession() : null;
     if (!state.session?.access_token) { loginGate(true); $("[data-marsoh-shell]").setAttribute("aria-busy", "false"); return; }
     try {
       const payload = await api(`/v1/maritime/marsoh/bootstrap?language=${encodeURIComponent(state.locale)}`);
       state.bootstrap = payload; state.blocked = new Set(payload.blocked_user_ids || []); loginGate(false); updateComposerMeta();
+      if (payload.user?.avatar_url) state.avatarCache.set(payload.user.id, payload.user.avatar_url);
       $("[data-marsoh-policy-note]").textContent = t("sentNotice");
       renderChannels(); renderTopic();
+      refreshFirmUnread();
+      const firmTimer = setInterval(() => { if (!document.hidden) refreshFirmUnread(); }, 15000);
+      window.addEventListener("pagehide", () => clearInterval(firmTimer), { once: true });
       const first = payload.channels?.find((channel) => channel.slug === "world") || payload.channels?.[0];
       if (first) await openChannel(first);
       await flushOutbox();

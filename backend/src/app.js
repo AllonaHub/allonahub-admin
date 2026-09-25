@@ -20,6 +20,7 @@ import { registerMaritimePasskeyRoutes } from "./routes/maritime-passkey.js";
 import { registerMaritimePartnerCenterRoutes } from "./routes/maritime-partner-center.js";
 import { registerMaritimeSmartAccountRoutes } from "./routes/maritime-smart-account.js";
 import { registerMarsohRoutes } from "./routes/marsoh.js";
+import { registerMaritimeConnectChatRoutes } from "./routes/maritime-connect-chat.js";
 import { registerPlatformRoutes } from "./routes/platform.js";
 
 function requestId() {
@@ -312,6 +313,7 @@ export async function buildApp() {
   registerMaritimePartnerCenterRoutes(app);
   registerMaritimeSmartAccountRoutes(app);
   registerMarsohRoutes(app);
+  registerMaritimeConnectChatRoutes(app);
   let jobAlertTimer;
   app.addHook("onListen", async () => {
     if (!config.maritimeReferenceNotifications.enabled || !config.maritimeReferenceNotifications.resendApiKey) return;

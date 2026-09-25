@@ -88,8 +88,8 @@ button:focus-visible, a:focus-visible, textarea:focus-visible, select:focus-visi
 .marsoh-channel-heading { display: flex; align-items: center; justify-content: space-between; margin: 20px 4px 10px; }.marsoh-channel-heading h2 { margin: 0; font-size: 13px; text-transform: uppercase; color: var(--marsoh-muted); }
 .marsoh-live-dot { display: inline-flex; align-items: center; gap: 6px; color: var(--marsoh-success); font-size: 12px; }.marsoh-live-dot i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px currentColor; }
 .marsoh-channel-list { display: grid; gap: 6px; }
-.marsoh-channel-button { width: 100%; min-height: 58px; display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 8px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--marsoh-text); text-align: left; cursor: pointer; }
-.marsoh-channel-button:hover, .marsoh-channel-button.is-active { border-color: var(--marsoh-line); background: linear-gradient(120deg, rgba(0, 201, 239, .13), rgba(239, 199, 94, .06)); }
+.marsoh-channel-button { width: 100%; min-height: 58px; display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 8px; border: 1px solid rgba(0,201,239,.45); border-radius: 6px; background: linear-gradient(125deg,rgba(0,201,239,.12),rgba(0,75,106,.12)); box-shadow: inset 0 0 0 1px rgba(0,201,239,.08),0 0 9px rgba(0,201,239,.11); color: var(--marsoh-text); text-align: left; cursor: pointer; }
+.marsoh-channel-button:hover, .marsoh-channel-button.is-active { border-color: var(--marsoh-blue); background: linear-gradient(120deg, rgba(0, 201, 239, .25), rgba(239, 199, 94, .06)); box-shadow:0 0 13px rgba(0,201,239,.22); }
 .marsoh-channel-avatar { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; background: #10283a; color: var(--marsoh-blue); font-weight: 900; }
 .marsoh-channel-button strong, .marsoh-channel-button small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.marsoh-channel-button small { margin-top: 3px; color: var(--marsoh-muted); }
 .marsoh-channel-unread { min-width: 22px; height: 22px; display: grid; place-items: center; padding: 0 6px; border-radius: 999px; background: var(--marsoh-blue); color: #00131f; font-weight: 900; font-size: 12px; }
@@ -175,3 +175,153 @@ html[dir="rtl"] .marsoh-info { border-left: 0; border-right: 1px solid var(--mar
 html[dir="rtl"] .marsoh-message.is-own { margin-left: 0; margin-right: auto; }
 html[dir="rtl"] .marsoh-translation { border-left: 0; border-right: 3px solid var(--marsoh-turquoise); }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; scroll-behavior: auto !important; transition: none !important; } }
+
+/* Chat-only appearance choices keep the platform shell and its controls intact. */
+.marsoh-conversation { position: relative; isolation: isolate; }
+.marsoh-stream-wrap { background: var(--marsoh-chat-bg, rgba(0, 45, 63, .08)); }
+.marsoh-page[data-chat-theme="chart"] .marsoh-stream-wrap::before,
+.marsoh-page[data-chat-theme="ocean"] .marsoh-stream-wrap::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .045;
+  background: url("../images/brand/allona.logo.png") center / 108px 108px repeat;
+  transform: rotate(-11deg) scale(1.25);
+}
+.marsoh-page[data-chat-theme="chart"] { --marsoh-chat-bg: rgba(0, 111, 139, .13); }
+.marsoh-page[data-chat-theme="ocean"] { --marsoh-chat-bg: rgba(0, 79, 107, .09); }
+.marsoh-page[data-chat-theme="clear"] { --marsoh-chat-bg: transparent; }
+.marsoh-message { position: relative; width: fit-content; max-width: min(78%, 680px); }
+.marsoh-message.is-own { margin-right: 0; }
+.marsoh-bubble { border-radius: 17px 17px 17px 5px; box-shadow: 0 3px 12px rgba(0, 0, 0, .12); }
+.marsoh-message.is-own .marsoh-bubble { border-radius: 17px 17px 5px 17px; }
+.marsoh-bubble-body { display: block; }
+.marsoh-quoted { display: grid; gap: 2px; max-width: 100%; margin-bottom: 7px; padding: 5px 8px; border-left: 2px solid var(--marsoh-turquoise); border-radius: 4px; background: rgba(0, 201, 239, .1); font-size: 11px; }
+.marsoh-quoted small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--marsoh-muted); }
+.marsoh-mention { color: var(--marsoh-blue); font-weight: 800; }
+.marsoh-message-avatar { display: grid; place-items: center; width: 28px; height: 28px; flex: 0 0 28px; overflow: hidden; border: 1px solid var(--marsoh-line); border-radius: 50%; background: var(--marsoh-panel-2); color: var(--marsoh-blue); font-size: 12px; font-weight: 900; }
+.marsoh-message-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.marsoh-message-head { min-height: 29px; }
+.marsoh-translation-label { display: block; margin-top: 7px; font-size: 10px; color: var(--marsoh-turquoise); }
+.marsoh-translate { display: inline-flex; align-items: center; min-height: 28px; max-width: 100%; margin: 3px 6px 0; padding: 2px 5px; font-size: 11px; line-height: 1.2; }
+.marsoh-reply-action, .marsoh-message-menu { width: 30px; height: 30px; border: 1px solid var(--marsoh-line); border-radius: 50%; background: var(--marsoh-panel); color: var(--marsoh-muted); cursor: pointer; }
+.marsoh-reply-action { position: absolute; top: 22px; right: -36px; }
+.marsoh-message.is-own .marsoh-reply-action { right: auto; left: -36px; }
+.marsoh-message-menu { position: absolute; top: 54px; right: -36px; opacity: 1; font-weight: 800; }
+.marsoh-message-menu:hover, .marsoh-reply-action:hover { color: var(--marsoh-blue); border-color: var(--marsoh-blue); }
+.marsoh-chat-settings label { display: grid; gap: 8px; color: var(--marsoh-muted); font-size: 12px; }
+.marsoh-chat-settings select { width: 100%; min-height: 44px; border: 1px solid var(--marsoh-line); border-radius: 6px; background: var(--marsoh-panel); color: var(--marsoh-text); padding: 0 10px; }
+.marsoh-reply-preview { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; margin-bottom: 7px; padding: 7px 11px; border-left: 3px solid var(--marsoh-blue); background: var(--marsoh-panel-2); border-radius: 5px; }
+.marsoh-reply-preview div { display: grid; gap: 3px; min-width: 0; }
+.marsoh-reply-preview strong, .marsoh-reply-preview span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.marsoh-reply-preview span { color: var(--marsoh-muted); font-size: 11px; }
+.marsoh-reply-preview button { min-width: 36px; min-height: 36px; border: 0; background: transparent; color: var(--marsoh-text); font-size: 22px; cursor: pointer; }
+.marsoh-mentions { position: absolute; bottom: calc(100% + 5px); left: 14px; z-index: 7; width: min(320px, calc(100vw - 28px)); max-height: 210px; overflow: auto; padding: 5px; border: 1px solid var(--marsoh-line); border-radius: 7px; background: var(--marsoh-panel); box-shadow: 0 12px 28px rgba(0, 0, 0, .25); }
+.marsoh-mentions button { display: block; width: 100%; min-height: 42px; padding: 7px 10px; border: 0; border-radius: 4px; background: transparent; color: var(--marsoh-text); text-align: left; cursor: pointer; }
+.marsoh-mentions button:hover, .marsoh-mentions button:focus-visible { background: rgba(0, 201, 239, .13); }
+.marsoh-quick-reactions .marsoh-reaction-block { width: auto; flex: 0 0 auto; padding: 0 12px; border-left: 1px solid var(--marsoh-line); border-radius: 4px; color: var(--marsoh-muted); font-size: 11px; }
+.marsoh-report-menu { position: absolute; top: 86px; right: -38px; z-index: 8; display: grid; min-width: 155px; padding: 4px; border: 1px solid var(--marsoh-line); border-radius: 6px; background: var(--marsoh-panel); box-shadow: 0 12px 28px rgba(0, 0, 0, .25); }
+.marsoh-report-menu button { min-height: 38px; border: 0; border-radius: 4px; background: transparent; color: var(--marsoh-text); text-align: left; cursor: pointer; }
+.marsoh-report-menu button:hover { background: rgba(0, 201, 239, .12); }
+/* The room list is a row of luminous, pill-shaped destinations in either mode. */
+.marsoh-channel-list { gap: 10px; }
+.marsoh-channel-button { min-height: 66px; padding: 8px 12px; border: 1.5px solid var(--marsoh-blue); border-radius: 999px; box-shadow: inset 0 0 0 1px rgba(0, 201, 239, .12), 0 0 11px rgba(0, 201, 239, .28); }
+.marsoh-channel-button:hover, .marsoh-channel-button.is-active { box-shadow: inset 0 0 0 1px rgba(0, 201, 239, .2), 0 0 18px rgba(0, 201, 239, .48); }
+.marsoh-channel-avatar { background: rgba(0, 201, 239, .13); }
+.marsoh-message-head { min-height: 34px; gap: 9px; margin-bottom: 6px; }
+.marsoh-message-avatar { width: 34px; height: 34px; flex-basis: 34px; border: 2px solid var(--marsoh-blue); box-shadow: 0 0 9px rgba(0, 201, 239, .24); }
+.marsoh-message-avatar img { object-fit: cover; }
+.marsoh-message-meta { display: flex; align-items: center; gap: 8px; margin: 4px 7px 0; color: var(--marsoh-muted); font-size: 10px; }
+.marsoh-message.is-own .marsoh-message-meta { justify-content: flex-end; }
+.marsoh-message-meta time { white-space: nowrap; }
+.marsoh-message-meta .marsoh-message-status { margin: 0; font-size: 10px; }
+.marsoh-chat-settings label + label { margin-top: 14px; }
+body.marsoh-page[data-chat-mode="light"] {
+  --marsoh-bg: #f6fcff; --marsoh-panel: #fff; --marsoh-panel-2: #eaf8fd;
+  --marsoh-line: rgba(0, 111, 150, .23); --marsoh-text: #12384a;
+  --marsoh-muted: #426777; --marsoh-blue: #007da7; --marsoh-turquoise: #008d85;
+  --marsoh-gold: #a47405; --marsoh-success: #0b8464;
+  background: #f6fcff; color: #12384a;
+}
+body.marsoh-page[data-chat-mode="light"] .marsoh-topbar { background: #fff; }
+body.marsoh-page[data-chat-mode="light"] .marsoh-shell { background: #f6fcff; }
+body.marsoh-page[data-chat-mode="light"] .marsoh-channels { background: #eff9fd; }
+body.marsoh-page[data-chat-mode="light"] .marsoh-info { background: #f8fcfe; }
+body.marsoh-page[data-chat-mode="light"] .marsoh-conversation { background: #fff; }
+body.marsoh-page[data-chat-mode="light"] .marsoh-stream-wrap { background: #eaf8fd; }
+body.marsoh-page[data-chat-mode="light"] .marsoh-channel-button { background: linear-gradient(120deg, #fff, #e0f7ff); border-color: #00aee7; box-shadow: inset 0 0 0 1px #b6efff, 0 0 12px #03b7eb38; }
+body.marsoh-page[data-chat-mode="light"] .marsoh-channel-button:hover,
+body.marsoh-page[data-chat-mode="light"] .marsoh-channel-button.is-active { background: linear-gradient(120deg, #d3f3ff, #f6fcff); box-shadow: inset 0 0 0 1px #9be7fc, 0 0 17px #00b9ef65; }
+body.marsoh-page[data-chat-mode="light"] .marsoh-channel-avatar { color: #006f98; background: #d5f3fd; }
+body.marsoh-page[data-chat-mode="light"] .marsoh-pinned { background: #fff9e9; color: #284350; }
+body.marsoh-page[data-chat-mode="light"] .marsoh-topic { background: #eefaff; }
+body.marsoh-page[data-chat-mode="light"] .marsoh-topic h2 { color: #10384e; }
+body.marsoh-page[data-chat-mode="light"] .marsoh-message-head strong { color: #10384e; }
+body.marsoh-page[data-chat-mode="light"] .marsoh-bubble { color: #15384a; background: #fff; border-color: #bbdce9; box-shadow: 0 3px 10px #0a52601b; }
+body.marsoh-page[data-chat-mode="light"] .marsoh-message.is-own .marsoh-bubble { color: #073447; background: #bceffd; border-color: #40bfe9; }
+body.marsoh-page[data-chat-mode="light"] .marsoh-composer-area { background: #fff; }
+body.marsoh-page[data-chat-mode="light"] .marsoh-composer { background: #f7fcff; border-color: #8ed8ee; }
+body.marsoh-page[data-chat-mode="light"] .marsoh-composer textarea { color: #12384a; }
+body.marsoh-page[data-chat-mode="light"] .marsoh-composer textarea::placeholder { color: #5d7a89; }
+body.marsoh-page[data-chat-mode="light"] .marsoh-message-avatar { background: #d7f2fc; color: #076c90; }
+body.marsoh-page[data-chat-mode="light"] .marsoh-reply-action,
+body.marsoh-page[data-chat-mode="light"] .marsoh-message-menu { background: #fff; }
+body.marsoh-page[data-chat-mode="light"] .marsoh-chat-settings select,
+body.marsoh-page[data-chat-mode="light"] .marsoh-notification-setting select,
+body.marsoh-page[data-chat-mode="light"] .marsoh-language select { background: #fff; color: #12384a; }
+body.marsoh-page[data-chat-mode="light"] .marsoh-firms-link { color: #065a79; }
+body.marsoh-page[data-chat-mode="light"] .marsoh-stream-wrap::before { opacity: .018; }
+body.marsoh-page[data-chat-mode="dark"] { --marsoh-bg: #102936; --marsoh-panel: #163444; --marsoh-panel-2: #1b3d4d; }
+body.marsoh-page[data-chat-mode="dark"] .marsoh-topbar { background: #102633; }
+body.marsoh-page[data-chat-mode="dark"] .marsoh-channels,
+body.marsoh-page[data-chat-mode="dark"] .marsoh-info { background: #14313f; }
+body.marsoh-page[data-chat-mode="dark"] .marsoh-conversation { background: #112c39; }
+body.marsoh-page[data-chat-mode="dark"] .marsoh-composer-area { background: #14303e; }
+body.marsoh-page[data-chat-mode="dark"] .marsoh-composer { background: #1b3b4b; }
+body.marsoh-page[data-chat-mode="dark"] .marsoh-message.is-own .marsoh-bubble { background: #145b70; }
+body.marsoh-page[data-chat-mode="light"] .marsoh-room-header h1,
+body.marsoh-page[data-chat-mode="light"] .marsoh-topic p,
+body.marsoh-page[data-chat-mode="light"] .marsoh-pinned > p,
+body.marsoh-page[data-chat-mode="light"] .marsoh-composer textarea,
+body.marsoh-page[data-chat-mode="light"] .marsoh-message-head strong { color: #12384a !important; }
+body.marsoh-page[data-chat-mode="light"] .marsoh-composer textarea::placeholder { color: #5d7a89 !important; }
+body.marsoh-page[data-chat-mode="light"] .marsoh-composer textarea { background: transparent !important; }
+body.marsoh-page[data-chat-mode="light"] .marsoh-composer textarea,
+body.marsoh-page[data-chat-mode="light"] .marsoh-composer textarea:focus { box-shadow: none !important; }
+.marsoh-room-controls { display: flex; align-items: center; gap: 9px; }
+.marsoh-mode-toggle { display: grid; place-items: center; flex: 0 0 34px; width: 34px; height: 34px; border: 1px solid var(--marsoh-blue); border-radius: 50%; background: rgba(0,201,239,.1); color: var(--marsoh-blue); cursor: pointer; box-shadow: 0 0 9px rgba(0,201,239,.2); }
+.marsoh-mode-toggle span { font-size: 19px; line-height: 1; }
+.marsoh-mode-toggle:hover { background: rgba(0,201,239,.2); box-shadow: 0 0 14px rgba(0,201,239,.35); }
+.marsoh-pinned { min-height: 45px; margin: 7px 12px 0; padding: 5px 10px; border: 1px solid var(--marsoh-line); border-left: 2px solid var(--marsoh-gold); border-radius: 5px; }
+.marsoh-auto-translate { min-height: 35px; border: 0; padding: 2px 3px; background: transparent; }
+.marsoh-topic { display: flex; align-items: center; gap: 8px; min-height: 34px; margin: 0 12px; padding: 5px 10px; border: 0; border-bottom: 1px solid var(--marsoh-line); background: transparent; }
+.marsoh-topic > span { flex: none; font-size: 15px; }
+.marsoh-topic p { margin: 0; min-width: 0; font-size: 12px; color: var(--marsoh-text); }
+.marsoh-message { margin: 5px 0; }
+.marsoh-message-head { min-height: 30px; margin-bottom: 3px; }
+.marsoh-message-avatar { width: 30px; height: 30px; flex-basis: 30px; }
+.marsoh-bubble { padding: 8px 11px; }
+.marsoh-message-meta { min-height: 20px; margin-top: 1px; gap: 5px; }
+.marsoh-translate { min-height: 20px; margin: 0; padding: 0 3px; font-size: 10px; }
+.marsoh-date-divider { margin: 13px 0; }
+.marsoh-messages { padding-top: 10px; padding-bottom: 14px; }
+@media (max-width: 760px) {
+  body.marsoh-page > header.marsoh-topbar { z-index: 30; overflow: visible !important; }
+  body.marsoh-page > header .marsoh-breadcrumbs { position: absolute; top: 68px; left: 0; right: 0; display: flex !important; justify-content: space-around; height: 39px; padding: 0 5px; border-bottom: 1px solid var(--marsoh-line); background: var(--marsoh-panel); }
+  body.marsoh-page > header .marsoh-breadcrumbs a, body.marsoh-page > header .marsoh-breadcrumbs button { min-height: 38px; padding: 0 5px; font-size: 11px; white-space: nowrap; color: var(--marsoh-text); }
+  body.marsoh-page[data-chat-mode="light"] > header .marsoh-breadcrumbs a,
+  body.marsoh-page[data-chat-mode="light"] > header .marsoh-breadcrumbs button { color: #12384a !important; }
+  body.marsoh-page > main.marsoh-shell { height: calc(100dvh - 107px); margin-top: 39px !important; }
+  .marsoh-room-meta { flex-direction: row; align-items: center; }
+  .marsoh-room-controls { gap: 5px; }
+  .marsoh-mode-toggle { flex-basis: 32px; width: 32px; height: 32px; }
+  .marsoh-pinned { margin: 5px 7px 0; padding: 4px 7px; }
+  .marsoh-pinned > p { font-size: 11px; }
+  .marsoh-topic { margin: 0 7px; padding: 4px 8px; }
+  .marsoh-topic p { font-size: 11px; }
+  .marsoh-message { margin: 4px 0; }
+}
+@media (max-width: 760px) {
+  .marsoh-message { max-width: calc(100% - 43px); }
+  .marsoh-reply-action { right: -33px; }
+  .marsoh-message.is-own .marsoh-reply-action { left: -33px; }
+  .marsoh-message-menu { right: -33px; }
+  .marsoh-report-menu { right: -33px; }
+}

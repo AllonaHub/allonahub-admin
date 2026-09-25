@@ -6,7 +6,8 @@
   <title>MarSoh | AllonaHub Denizcilik</title>
   <meta name="description" content="MarSoh, doğrulanmış AllonaHub denizcilik kullanıcılarının güvenli küresel sohbet ağıdır.">
   <link rel="stylesheet" href="../../css/platform.css?v=20260919-marsoh2">
-  <link rel="stylesheet" href="../../css/marsoh.css?v=20260920-fluid-bubbles1">
+  <link rel="stylesheet" href="../../css/marsoh.css?v=20260925-chat-refresh1">
+  <link rel="stylesheet" href="../../css/marsoh-firms.css?v=20260925-firms1">
 </head>
 <body class="marsoh-page" data-page="marsoh" data-marsoh-voice-typing="disabled">
   <a class="marsoh-skip" href="#marsohMessages" data-marsoh-copy="skip">Mesajlara geç</a>
@@ -67,6 +68,7 @@
       <div class="marsoh-channel-list" data-marsoh-channel-list>
         <div class="marsoh-channel-skeleton"></div><div class="marsoh-channel-skeleton"></div><div class="marsoh-channel-skeleton"></div>
       </div>
+      <a class="marsoh-firms-link" href="maritime-firm-chat.html" aria-label="Firmalarım mesajlarını aç"><span aria-hidden="true">◉</span><strong>Firmalarım</strong><span class="marsoh-channel-unread" data-marsoh-firm-unread hidden>0</span></a>
       <label class="marsoh-notification-setting">
         <span data-marsoh-copy="notifications">Bildirim tercihi</span>
         <select data-marsoh-notification>
@@ -75,6 +77,7 @@
           <option value="muted" data-marsoh-copy="notifyMuted">Sessiz</option>
         </select>
       </label>
+      <button type="button" class="marsoh-browser-notify" data-marsoh-browser-notify>Tarayıcı bildirimlerini aç</button>
     </aside>
 
     <section class="marsoh-conversation" data-marsoh-conversation hidden>
@@ -84,7 +87,7 @@
         </button>
         <div><h1 data-marsoh-room-title>MarSoh</h1><p data-marsoh-room-subtitle></p></div>
         <div class="marsoh-room-meta">
-          <span class="marsoh-connection" data-marsoh-connection data-state="connecting" role="status" aria-live="polite"><i></i><span data-marsoh-copy="connecting">Bağlanıyor</span></span>
+          <div class="marsoh-room-controls"><span class="marsoh-connection" data-marsoh-connection data-state="connecting" role="status" aria-live="polite"><i></i><span data-marsoh-copy="connecting">Bağlanıyor</span></span><button type="button" class="marsoh-mode-toggle" data-marsoh-mode-toggle aria-label="Koyu temaya geç" aria-pressed="false" title="Açık / koyu tema"><span aria-hidden="true">☼</span></button></div>
           <span class="marsoh-room-count" data-marsoh-room-count aria-live="polite"></span>
         </div>
         <button class="marsoh-icon-button marsoh-info-toggle" type="button" data-marsoh-open-info aria-label="Topluluk kurallarını aç" title="Topluluk kuralları" data-marsoh-aria="openRules" data-marsoh-title="rules">?</button>
@@ -98,7 +101,7 @@
         </label>
       </aside>
       <article class="marsoh-topic" data-marsoh-topic hidden>
-        <div><span data-marsoh-copy="todayTopic">Bugünün deniz konusu</span><h2></h2></div><p></p>
+        <span aria-hidden="true">✦</span><p></p>
       </article>
 
       <div class="marsoh-stream-wrap">
@@ -111,6 +114,8 @@
       </div>
 
       <div class="marsoh-composer-area">
+        <div class="marsoh-reply-preview" data-marsoh-reply-preview hidden><div><strong></strong><span></span></div><button type="button" data-marsoh-reply-cancel aria-label="Yanıtı iptal et">×</button></div>
+        <div class="marsoh-mentions" data-marsoh-mentions hidden role="listbox" aria-label="Odadaki kişileri etiketle"></div>
         <div class="marsoh-emoji-panel" data-marsoh-emoji-panel hidden aria-label="Emoji seçici" data-marsoh-aria="emojiPicker">
           <div class="marsoh-emoji-panel__head"><strong data-marsoh-copy="emojiPicker">Emoji seçici</strong><button type="button" data-marsoh-emoji-close aria-label="Kapat" data-marsoh-aria="close">×</button></div>
           <div class="marsoh-emoji-grid" data-marsoh-emoji-grid></div>
@@ -152,6 +157,7 @@
           <li data-marsoh-copy="ruleMoney">Komisyon, ödeme veya aracılık talep etmeyin.</li>
         </ul>
       </section>
+      <section class="marsoh-chat-settings"><h3 data-marsoh-copy="chatAppearance">Sohbet görünümü</h3><label><span data-marsoh-copy="chatMode">Renk modu</span><select data-marsoh-chat-mode><option value="light" data-marsoh-copy="modeLight">Açık</option><option value="dark" data-marsoh-copy="modeDark">Koyu</option></select></label><label><span data-marsoh-copy="chatTheme">Sohbet teması</span><select data-marsoh-chat-theme><option value="ocean" data-marsoh-copy="themeOcean">Deniz</option><option value="chart" data-marsoh-copy="themeChart">Deniz haritası</option><option value="clear" data-marsoh-copy="themeClear">Sade</option></select></label></section>
       <section class="marsoh-safety-card">
         <span aria-hidden="true">!</span><div><h3 data-marsoh-copy="seaSafety">Denizde güvenlik</h3><p data-marsoh-copy="seaSafetyText">Acil bir durumda sohbet yerine geminizin resmi acil durum prosedürünü izleyin.</p></div>
       </section>
@@ -172,8 +178,8 @@
   <script src="../../js/supabase-client.js?v=20260920-auth-session1" defer></script>
   <script src="../../js/auth.js?v=20260920-auth-session1" defer></script>
   <script src="../../js/platform.js?v=20260919-marsoh2" defer></script>
-  <script src="../../js/marsoh-i18n.js?v=20260920-auto-translation" defer></script>
+  <script src="../../js/marsoh-i18n.js?v=20260925-chat-refresh1" defer></script>
   <script src="../../js/marsoh-speech-provider.js?v=20260919-marsoh2" defer></script>
-  <script src="../../js/marsoh.js?v=20260920-voice-hidden" defer></script>
+  <script src="../../js/marsoh.js?v=20260925-chat-refresh1" defer></script>
 </body>
 </html>

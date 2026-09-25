@@ -135,7 +135,8 @@ test("translation languages and emoji reactions share the same strict server and
 test("MarSoh has no attachment, camera, file, video, audio, GIF, or storage feature", async () => {
   const [migration, route, , ui, , page] = await sources();
   assert.doesNotMatch(page, /type=["']file|accept=["']|attach|camera|gallery|gif|sticker/i);
-  assert.doesNotMatch(route, /attachment|storage\.from|bucket|multipart/i);
+  assert.doesNotMatch(route, /attachment|multipart/i);
+  assert.match(route, /createSignedUrl\(`users\/\$\{id\}\/profile\.webp`, 600\)/);
   assert.doesNotMatch(migration, /attachment|storage\.buckets|storage\.objects/i);
   assert.doesNotMatch(ui, /FormData|FileReader|MediaRecorder/);
 });
@@ -225,7 +226,8 @@ test("company actors stay behind the disabled feature flag and verified-company 
 
 test("text is rendered with textContent rather than executable HTML", async () => {
   const [, , , ui, , , , , , adminUi] = await sources();
-  assert.match(ui, /body\.textContent = message\.body/);
+  assert.match(ui, /renderMessageBody\(body, message\.body\)/);
+  assert.match(ui, /document\.createTextNode/);
   assert.match(adminUi, /escape\(message\.body \|\| "-"\)/);
   assert.doesNotMatch(ui, /innerHTML\s*=\s*message\.body/);
 });

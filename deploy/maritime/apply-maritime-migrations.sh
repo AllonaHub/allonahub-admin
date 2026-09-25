@@ -46,6 +46,7 @@ MIGRATIONS=(
   "$ROOT_DIR/supabase/migrations/20260921010000_repair_auth_device_security_and_failure_reporting.sql"
   "$ROOT_DIR/supabase/migrations/20260921020000_allow_confirmed_manual_global_cv.sql"
   "$ROOT_DIR/supabase/migrations/20260925160000_maritime_submitted_application_rooms.sql"
+  "$ROOT_DIR/supabase/migrations/20260925193000_maritime_private_chat_read_cursors.sql"
 )
 
 if [ -z "$DB_URL" ]; then

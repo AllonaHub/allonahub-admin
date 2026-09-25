@@ -967,6 +967,14 @@
     const query = partnerId ? `?partner_id=${encodeURIComponent(partnerId)}` : "";
     state.data = await api(`/v1/maritime/partner-center${query}`);
     state.partnerId = state.data.partner.id;
+    const chatLink = document.querySelector(".mp-firm-chat-link");
+    if (chatLink) chatLink.href = `../ecosystem/maritime-firm-chat.html?source=partner&partner_id=${encodeURIComponent(state.partnerId)}`;
+    api(`/v1/maritime/connect-chat/threads?partner_id=${encodeURIComponent(state.partnerId)}`).then((result) => {
+      const badge = document.querySelector("[data-mp-firm-unread]");
+      if (!badge) return;
+      const count = (result.threads || []).filter((thread) => thread.unread).length;
+      badge.hidden = count === 0; badge.textContent = count > 99 ? "99+" : String(count);
+    }).catch(() => {});
     render();
   }
 
