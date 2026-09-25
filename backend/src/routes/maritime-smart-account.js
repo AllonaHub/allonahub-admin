@@ -1146,6 +1146,12 @@ export function registerMaritimeSmartAccountRoutes(app) {
     if (!cv || cv.profile_payload?.data_origin !== "user_entered_maritime_cv" || ["restricted", "stale"].includes(cv.profile_status)) {
       throw httpError("Başvurmadan önce Maritime CV'nizi kaydedin.", 409, "MARITIME_CV_REQUIRED");
     }
+    const cvReadiness = maritimeGlobalPassportReadiness(cv.profile_payload, {
+      hasPhoto: await hasStoredProfilePhoto(ctx.user.id)
+    });
+    if (!cvReadiness.ready) {
+      throw httpError(`Başvurmak için Maritime CV zorunlu alanlarını tamamlayın: ${cvReadiness.missing.map(adminCvRequiredLabel).join(", ")}.`, 409, "MARITIME_CV_REQUIRED_FIELDS_MISSING");
+    }
     const candidateRank = canonicalRank(buildMaritimeSmartProfile({ cvProfile: cv }).profile.rank);
     if (!candidateRank || !canonicalRank(job.rank_code) || candidateRank !== canonicalRank(job.rank_code)) {
       throw httpError("CV'nizdeki rütbe bu ilana uygun değil.", 409, "RANK_MISMATCH");
@@ -1905,6 +1911,17 @@ export function registerMaritimeSmartAccountRoutes(app) {
     const ctx = await requireCustomer(request, "maritime.application.submit");
     const { applicationId } = applicationParamsSchema.parse(request.params || {});
     confirmationSchema.parse(request.body || {});
+    const savedCv = assertDb(await supabaseAdmin
+      .from("maritime_cv_profiles")
+      .select("profile_payload")
+      .eq("seafarer_user_id", ctx.user.id)
+      .maybeSingle(), "Maritime CV kaydı okunamadı.");
+    const cvReadiness = maritimeGlobalPassportReadiness(savedCv?.profile_payload || {}, {
+      hasPhoto: await hasStoredProfilePhoto(ctx.user.id)
+    });
+    if (!cvReadiness.ready) {
+      throw httpError(`Başvurmak için Maritime CV zorunlu alanlarını tamamlayın: ${cvReadiness.missing.join(", ")}.`, 409, "MARITIME_CV_REQUIRED_FIELDS_MISSING");
+    }
     await requireMaritimePasskeyProof(request, ctx.user.id);
     const result = assertDb(await ctx.db.rpc("submit_maritime_application", {
       p_application_id: applicationId,
