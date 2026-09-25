@@ -259,7 +259,7 @@ test("smart account is a dedicated no-footer workspace with explicit approval ac
   assert.match(ui, /await pdf\.save\(fileName, \{ returnPromise: true \}\)/);
   assert.doesNotMatch(ui, /window\.print\(\)/);
   assert.match(ui, /state\.cvOpen/);
-  assert.match(ui, /maritime-cv-avatar/);
+  assert.doesNotMatch(ui, /<div class="maritime-cv-avatar">/);
   assert.match(ui, /cv\.certificate_records/);
   assert.match(ui, /cv\.identity_documents/);
   assert.match(ui, /cv\.medical_records/);
@@ -283,6 +283,15 @@ test("smart account is a dedicated no-footer workspace with explicit approval ac
   assert.match(css, /\.maritime-global-passport-help-card/);
   assert.match(css, /\.maritime-global-passport-help-toggle\[aria-expanded="true"\]/);
   assert.match(css, /\.maritime-global-passport-help-card \{[\s\S]*position: fixed;[\s\S]*max-height: calc\(100dvh - 24px\);[\s\S]*transform: translateY\(-50%\);/);
+});
+
+test("candidate match preview is server-calculated from saved Maritime CV without granting application access", async () => {
+  const routes = await readFile(routeUrl, "utf8");
+  assert.match(routes, /app\.get\("\/v1\/maritime\/candidate-matches"/);
+  assert.match(routes, /requireCustomer\(request, "maritime\.candidate_matches\.read"\)/);
+  assert.match(routes, /input\.cvProfile\.profile_payload\?\.data_origin !== "user_entered_maritime_cv"/);
+  assert.match(routes, /matchMaritimeJobs\(snapshot, jobs\)\.filter/);
+  assert.match(routes, /job_id: match\.job_id, eligible: true, hard_gate_status: "passed"/);
 });
 
 test("every smart-account label has a complete nine-language row", async () => {

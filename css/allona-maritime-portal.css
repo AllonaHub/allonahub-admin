@@ -273,6 +273,45 @@ body.maritime-portal-page textarea {
   align-items: center;
 }
 
+.maritime-jobs-counters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.maritime-match-counter,
+.maritime-match-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 9px;
+  border: 1px solid #0ac5e9;
+  border-radius: 6px;
+  color: #e8fcff;
+  background: #07546e;
+  font-size: 12px;
+  line-height: 1.2;
+  white-space: normal;
+}
+
+.maritime-match-counter span {
+  display: inline-grid;
+  min-width: 20px;
+  min-height: 20px;
+  place-items: center;
+  border-radius: 50%;
+  background: #b71935;
+  color: #fff;
+  font-weight: 800;
+}
+
+body.maritime-portal-page[data-theme="white"] .maritime-match-badge,
+body.maritime-portal-page[data-theme="white"] .maritime-match-counter {
+  color: #073348;
+  background: #d7f7ff;
+}
+
 .maritime-toolbar-copy h2,
 .maritime-section-heading h2 {
   margin: 0 0 4px;
@@ -330,6 +369,30 @@ body.maritime-portal-page textarea {
   border: 1px solid var(--maritime-line);
   border-radius: 8px;
   background: linear-gradient(145deg, rgba(8, 42, 69, 0.96), rgba(3, 20, 38, 0.98));
+}
+
+.maritime-job-card {
+  gap: 9px;
+  padding: 13px;
+  align-content: start;
+}
+
+.maritime-job-card .maritime-job-title h3 {
+  font-size: 16px;
+}
+
+.maritime-job-card .maritime-job-description {
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.maritime-job-card .maritime-job-meta span {
+  padding: 7px 8px;
+}
+
+.maritime-job-card .maritime-job-highlights > * {
+  min-height: 36px;
+  padding: 6px 8px;
 }
 
 .maritime-job-head,

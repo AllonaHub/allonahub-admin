@@ -65,7 +65,7 @@ test("Maritime PDF purchases use isolated USD entitlements and trusted callback 
   assert.match(schemaCheck, /Hidden Maritime Premium or PDF entitlement boundary is unsafe/);
 });
 
-test("only paid PDF controls are visible and no Premium surface is rendered", async () => {
+test("PDF controls are temporarily price-free and no Premium surface is rendered", async () => {
   const [cvPage, cvForm, cvControls, commerceUi, smartPage, smartUi, cvCss, smartCss] = await Promise.all([
     readFile(cvPageUrl, "utf8"),
     readFile(cvFormUrl, "utf8"),
@@ -76,12 +76,13 @@ test("only paid PDF controls are visible and no Premium surface is rendered", as
     readFile(cvCssUrl, "utf8"),
     readFile(smartCssUrl, "utf8")
   ]);
-  assert.match(cvPage, /PDF İndir · 7 USD/);
-  assert.match(cvForm, /Download PDF · \$7/);
+  assert.match(cvPage, /PDF İndir/);
+  assert.doesNotMatch(cvPage, /PDF İndir · 7 USD/);
+  assert.match(cvForm, /downloadPdf:"Download PDF"/);
   assert.match(cvControls, /authorizeOrCheckout\("maritime_cv_pdf"\)/);
   assert.match(cvControls, /scale: 2\.5/);
   assert.match(cvControls, /AllonaMaritimePdfNames\.maritimeCv/);
-  assert.match(smartUi, /Download Global CV PDF · \$15/);
+  assert.match(smartUi, /Download Global CV PDF"/);
   assert.match(smartUi, /authorizeOrCheckout\("global_cv_pdf"\)/);
   assert.match(smartUi, /AllonaMaritimePdfNames\.globalCv/);
   assert.match(smartUi, /addGlobalCvPages/);

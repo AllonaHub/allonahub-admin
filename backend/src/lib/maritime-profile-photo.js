@@ -29,6 +29,7 @@ export async function normalizeMaritimeProfilePhoto(bytes, contentType) {
       .resize({ width: 600, height: 800, fit: "inside", withoutEnlargement: true })
       .flatten({ background: "#ffffff" })
       .webp({ quality: 90 })
+      .withIccProfile("srgb")
       .timeout({ seconds: 5 })
       .toBuffer();
     if (output.length > MARITIME_PROFILE_PHOTO_MAX_BYTES) throw invalidPhoto();

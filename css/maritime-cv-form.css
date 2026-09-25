@@ -196,6 +196,28 @@ body.cv-form-page .cv-photo-field-head label {
   margin: 0;
 }
 
+body.cv-form-page #photoInput {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body.cv-form-page #photoInput::file-selector-button {
+  max-width: 48%;
+  min-height: 42px;
+  margin-right: 8px;
+  padding: 8px 10px;
+  border: 1px solid #23bfe5;
+  border-radius: 5px;
+  color: #fff;
+  background: #075a76;
+  font: inherit;
+}
+
 body.cv-form-page .cv-photo-remove {
   min-height: 28px;
   padding: 5px 9px;

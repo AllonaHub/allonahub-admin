@@ -508,6 +508,7 @@ textarea:focus{
 
   .photoCell{
     width:104px;
+    max-width:28vw;
   }
 
   .emptyPhoto{
@@ -529,7 +530,13 @@ textarea:focus{
   }
 
   .photoCell{
-    width:88px;
+    width:72px;
+    max-width:24vw;
+  }
+
+  .cvPhotoFrame{
+    width:100%;
+    max-height:100px;
   }
 }
 

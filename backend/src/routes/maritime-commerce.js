@@ -15,6 +15,7 @@ const authorizeSchema = z.object({
 const imoParamsSchema = z.object({ imo: z.string().trim().max(24) }).strict();
 const imoQuerySchema = z.object({ fresh_position: z.enum(["0", "1"]).optional().default("0") }).strict();
 const POSITION_CACHE_MS = 15 * 60 * 1000;
+const freePdfDownloadsEnabled = process.env.MARITIME_PDF_FREE_DOWNLOADS_ENABLED !== "false";
 
 function httpError(message, statusCode = 400, code = "MARITIME_COMMERCE_REQUEST_ERROR") {
   const error = new Error(message);
@@ -124,10 +125,11 @@ export function registerMaritimeCommerceRoutes(app) {
     }));
     return {
       ok: true,
+      free_downloads_enabled: freePdfDownloadsEnabled,
       currency: settings.currency,
       products: {
-        maritime_cv_pdf: { price: productPrice(settings, "maritime_cv_pdf"), ...totals.maritime_cv_pdf },
-        global_cv_pdf: { price: productPrice(settings, "global_cv_pdf"), ...totals.global_cv_pdf }
+        maritime_cv_pdf: { price: freePdfDownloadsEnabled ? 0 : productPrice(settings, "maritime_cv_pdf"), ...totals.maritime_cv_pdf },
+        global_cv_pdf: { price: freePdfDownloadsEnabled ? 0 : productPrice(settings, "global_cv_pdf"), ...totals.global_cv_pdf }
       }
     };
   });
@@ -138,6 +140,14 @@ export function registerMaritimeCommerceRoutes(app) {
     const ctx = await requireCustomer(request, "maritime.pdf_download.authorize");
     const input = authorizeSchema.parse(request.body || {});
     const currentSourceVersion = await sourceVersion(ctx.user.id, input.product);
+    if (freePdfDownloadsEnabled) {
+      await auditEvent({
+        request, actorId: ctx.user.id, actorRole: ctx.profile.role,
+        action: "maritime.pdf_download_authorized", resourceType: "maritime_pdf_download",
+        metadata: { product: input.product, access_source: "temporary_free", source_version: currentSourceVersion, idempotency_key: input.idempotency_key }
+      });
+      return { ok: true, product: input.product, access_source: "temporary_free" };
+    }
     const rpc = await supabaseAdmin.rpc("consume_maritime_pdf_download", {
       p_user_id: ctx.user.id,
       p_product: input.product,
@@ -170,6 +180,7 @@ export function registerMaritimeCommerceRoutes(app) {
   app.post("/v1/maritime/pdf-checkout", {
     config: { rateLimit: { max: 5, timeWindow: "10 minutes" } }
   }, async (request, reply) => {
+    if (freePdfDownloadsEnabled) throw httpError("PDF indirme şu anda ücretsizdir.", 409, "MARITIME_PDF_CURRENTLY_FREE");
     if (config.paymentsDisabled) throw httpError("Ödeme sistemi geçici olarak koruma modunda.", 503, "PAYMENTS_DISABLED");
     const ctx = await requireCustomer(request, "maritime.pdf_checkout");
     const input = checkoutSchema.parse(request.body || {});

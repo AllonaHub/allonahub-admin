@@ -8,6 +8,7 @@
   const root = document.querySelector("[data-portal-root]");
   let session = null;
   let jobs = [];
+  let candidateMatches = [];
   let activeFilter = "all";
   let activeTopic = "fraud";
   let renderedLanguage = "";
@@ -113,7 +114,7 @@
     internationalRoute: ["Uluslararası", "Beynəlxalq", "Халықаралық", "Xalqaro", "Эл аралык", "International", "International", "Международный", "دولي"],
     apply: ["Başvur", "Müraciət et", "Өтінім беру", "Ariza berish", "Арыз берүү", "Apply", "Bewerben", "Откликнуться", "تقديم"],
     applied: ["Başvuruldu", "Müraciət edildi", "Өтінім берілді", "Ariza berildi", "Арыз берилди", "Applied", "Beworben", "Заявка отправлена", "تم التقديم"],
-    applicationBlockedTitle: ["Başvuru şu anda gönderilemiyor", "Müraciət hazırda göndərilə bilmir", "Өтінімді қазір жіберу мүмкін емес", "Arizani hozir yuborib bo‘lmaydi", "Арызды азыр жөнөтүү мүмкүн эмес", "Application cannot be sent yet", "Bewerbung kann noch nicht gesendet werden", "Заявку пока нельзя отправить", "لا يمكن إرسال الطلب الآن"],
+    applicationBlockedTitle: ["Bu ilana başvuru yapamazsınız", "Bu elana müraciət edə bilməzsiniz", "Бұл жұмысқа өтініш бере алмайсыз", "Bu eʼlonga ariza bera olmaysiz", "Бул орунга арыз бере албайсыз", "You cannot apply for this job", "Sie können sich nicht auf diese Stelle bewerben", "Вы не можете подать заявку на эту вакансию", "لا يمكنك التقدم لهذه الوظيفة"],
     applicationDialogClose: ["Kapat", "Bağla", "Жабу", "Yopish", "Жабуу", "Close", "Schließen", "Закрыть", "إغلاق"],
     qualificationMismatchTemplate: ["CV'nizdeki rütbe bu ilan için uygun değil. Size uygun ilanlara göz atabilirsiniz.", "CV-nizdəki rütbə bu elana uyğun deyil. Sizə uyğun elanlara baxa bilərsiniz.", "Түйіндемеңіздегі дәреже бұл орынға сәйкес емес. Өзіңізге сай орындарды қараңыз.", "CV dagi unvoningiz bu eʼlonga mos emas. Oʻzingizga mos ishlarni ko‘ring.", "CVдеги даражаңыз бул орунга туура келбейт. Өзүңүзгө ылайык орундарды караңыз.", "The rank in your CV does not match this role. Please explore positions suited to your rank.", "Ihr Rang im Lebenslauf passt nicht zu dieser Stelle. Sehen Sie sich passende Stellen an.", "Звание в вашем резюме не соответствует этой вакансии. Посмотрите подходящие вакансии.", "رتبتك في سيرتك الذاتية لا تناسب هذه الوظيفة. اطلع على الوظائف المناسبة لك."],
     requirementsMismatch: ["CV'niz bu ilanın diğer koşullarıyla eşleşmiyor. Size uygun ilanlara göz atabilirsiniz.", "CV-niz bu elanın digər şərtlərinə uyğun gəlmir. Sizə uyğun elanlara baxa bilərsiniz.", "Түйіндемеңіз бұл орынның басқа талаптарына сәйкес емес. Өзіңізге сай орындарды қараңыз.", "CV bu eʼlonning boshqa talablariga mos emas. Oʻzingizga mos ishlarni ko‘ring.", "CVңиз бул орундагы башка шарттарга туура келбейт. Өзүңүзгө ылайык орундарды караңыз.", "Your CV does not meet the other requirements for this role. Please explore suitable positions.", "Ihr Lebenslauf erfüllt die weiteren Anforderungen dieser Stelle nicht. Sehen Sie sich passende Stellen an.", "Ваше резюме не соответствует другим условиям вакансии. Посмотрите подходящие вакансии.", "سيرتك الذاتية لا تستوفي المتطلبات الأخرى لهذه الوظيفة. اطلع على الوظائف المناسبة لك."],
@@ -137,6 +138,9 @@
     eligibilityUnavailable: ["Kontrol Bekleniyor", "Yoxlama gözlənilir", "Тексеру күтілуде", "Tekshiruv kutilmoqda", "Текшерүү күтүлүүдө", "Check Pending", "Prüfung ausstehend", "Ожидается проверка", "بانتظار التحقق"],
     eligibilityUnavailableReason: ["Bilgileriniz şu anda kontrol edilemiyor. Lütfen biraz sonra yeniden deneyin.", "Məlumatınız hazırda yoxlanıla bilmir. Bir az sonra yenidən cəhd edin.", "Деректеріңіз қазір тексерілмейді. Кейінірек қайталап көріңіз.", "Maʼlumotlaringiz hozir tekshirilmayapti. Birozdan keyin qayta urinib ko‘ring.", "Маалыматыңыз азыр текшерилбей жатат. Бир аздан кийин кайра аракет кылыңыз.", "Your information cannot be checked right now. Please try again shortly.", "Ihre Angaben können derzeit nicht geprüft werden. Versuchen Sie es später erneut.", "Сейчас данные нельзя проверить. Повторите попытку позже.", "تعذر التحقق من بياناتك حالياً. حاول مرة أخرى بعد قليل."],
     applicationConfirm: ["CV'niz bu ilana uygundur. Başvuruyu doğrulanmış firmaya göndermek istiyor musunuz?", "CV-niz bu elana uyğundur. Müraciəti təsdiqlənmiş şirkətə göndərmək istəyirsiniz?", "CV осы орынға сәйкес. Өтінімді расталған компанияға жібересіз бе?", "CV bu eʼlonga mos. Arizani tasdiqlangan kompaniyaga yuborasizmi?", "CV бул жарыяга туура келет. Арызды текшерилген компанияга жөнөтөсүзбү?", "Your CV matches this listing. Submit the application to the verified company?", "Ihr CV passt zu dieser Stelle. Bewerbung an das verifizierte Unternehmen senden?", "Ваш CV подходит. Отправить заявку проверенной компании?", "سيرتك مطابقة. هل تريد إرسال الطلب إلى الشركة الموثقة؟"],
+    matchedJobs: ["Eşleşen ilanlar", "Uyğun elanlar", "Сәйкес хабарландырулар", "Mos eʼlonlar", "Дал келген жарыялар", "Matched jobs", "Passende Stellen", "Подходящие вакансии", "الوظائف المطابقة"],
+    shareDocumentsConsent: ["Başvur ve belgelerimi bu firmayla paylaş", "Müraciət et və sənədlərimi bu şirkətlə paylaş", "Өтініш беріп, құжаттарымды осы компаниямен бөлісу", "Ariza berish va hujjatlarimni kompaniyaga ulashish", "Арыз берүү жана документтеримди компанияга бөлүшүү", "Apply and share my documents with this company", "Bewerben und Dokumente mit diesem Unternehmen teilen", "Подать заявку и поделиться документами с компанией", "تقديم الطلب ومشاركة مستنداتي مع الشركة"],
+    shareDocumentsConfirm: ["Bu ilana başvurarak Maritime CV'nizin ve yüklediğiniz belgelerin yalnızca bu doğrulanmış firmadaki yetkili kişilerce görüntülenmesine izin veriyorsunuz. Devam edilsin mi?", "Bu elana müraciət edərək Maritime CV-nizin və yüklədiyiniz sənədlərin yalnız bu təsdiqlənmiş şirkətin səlahiyyətli şəxslərinə görünməsinə icazə verirsiniz. Davam edilsin?", "Осы жұмысқа өтініш беру арқылы Maritime CV және құжаттарыңызды тек расталған компания өкілдеріне көрсетесіз. Жалғастырасыз ба?", "Ariza bilan Maritime CV va hujjatlaringiz faqat tasdiqlangan kompaniya vakillariga ko‘rinadi. Davom etilsinmi?", "Бул орунга арыз берип, Maritime CV жана документтериңизди текшерилген компаниянын ыйгарым укуктуу өкүлдөрүнө көрсөтүүгө уруксат бересиз. Улантасызбы?", "By applying, you allow authorized people at this verified company to view your Maritime CV and uploaded documents for this job only. Continue?", "Mit der Bewerbung erlauben Sie den Berechtigten dieses verifizierten Unternehmens, Ihr Maritime CV und Ihre Dokumente nur für diese Stelle einzusehen. Fortfahren?", "Подавая заявку, вы разрешаете уполномоченным представителям этой проверенной компании просматривать ваше Maritime CV и документы только для этой вакансии. Продолжить?", "بتقديم الطلب، تسمح للمخولين لدى هذه الشركة الموثقة بعرض سيرتك البحرية ومستنداتك لهذه الوظيفة فقط. هل تتابع؟"],
     applicationSending: ["Uygunluk doğrulanıyor ve başvuru gönderiliyor...", "Uyğunluq yoxlanılır və müraciət göndərilir...", "Сәйкестік тексеріліп, өтінім жіберілуде...", "Moslik tekshirilib, ariza yuborilmoqda...", "Шайкештик текшерилип, арыз жөнөтүлүүдө...", "Checking eligibility and submitting...", "Eignung wird geprüft und Bewerbung gesendet...", "Проверяем соответствие и отправляем заявку...", "جارٍ التحقق من الأهلية وإرسال الطلب..."],
     applicationFailed: ["Başvuru gönderilemedi. Global CV eşleşmenizi yenileyip tekrar deneyin.", "Müraciət göndərilmədi. Global CV uyğunluğunu yeniləyib yenidən cəhd edin.", "Өтінім жіберілмеді. Global CV сәйкестігін жаңартып көріңіз.", "Ariza yuborilmadi. Global CV mosligini yangilab qayta urinib ko‘ring.", "Арыз жөнөтүлгөн жок. Global CV шайкештигин жаңыртып кайталаңыз.", "Application could not be submitted. Refresh your Global CV match and try again.", "Bewerbung konnte nicht gesendet werden. Aktualisieren Sie Ihren Global-CV-Abgleich.", "Заявка не отправлена. Обновите сопоставление Global CV.", "تعذر إرسال الطلب. حدّث مطابقة Global CV وحاول مجدداً."],
     jobSafeSummary: ["Pozisyon doğrulanmış firma havuzunda yayınlanır. Ayrıntılı şirket bilgileri yalnızca kabul edilen başvuruda görünür.", "Vəzifə təsdiqlənmiş şirkət hovuzunda yayımlanır. Ətraflı şirkət məlumatı yalnız qəbul edilən müraciətdə görünür.", "Лауазым расталған компаниялар пулында жарияланады. Толық дерек тек қабылданған өтінімде көрінеді.", "Lavozim tasdiqlangan kompaniyalar tizimida eʼlon qilinadi. Batafsil maʼlumot faqat qabul qilingan arizada ko‘rinadi.", "Кызмат текшерилген компаниялар тизмесинде жарыяланат. Толук маалымат кабыл алынган арызда гана көрүнөт.", "The position is published in the verified company pool. Full company details appear only after acceptance.", "Die Stelle wird im Pool verifizierter Unternehmen veröffentlicht. Details erscheinen erst nach Annahme.", "Вакансия размещена в пуле проверенных компаний. Полные данные видны только после принятия заявки.", "تُنشر الوظيفة ضمن مجموعة الشركات الموثقة، ولا تظهر التفاصيل الكاملة إلا بعد قبول الطلب."],
@@ -360,6 +364,15 @@
     return text({ deck: "filterDeck", engine: "filterEngine", electrical: "filterElectrical", hotel: "filterHotel" }[code] || "filterAll");
   }
 
+  function departmentForRank(rankCode) {
+    const rank = String(rankCode || "").trim().toLowerCase();
+    if (["master", "chief_officer", "second_officer", "third_officer", "deck_cadet", "bosun", "able_seaman", "ordinary_seaman", "deck_boy"].includes(rank)) return "deck";
+    if (["chief_engineer", "second_engineer", "third_engineer", "fourth_engineer", "engine_cadet", "engine_bosun", "able_engine_rating", "motorman", "oiler", "wiper", "fitter", "welder", "pumpman"].includes(rank)) return "engine";
+    if (["eto", "electro_technical_rating", "electrician"].includes(rank)) return "electrical";
+    if (["chief_cook", "cook", "steward"].includes(rank)) return "hotel";
+    return "all";
+  }
+
   async function loadPublicJobs() {
     const base = String(App.config && App.config.apiBaseUrl || "").replace(/\/$/, "");
     if (!base) return [];
@@ -400,7 +413,7 @@
           vesselDwt: Number(vessel.deadweight) || null,
           vesselGt: Number(vessel.gross_tonnage) || null,
           hasOperationalDetails: Boolean(requirements.joining_date || requirements.salary || requirements.vessel_public_profile),
-          department: "all",
+          department: departmentForRank(requirements.rank_code),
           verified: true,
           live: true
         };
@@ -509,7 +522,7 @@
 
   function jobApplicationAction(job, gate) {
     const icon = gate.applied ? "fa-check" : "fa-paper-plane";
-    const content = `<i class="fa-solid ${icon}" aria-hidden="true"></i>${escapeHtml(text(gate.label))}`;
+    const content = `<i class="fa-solid ${icon}" aria-hidden="true"></i>${escapeHtml(text(gate.applied ? gate.label : "shareDocumentsConsent"))}`;
     return `<button class="maritime-button maritime-button--primary" type="button" data-apply-job="${escapeHtml(job.id)}" ${gate.applied ? "disabled" : ""}>${content}</button>`;
   }
 
@@ -520,8 +533,9 @@
     const metadata = job.hasOperationalDetails
       ? `<div class="maritime-job-meta"><span><b>${escapeHtml(text("vesselSpecs"))}</b>${escapeHtml(vesselFacts || "-")}</span><span><b>${escapeHtml(text("contract"))}</b>${escapeHtml(job.contract)}</span><span><b>${escapeHtml(text("route"))}</b>${escapeHtml(job.tradingArea || job.location)}</span><span><b>${escapeHtml(text("joiningPort"))}</b>${escapeHtml(job.joiningPort || "-")}</span><span><b>${escapeHtml(text("currentPort"))}</b>${escapeHtml(job.currentPort || "-")}</span><span><b>${escapeHtml(text("nextPort"))}</b>${escapeHtml(job.nextPort || "-")}</span>${job.warRisk ? `<span class="is-risk"><b>${escapeHtml(text("routeRisk"))}</b>${escapeHtml([job.warRisk, job.warRiskNote].filter(Boolean).join(" · "))}</span>` : ""}</div>`
       : `<div class="maritime-job-meta"><span><b>${escapeHtml(text("department"))}</b>${escapeHtml(departmentLabel(job.department))}</span><span><b>${escapeHtml(text("contract"))}</b>${escapeHtml(job.contract)}</span><span><b>${escapeHtml(text("route"))}</b>${escapeHtml(job.location)}</span></div>`;
+    const matched = session && candidateMatches.some((match) => match.job_id === job.smartJobId && match.eligible === true);
     return `<article class="maritime-job-card" data-job-id="${escapeHtml(job.id)}" data-department="${escapeHtml(job.department)}">
-      <div class="maritime-job-head"><div class="maritime-job-title"><span class="maritime-reference">${escapeHtml(job.reference)}</span><h3>${escapeHtml(job.title)}</h3></div><span class="maritime-verified-badge"><i class="fa-solid fa-circle-check" aria-hidden="true"></i>${escapeHtml(text("verifiedCompany"))}</span></div>
+      <div class="maritime-job-head"><div class="maritime-job-title"><span class="maritime-reference">${escapeHtml(job.reference)}</span><h3>${escapeHtml(job.title)}</h3></div><span class="maritime-verified-badge"><i class="fa-solid fa-circle-check" aria-hidden="true"></i>${escapeHtml(text("verifiedCompany"))}</span>${matched ? `<span class="maritime-match-badge">${escapeHtml(text("matchedJobs"))}</span>` : ""}</div>
       ${highlights}
       <p class="maritime-job-description">${escapeHtml(job.summary)}</p>
       ${metadata}
@@ -567,7 +581,7 @@
     if (!grid) return;
     const query = compact(new URLSearchParams(window.location.search).get("q"), 80).toLocaleLowerCase(localeCodes[language()] || "tr-TR");
     const filtered = jobs.filter(function (job) {
-      const departmentMatch = activeFilter === "all" || job.department === activeFilter || job.department === "all";
+      const departmentMatch = activeFilter === "all" || job.department === activeFilter;
       const searchMatch = !query || `${job.title} ${job.summary} ${job.location} ${departmentLabel(job.department)}`.toLocaleLowerCase(localeCodes[language()] || "tr-TR").includes(query);
       return departmentMatch && searchMatch;
     });
@@ -601,7 +615,7 @@
       showApplicationDialog(gate);
       return;
     }
-    if (!window.confirm(text("applicationConfirm"))) return;
+    if (!window.confirm(text("shareDocumentsConfirm"))) return;
     if (notice) { notice.textContent = text("applicationSending"); notice.className = "maritime-notice is-visible"; }
     try {
       let draft = smartDraftFor(job);
@@ -630,6 +644,7 @@
   }
 
   async function renderJobs() {
+    candidateMatches = [];
     const [liveJobs] = await Promise.all([loadPublicJobs(), loadSmartApplicationState()]);
     if (session?.access_token && smartApplicationState.run?.status === "user_confirmed") {
       try {
@@ -651,8 +666,21 @@
         // The existing eligibility notice remains visible if a refresh is unavailable.
       }
     }
+    if (session?.access_token) {
+      try {
+        const base = String(App.config && App.config.apiBaseUrl || "https://api.allonahub.com").replace(/\/$/, "");
+        const response = await fetch(`${base}/v1/maritime/candidate-matches`, {
+          headers: { Authorization: `Bearer ${session.access_token}`, Accept: "application/json" }
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (response.ok && payload.ok === true && Array.isArray(payload.matches)) candidateMatches = payload.matches;
+      } catch (error) {
+        // Keep the public listing available if the candidate matching API is unavailable.
+      }
+    }
     jobs = liveJobs;
-    root.innerHTML = `<section class="maritime-toolbar"><div class="maritime-toolbar-copy"><h2>${escapeHtml(text("openJobs"))}</h2><p>${escapeHtml(text("openJobsLead"))}</p></div><strong class="maritime-reference" data-jobs-count></strong></section>
+    const matchedCount = jobs.filter(function (job) { return candidateMatches.some((match) => match.job_id === job.smartJobId && match.eligible === true); }).length;
+    root.innerHTML = `<section class="maritime-toolbar"><div class="maritime-toolbar-copy"><h2>${escapeHtml(text("openJobs"))}</h2><p>${escapeHtml(text("openJobsLead"))}</p></div><div class="maritime-jobs-counters">${session && matchedCount ? `<strong class="maritime-match-counter" aria-label="${escapeHtml(text("matchedJobs"))}: ${matchedCount}">${escapeHtml(text("matchedJobs"))}<span>${matchedCount}</span></strong>` : ""}<strong class="maritime-reference" data-jobs-count></strong></div></section>
       <div class="maritime-filter-rail" role="toolbar" aria-label="${escapeHtml(text("openJobs"))}">${[["all", "filterAll"], ["deck", "filterDeck"], ["engine", "filterEngine"], ["electrical", "filterElectrical"], ["hotel", "filterHotel"]].map(function (item) { return `<button type="button" data-job-filter="${item[0]}" aria-pressed="${item[0] === activeFilter}">${escapeHtml(text(item[1]))}</button>`; }).join("")}</div>
       <div class="maritime-notice" role="status" aria-live="polite" data-jobs-notice></div><section class="maritime-job-grid" data-jobs-grid></section>${applicationDialogMarkup()}`;
     renderJobResults();

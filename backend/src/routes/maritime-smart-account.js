@@ -1615,6 +1615,22 @@ export function registerMaritimeSmartAccountRoutes(app) {
     return { ok: true, ...(await latestSmartState(ctx.user.id, ctx.user)) };
   });
 
+  app.get("/v1/maritime/candidate-matches", {
+    config: { rateLimit: { max: 30, timeWindow: "1 minute" } }
+  }, async (request) => {
+    const ctx = await requireCustomer(request, "maritime.candidate_matches.read");
+    const input = await smartInputs(ctx.user.id);
+    if (!input.cvProfile || input.cvProfile.profile_payload?.data_origin !== "user_entered_maritime_cv" ||
+        ["restricted", "stale"].includes(input.cvProfile.profile_status)) {
+      return { ok: true, matches: [] };
+    }
+    const jobs = await verifiedOpenJobs();
+    const snapshot = buildMaritimeSmartProfile(input);
+    const matches = matchMaritimeJobs(snapshot, jobs).filter((match) => match.eligible === true)
+      .map((match) => ({ job_id: match.job_id, eligible: true, hard_gate_status: "passed" }));
+    return { ok: true, matches };
+  });
+
   app.post("/v1/maritime/smart-account/refresh-matches", {
     config: { rateLimit: { max: 12, timeWindow: "10 minutes" } }
   }, async (request) => {

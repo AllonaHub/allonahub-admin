@@ -1435,7 +1435,7 @@ async function redirectAuthenticatedUser(){
     if(await rejectProtectedAccountOnCustomerLogin(context))return;
     if(context.type==="customer" && !await claimCustomerAccountDevice(data.user))return;
     const returnTo=await authorizedReturnTo(data.user,"user-panel.html");
-    if(await needsMfaVerification()){
+    if(context.type!=="customer" && await needsMfaVerification()){
       redirectMfa(returnTo);
       return;
     }
@@ -1950,7 +1950,7 @@ async function loginUser(){
 
     localStorage.setItem("allonahub_auth_verified_at",new Date().toISOString());
     const returnTo=await authorizedReturnTo(verifiedUser,"user-panel.html");
-    if(await needsMfaVerification()){
+    if(context.type!=="customer" && await needsMfaVerification()){
       redirectMfa(returnTo);
       return;
     }

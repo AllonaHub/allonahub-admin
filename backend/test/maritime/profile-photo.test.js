@@ -23,6 +23,14 @@ for (const [format, mime] of [["png", "image/png"], ["jpeg", "image/jpeg"], ["we
   });
 }
 
+test("profile photo preserves recognizable colors after sRGB normalization", async () => {
+  const output = await normalizeMaritimeProfilePhoto(await photo("png"), "image/png");
+  const pixel = await sharp(output).extract({ left: 250, top: 350, width: 1, height: 1 }).removeAlpha().raw().toBuffer();
+  assert.ok(Math.abs(pixel[0] - 110) < 18);
+  assert.ok(Math.abs(pixel[1] - 170) < 18);
+  assert.ok(Math.abs(pixel[2] - 200) < 18);
+});
+
 test("photo validation rejects MIME spoofing, SVG, truncated files and non-buffers", async () => {
   const png = await photo("png");
   for (const [bytes, mime] of [

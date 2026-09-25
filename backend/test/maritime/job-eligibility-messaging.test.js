@@ -17,6 +17,7 @@ async function portalGate() {
     .replace(/let smartApplicationState = ([^\n]+);/, (line) => `${line}\n  window.__setSmartApplicationState = (value) => { smartApplicationState = value; };`)
     .replace("function jobApplicationGate(job) {", "window.__jobApplicationGate = function jobApplicationGate(job) {")
     .replace("function jobApplicationAction(job, gate) {", "window.__jobApplicationAction = function jobApplicationAction(job, gate) {")
+    .replace("function departmentForRank(rankCode) {", "window.__departmentForRank = function departmentForRank(rankCode) {")
     .replace("function applicationDialogMarkup() {", "window.__applicationDialogMarkup = function applicationDialogMarkup() {");
   const window = { Allona: {} };
   vm.runInNewContext(instrumented, {
@@ -39,6 +40,23 @@ async function portalGate() {
   window.__setPortalSession({ access_token: "token", user: { id: "candidate" } });
   return { source, window };
 }
+
+test("published rank codes select the correct department without leaking into every filter", async () => {
+  const { window, source } = await portalGate();
+  const groups = {
+    deck: ["master", "chief_officer", "second_officer", "third_officer", "deck_cadet", "bosun", "able_seaman", "ordinary_seaman", "deck_boy"],
+    engine: ["chief_engineer", "second_engineer", "third_engineer", "fourth_engineer", "engine_cadet", "engine_bosun", "able_engine_rating", "motorman", "oiler", "wiper", "fitter", "welder", "pumpman"],
+    electrical: ["eto", "electro_technical_rating", "electrician"],
+    hotel: ["chief_cook", "cook", "steward"]
+  };
+  for (const [department, ranks] of Object.entries(groups)) {
+    for (const rank of ranks) assert.equal(window.__departmentForRank(rank), department, rank);
+  }
+  assert.equal(window.__departmentForRank("unknown"), "all");
+  assert.match(source, /department: departmentForRank\(requirements\.rank_code\)/);
+  assert.doesNotMatch(source, /job\.department === "all"/);
+  assert.equal(window.__portalCopyRows.applicationBlockedTitle[0], "Bu ilana başvuru yapamazsınız");
+});
 
 test("job gate directs candidates with no documents to document upload", async () => {
   const { source, window } = await portalGate();
@@ -68,7 +86,7 @@ test("job gate directs candidates with no documents to document upload", async (
   assert.equal(gate.disabled, false);
   const action = window.__jobApplicationAction({ id: "listing" }, gate);
   assert.match(action, /<button[^>]+data-apply-job="listing"/);
-  assert.match(action, />[^<]*<i[^>]*><\/i>Başvur<\/button>/);
+  assert.match(action, /Başvur ve belgelerimi bu firmayla paylaş<\/button>/);
   assert.doesNotMatch(action, /maritime-documents\.html/);
   assert.match(window.__applicationDialogMarkup(), /<dialog[^>]+data-application-dialog/);
   assert.doesNotMatch(source, /Uygunluk doğrulanamadı/);

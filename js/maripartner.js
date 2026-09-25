@@ -828,6 +828,11 @@
 
   function render() {
     Object.entries(state.data.counters || {}).forEach(([key, value]) => { $$(`[data-mp-count="${key}"]`).forEach((target) => { target.textContent = Number(value || 0).toLocaleString("tr-TR"); }); });
+    $$('[data-mp-match-badge]').forEach((target) => {
+      const count = Number(state.data.counters?.eligible_matches || 0);
+      target.hidden = count < 1;
+      target.textContent = count > 99 ? "99+" : String(count);
+    });
     const business = state.data.partner || {};
     const verification = state.data.verification || {};
     $("[data-mp-company-name]").textContent = business.display_name || "Şirket hesabı";
