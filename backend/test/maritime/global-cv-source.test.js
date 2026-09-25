@@ -13,7 +13,8 @@ const { registerMaritimeSmartAccountRoutes } = await import("../../src/routes/ma
 test("Global CV displays passport kinds as localized names rather than raw field codes", async () => {
   const source = (await readFile(new URL("../../../js/allona-maritime-smart-account.js", import.meta.url), "utf8"))
     .replace("function cvDocumentLabel(kind, label) {", "window.__cvDocumentLabel = function cvDocumentLabel(kind, label) {")
-    .replace("function cvChoiceLabel(value) {", "window.__cvChoiceLabel = function cvChoiceLabel(value) {");
+    .replace("function cvChoiceLabel(value) {", "window.__cvChoiceLabel = function cvChoiceLabel(value) {")
+    .replace("function cvLevelLabel(value) {", "window.__cvLevelLabel = function cvLevelLabel(value) {");
   const window = { Allona: {} };
   const language = { value: "tr" };
   vm.runInNewContext(source, {
@@ -31,6 +32,9 @@ test("Global CV displays passport kinds as localized names rather than raw field
   language.value = "tr";
   assert.equal(window.__cvChoiceLabel("male"), "Erkek");
   assert.equal(window.__cvChoiceLabel("married"), "Evli");
+  assert.equal(window.__cvLevelLabel("good / average"), "İyi / Orta");
+  language.value = "en";
+  assert.equal(window.__cvLevelLabel("poor / good"), "Basic / Good");
 });
 
 async function harness(t, cvProfile, role = "customer") {

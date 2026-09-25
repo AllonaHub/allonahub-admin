@@ -463,6 +463,18 @@
     return labels[String(value || "").toLowerCase()] ? rowText(labels[String(value).toLowerCase()]) : value;
   }
 
+  function cvLevelLabel(value) {
+    const labels = {
+      good: ["İyi", "Yaxşı", "Жақсы", "Yaxshi", "Жакшы", "Good", "Gut", "Хорошо", "جيد"],
+      average: ["Orta", "Orta", "Орташа", "O‘rtacha", "Орточо", "Average", "Mittel", "Средний", "متوسط"],
+      poor: ["Başlangıç", "Başlanğıc", "Бастапқы", "Boshlang‘ich", "Башталгыч", "Basic", "Grundkenntnisse", "Начальный", "مبتدئ"]
+    };
+    return String(value || "").split("/").map(function (part) {
+      const trimmed = part.trim();
+      return labels[trimmed.toLowerCase()] ? rowText(labels[trimmed.toLowerCase()]) : trimmed;
+    }).join(" / ");
+  }
+
   function currencyLabel(amount, currency) {
     const numeric = Number(amount);
     if (!Number.isFinite(numeric) || numeric <= 0) return "";
@@ -588,7 +600,7 @@
     }).join("");
     const languageMarkup = languageRows.map(function (entry) {
       const languageName = localizedValue(entry.language_i18n, localizedLanguageName(entry.language));
-      const level = localizedValue(entry.level_i18n, entry.level) || text("notStated");
+      const level = cvLevelLabel(localizedValue(entry.level_i18n, entry.level)) || text("notStated");
       return `<span><b>${escapeHtml(languageName)}</b><small>${escapeHtml(level)}</small></span>`;
     }).join("");
     const serviceMarkup = service.map(function (row) {
@@ -629,7 +641,9 @@
       return [row.code, label].filter(Boolean).join(" · ");
     }));
     const skillsMarkup = valueList(skillRows.map(function (row) {
-      return localizedValue(row.name_i18n, row.name);
+      const label = localizedValue(row.name_i18n, row.name);
+      const separator = label.lastIndexOf(": ");
+      return separator < 0 ? label : `${label.slice(0, separator)}: ${cvLevelLabel(label.slice(separator + 2))}`;
     }));
     const achievementsMarkup = achievementRows.map(function (row) {
       const title = localizedValue(row.title_i18n, row.title);
