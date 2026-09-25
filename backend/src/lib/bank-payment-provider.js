@@ -17,7 +17,7 @@ async function hmacSha256Hex(payload, secret) {
 }
 
 export function bankPaymentConfigured() {
-  return Boolean(config.bankPayment.apiKey && config.bankPayment.secretKey && config.bankPayment.baseUrl);
+  return config.bankPayment.provider === "legacy" && Boolean(config.bankPayment.apiKey && config.bankPayment.secretKey && config.bankPayment.baseUrl);
 }
 
 function bankPaymentConfigError() {

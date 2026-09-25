@@ -368,6 +368,7 @@ export const config = {
     serviceRoleKey: readEnv("SUPABASE_SERVICE_ROLE_KEY")
   },
   bankPayment: {
+    provider: readEnv("BANK_PAYMENT_PROVIDER", { required: false, defaultValue: "legacy" }).toLowerCase(),
     apiKey: readOptionalSecret("BANK_PAYMENT_API_KEY"),
     secretKey: readOptionalSecret("BANK_PAYMENT_SECRET_KEY"),
     baseUrl: readEnv("BANK_PAYMENT_API_URL", { required: false, defaultValue: "" }).replace(/\/$/, ""),
