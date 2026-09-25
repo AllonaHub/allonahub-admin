@@ -37,7 +37,8 @@ test("guide sends a branded single-use email without personal CV data", async ()
       const payload = JSON.parse(options.body);
       assert.equal(payload.subject, welcomeGuide.subject);
       assert.deepEqual(payload.to, ["reader@example.com"]);
-      assert.match(payload.html, /allonahub-welcome\.gif/);
+      assert.match(payload.html, /allonahub-notification\.gif/);
+      assert.doesNotMatch(payload.html, /allonahub-welcome\.gif/);
       assert.match(payload.html, /pages\/account\/user\.html/);
       assert.equal(options.headers["Idempotency-Key"], "allonahub-welcome-guide/user-1");
       assert.doesNotMatch(JSON.stringify(payload), /passport_number|certificate_number/i);

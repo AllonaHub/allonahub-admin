@@ -5,7 +5,8 @@ import { renderAllonaHubEmail } from "../../src/lib/allonahub-email-template.js"
 test("shared email template keeps welcome copy readable without animation", () => {
   const html = renderAllonaHubEmail({ variant: "welcome", eyebrow: "KAYDINIZ OLUŞTURULDU", title: "AllonaHub ekosistemine hoş geldin", message: "Hesabın hazır.", action: "Hesabıma git", actionUrl: "https://allonahub.com/pages/account/user.html" });
   assert.match(html, /AllonaHub ekosistemine hoş geldin/);
-  assert.match(html, /allonahub-welcome\.gif/);
+  assert.match(html, /allonahub-notification\.gif/);
+  assert.doesNotMatch(html, /allonahub-welcome\.gif/);
   assert.match(html, /https:\/\/allonahub.com\/pages\/account\/user.html/);
   assert.match(html, /background:#08243d/);
   assert.match(html, /border-top:2px solid #10bde8/);

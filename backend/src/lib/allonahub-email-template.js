@@ -20,7 +20,9 @@ export function escapeEmailHtml(value) {
 
 export function renderAllonaHubEmail({ variant = "notification", eyebrow, title, message, lines = [], details = [], action, actionUrl }) {
   const safeVariant = ["welcome", "security", "notification"].includes(variant) ? variant : "notification";
-  const motion = `https://allonahub.com/images/email/allonahub-${safeVariant}.gif`;
+  // The old welcome GIF has baked-in wording; all banner copy belongs to the HTML overlay.
+  const motionVariant = safeVariant === "welcome" ? "notification" : safeVariant;
+  const motion = `https://allonahub.com/images/email/allonahub-${motionVariant}.gif`;
   const safeUrl = typeof actionUrl === "string" && /^https:\/\//i.test(actionUrl) ? escapeEmailHtml(actionUrl) : "";
   const lineHtml = lines.filter(Boolean).map((line) => `<p style="margin:0 0 8px;color:#29475d;font-size:14px;line-height:1.6">${escapeEmailHtml(line)}</p>`).join("");
   const detailHtml = details.length ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:14px">${details.map(([label, value]) => `<tr><th style="padding:8px 10px;text-align:left;border-bottom:1px solid #dbe7ef;color:#264653;width:38%">${escapeEmailHtml(label)}</th><td style="padding:8px 10px;border-bottom:1px solid #dbe7ef;color:#102a43">${escapeEmailHtml(value || "Belirtilmedi")}</td></tr>`).join("")}</table>` : "";
