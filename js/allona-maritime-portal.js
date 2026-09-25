@@ -108,6 +108,7 @@
     nextPort: ["Sonraki liman", "Növbəti liman", "Келесі порт", "Keyingi port", "Кийинки порт", "Next port", "Nächster Hafen", "Следующий порт", "الميناء التالي"],
     vesselSpecs: ["Gemi bilgisi", "Gəmi məlumatı", "Кеме мәліметі", "Kema maʼlumoti", "Кеме маалыматы", "Vessel details", "Schiffsdaten", "Данные судна", "بيانات السفينة"],
     routeRisk: ["Rota riski", "Marşrut riski", "Маршрут тәуекелі", "Yo‘nalish xavfi", "Багыт коркунучу", "Route risk", "Routenrisiko", "Риск маршрута", "مخاطر المسار"],
+    noWarZone: ["Şirketin bildirdiğine göre geminin planlanan rotası savaş bölgesinden geçmiyor", "Şirkətin bildirdiyinə görə gəminin planlaşdırılan marşrutu müharibə zonasından keçmir", "Компания мәліметіне сай кеменің жоспарланған бағыты соғыс аймағынан өтпейді", "Kompaniya maʼlumotiga ko‘ra, kemaning rejalashtirilgan yo‘nalishi urush hududidan o‘tmaydi", "Компаниянын маалыматына ылайык, кеменин пландалган багыты согуш аймагынан өтпөйт", "According to the company, the vessel's planned route does not pass through a war zone", "Nach Angaben des Unternehmens führt die geplante Route des Schiffes nicht durch ein Kriegsgebiet", "По данным компании, запланированный маршрут судна не проходит через зону боевых действий", "وفقاً للشركة، لا يمر المسار المخطط للسفينة عبر منطقة حرب"],
     sixMonths: ["6 ay", "6 ay", "6 ай", "6 oy", "6 ай", "6 months", "6 Monate", "6 месяцев", "6 أشهر"],
     globalRoute: ["Global", "Qlobal", "Жаһандық", "Global", "Глобалдык", "Global", "Global", "Международный", "عالمي"],
     europeRoute: ["Avrupa", "Avropa", "Еуропа", "Yevropa", "Европа", "Europe", "Europa", "Европа", "أوروبا"],
@@ -411,6 +412,7 @@
           nextPort: compact(requirements.next_port, 120),
           tradingArea: compact(requirements.trading_area_label, 120),
           warRisk: compact(requirements.war_risk_label, 180),
+          warRiskStatus: compact(requirements.war_risk_status, 60),
           warRiskNote: compact(requirements.war_risk_note, 240),
           vesselType: compact(vessel.vessel_type, 120),
           vesselFlag: compact(vessel.flag_state, 80),
@@ -517,7 +519,7 @@
     const vesselFacts = [job.vesselType, job.vesselDwt ? job.vesselDwt.toLocaleString(localeCodes[language()] || "tr-TR") + " DWT" : "", job.vesselGt ? job.vesselGt.toLocaleString(localeCodes[language()] || "tr-TR") + " GT" : "", job.vesselFlag].filter(Boolean).join(" · ");
     const highlights = job.hasOperationalDetails ? `<div class="maritime-job-highlights"><strong>${escapeHtml(job.salary || "-")}</strong><span>${escapeHtml(text("minimumExperience"))}: ${escapeHtml(String(job.experienceMonths))} ${escapeHtml(text("months"))}</span><span>${escapeHtml(text("joiningDate"))}: ${escapeHtml(job.joiningDate ? dateLabel(job.joiningDate) : "-")}</span></div>` : "";
     const metadata = job.hasOperationalDetails
-      ? `<div class="maritime-job-meta"><span><b>${escapeHtml(text("vesselSpecs"))}</b>${escapeHtml(vesselFacts || "-")}</span><span><b>${escapeHtml(text("contract"))}</b>${escapeHtml(job.contract)}</span><span><b>${escapeHtml(text("route"))}</b>${escapeHtml(job.tradingArea || job.location)}</span><span><b>${escapeHtml(text("joiningPort"))}</b>${escapeHtml(job.joiningPort || "-")}</span><span><b>${escapeHtml(text("currentPort"))}</b>${escapeHtml(job.currentPort || "-")}</span><span><b>${escapeHtml(text("nextPort"))}</b>${escapeHtml(job.nextPort || "-")}</span>${job.warRisk ? `<span class="is-risk"><b>${escapeHtml(text("routeRisk"))}</b>${escapeHtml([job.warRisk, job.warRiskNote].filter(Boolean).join(" · "))}</span>` : ""}</div>`
+      ? `<div class="maritime-job-meta"><span><b>${escapeHtml(text("vesselSpecs"))}</b>${escapeHtml(vesselFacts || "-")}</span><span><b>${escapeHtml(text("contract"))}</b>${escapeHtml(job.contract)}</span><span><b>${escapeHtml(text("route"))}</b>${escapeHtml(job.tradingArea || job.location)}</span><span><b>${escapeHtml(text("joiningPort"))}</b>${escapeHtml(job.joiningPort || "-")}</span><span><b>${escapeHtml(text("currentPort"))}</b>${escapeHtml(job.currentPort || "-")}</span><span><b>${escapeHtml(text("nextPort"))}</b>${escapeHtml(job.nextPort || "-")}</span>${job.warRisk ? `<span class="is-risk"><b>${escapeHtml(text("routeRisk"))}</b>${escapeHtml([job.warRiskStatus === "no_known_listed_area" ? text("noWarZone") : job.warRisk, job.warRiskNote].filter(Boolean).join(" · "))}</span>` : ""}</div>`
       : `<div class="maritime-job-meta"><span><b>${escapeHtml(text("department"))}</b>${escapeHtml(departmentLabel(job.department))}</span><span><b>${escapeHtml(text("contract"))}</b>${escapeHtml(job.contract)}</span><span><b>${escapeHtml(text("route"))}</b>${escapeHtml(job.location)}</span></div>`;
     const matched = session && candidateMatches.find((match) => match.job_id === job.smartJobId && match.rank_compatible === true);
     return `<article class="maritime-job-card" data-job-id="${escapeHtml(job.id)}" data-department="${escapeHtml(job.department)}">

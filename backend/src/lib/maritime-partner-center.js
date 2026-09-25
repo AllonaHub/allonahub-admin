@@ -106,7 +106,7 @@ export const MARIPARTNER_TRADING_AREAS = Object.freeze({
 });
 
 export const MARIPARTNER_WAR_RISK_STATUSES = Object.freeze({
-  no_known_listed_area: "Beyan edilen rotada bilinen listelenmiş risk bölgesi yok",
+  no_known_listed_area: "Şirketin bildirdiğine göre geminin planlanan rotası savaş bölgesinden geçmiyor",
   listed_area_planned: "Listelenmiş veya yüksek riskli bölge geçişi planlanıyor",
   route_under_review: "Rota ve risk değerlendirmesi henüz kesinleşmedi"
 });
