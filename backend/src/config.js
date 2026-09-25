@@ -52,7 +52,8 @@ const requiredAllowedOrigins = [
 ];
 const requiredWebAuthnOrigins = [
   "https://allonahub.com",
-  "https://www.allonahub.com"
+  "https://www.allonahub.com",
+  "https://admin.allonahub.com"
 ];
 
 export const config = {

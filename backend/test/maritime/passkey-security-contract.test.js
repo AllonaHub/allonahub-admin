@@ -13,6 +13,16 @@ const smartUiUrl = new URL("../../../js/allona-maritime-smart-account.js", impor
 const cvPageUrl = new URL("../../../pages/ecosystem/maritime-cv.html", import.meta.url);
 const smartPageUrl = new URL("../../../pages/ecosystem/maritime-smart-account.html", import.meta.url);
 const appUrl = new URL("../../src/app.js", import.meta.url);
+const configUrl = new URL("../../src/config.js", import.meta.url);
+
+test("WebAuthn accepts both customer and admin-hosted job pages without relaxing RP checks", async () => {
+  const [config, route] = await Promise.all([readFile(configUrl, "utf8"), readFile(passkeyRouteUrl, "utf8")]);
+  assert.match(config, /"https:\/\/allonahub\.com"/);
+  assert.match(config, /"https:\/\/admin\.allonahub\.com"/);
+  assert.match(route, /hostname === configuredRpId \|\| hostname\.endsWith\(`\.\$\{configuredRpId\}`\)/);
+  assert.match(route, /config\.webauthn\.allowedOrigins\.includes\(origin\)/);
+  assert.match(route, /expectedOrigin: challenge\.origin/);
+});
 
 test("passkey secrets, challenges, and one-time proofs stay backend-only", async () => {
   const migration = await readFile(migrationUrl, "utf8");
