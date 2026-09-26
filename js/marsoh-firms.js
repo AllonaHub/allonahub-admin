@@ -5,6 +5,16 @@
   const params = new URLSearchParams(location.search);
   const partnerId = params.get("partner_id");
   const partner = params.get("source") === "partner" && !!partnerId;
+  if (partner) {
+    const panelUrl = "../partner/maripartner.html";
+    const back = $("[data-firm-nav-back]");
+    const returnLink = $("[data-firm-nav-return]");
+    if (back) back.href = panelUrl;
+    if (returnLink) {
+      returnLink.href = panelUrl;
+      returnLink.textContent = "Panele Dön";
+    }
+  }
   const state = { session: null, threads: [], rooms: [], documentRequests: [], introRequests: [], active: null, messages: [], seen: new Set(), loaded: false, timer: null };
   const base = () => /^(localhost|127\.0\.0\.1)$/i.test(location.hostname) ? "http://localhost:3000" : String(App.config?.apiBaseUrl || "https://api.allonahub.com").replace(/\/$/, "");
   function status(text) { $("[data-firm-status]").textContent = text || ""; }

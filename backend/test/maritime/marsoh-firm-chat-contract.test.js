@@ -30,6 +30,12 @@ test("private messages are server moderated, text-only, and idempotent", async (
 test("firm chat shows unread and renders message bodies as text", async () => {
   const ui = await source("js/marsoh-firms.js");
   const page = await source("pages/ecosystem/maritime-firm-chat.html");
+  assert.match(page, /data-firm-nav-back/);
+  assert.match(page, /data-firm-nav-return/);
+  assert.match(ui, /if \(partner\) \{\s*const panelUrl = "\.\.\/partner\/maripartner\.html"/);
+  assert.match(ui, /back\.href = panelUrl/);
+  assert.match(ui, /returnLink\.href = panelUrl/);
+  assert.match(ui, /returnLink\.textContent = "Panele Dön"/);
   assert.match(ui, /body\.textContent = message\.body/);
   assert.match(ui, /thread\.unread/);
   assert.match(ui, /Notification\.requestPermission\(\)/);
