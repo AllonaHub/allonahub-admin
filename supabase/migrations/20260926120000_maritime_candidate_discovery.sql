@@ -77,14 +77,14 @@ $$;
 revoke all on function public.maritime_intro_thread_visible(uuid) from public, anon;
 grant execute on function public.maritime_intro_thread_visible(uuid) to authenticated, service_role;
 
-create policy maritime_intro_room_consent_select
-  on public.maritime_private_candidate_rooms as restrictive for select to authenticated
-  using (public.maritime_intro_room_visible(id));
-
-create policy maritime_intro_thread_consent_select
-  on public.maritime_connect_threads as restrictive for select to authenticated
-  using (candidate_room_id is null or public.maritime_intro_room_visible(candidate_room_id));
-
-create policy maritime_intro_messages_consent_select
-  on public.maritime_connect_messages as restrictive for select to authenticated
-  using (public.maritime_intro_thread_visible(thread_id));
+do $$ begin
+  if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'maritime_private_candidate_rooms' and policyname = 'maritime_intro_room_consent_select') then
+    execute 'create policy maritime_intro_room_consent_select on public.maritime_private_candidate_rooms as restrictive for select to authenticated using (public.maritime_intro_room_visible(id))';
+  end if;
+  if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'maritime_connect_threads' and policyname = 'maritime_intro_thread_consent_select') then
+    execute 'create policy maritime_intro_thread_consent_select on public.maritime_connect_threads as restrictive for select to authenticated using (candidate_room_id is null or public.maritime_intro_room_visible(candidate_room_id))';
+  end if;
+  if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'maritime_connect_messages' and policyname = 'maritime_intro_messages_consent_select') then
+    execute 'create policy maritime_intro_messages_consent_select on public.maritime_connect_messages as restrictive for select to authenticated using (public.maritime_intro_thread_visible(thread_id))';
+  end if;
+end $$;
