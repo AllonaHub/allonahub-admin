@@ -436,6 +436,38 @@
     } finally { frame.remove(); }
   }
 
+  function candidateCvProgress(opened, button) {
+    const originalLabel = button.textContent;
+    const container = button.closest(".mp-applicant-card, .mp-candidate-detail");
+    const target = container?.querySelector("[data-mp-cv-preview]");
+    const previousContent = target?.innerHTML || "";
+    button.disabled = true;
+    button.textContent = "CV hazırlanıyor…";
+    if (target) target.innerHTML = '<div class="mp-cv-loading" role="status"><span class="mp-cv-loading__spinner" aria-hidden="true"></span><span>CV hazırlanıyor, lütfen bekleyin…</span></div>';
+    if (opened) {
+      opened.document.title = "AllonaHub · CV hazırlanıyor";
+      const style = opened.document.createElement("style");
+      style.textContent = "body{min-height:100vh;display:grid;place-items:center;margin:0;background:#eff8fb;color:#143848;font:16px system-ui,sans-serif}main{text-align:center;padding:24px}span{display:block;width:40px;height:40px;margin:0 auto 18px;border:3px solid #9bdff3;border-top-color:#087aa2;border-radius:50%;animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){span{animation:none}}";
+      const main = opened.document.createElement("main");
+      const spinner = opened.document.createElement("span"); spinner.setAttribute("aria-hidden", "true");
+      const label = opened.document.createElement("p"); label.textContent = "CV hazırlanıyor, lütfen bekleyin…";
+      main.append(spinner, label); opened.document.head.append(style); opened.document.body.append(main);
+    }
+    return {
+      done() { button.disabled = false; button.textContent = originalLabel; if (target) target.innerHTML = previousContent; },
+      fail(message) {
+        button.disabled = false; button.textContent = originalLabel;
+        if (target) target.textContent = message;
+        if (opened && !opened.closed) {
+          try {
+            const label = opened.document.querySelector("main p");
+            if (label) label.textContent = message;
+          } catch (_) { /* The tab may have navigated away. */ }
+        }
+      }
+    };
+  }
+
   function historyCard(title, detail, meta, className, action) {
     return `<article class="${escape(className || "")}"><strong>${escape(title)}</strong><span>${escape(detail || "")}</span><small>${escape(meta || "")}</small>${action || ""}</article>`;
   }
@@ -1759,12 +1791,12 @@
     if (inspectCv) {
       if (inspectCv.closest(".mp-applicant-card")) {
         const opened = window.open("", "_blank");
-        inspectCv.disabled = true;
+        const progress = candidateCvProgress(opened, inspectCv);
         try {
           const result = await api(`/v1/maritime/partner-center/candidate-rooms/${encodeURIComponent(inspectCv.dataset.mpCandidateCv)}/cv?partner_id=${encodeURIComponent(state.partnerId)}`);
           await openCandidatePdf(result.cv || {}, opened);
-        } catch (error) { opened?.close(); alert(error.message || "CV PDF açılamadı."); }
-        finally { inspectCv.disabled = false; }
+          progress.done();
+        } catch (error) { progress.fail(error.message || "CV PDF açılamadı."); }
         return;
       }
       const preview = inspectCv.closest(".mp-applicant-card, .mp-candidate-detail")?.querySelector("[data-mp-cv-preview]");
@@ -1790,13 +1822,13 @@
     const candidatePdf = event.target.closest("[data-mp-candidate-pdf]");
     if (candidatePdf) {
       const opened = window.open("", "_blank");
-      candidatePdf.disabled = true;
+      const progress = candidateCvProgress(opened, candidatePdf);
       try {
         const result = await api(`/v1/maritime/partner-center/candidate-rooms/${encodeURIComponent(candidatePdf.dataset.mpCandidatePdf)}/cv?partner_id=${encodeURIComponent(state.partnerId)}`);
         await openCandidatePdf(result.cv || {}, opened);
+        progress.done();
       }
-      catch (error) { opened?.close(); alert(error.message || "CV PDF açılamadı."); }
-      finally { candidatePdf.disabled = false; }
+      catch (error) { progress.fail(error.message || "CV PDF açılamadı."); }
       return;
     }
     const serviceDocument = event.target.closest("[data-mp-service-document]");

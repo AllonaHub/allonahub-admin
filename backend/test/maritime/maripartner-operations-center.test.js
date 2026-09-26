@@ -126,7 +126,7 @@ test("MariPartner keeps URL state, a locked light theme and responsive safeguard
   assert.match(html, /data-platform-controls-slot="home"/);
   assert.match(html, /js\/platform\.js/);
   assert.match(html, /data-theme="white" data-partner-theme-locked="true"/);
-  assert.match(html, /css\/maripartner\.css\?v=20260926-matches-page1/);
+  assert.match(html, /css\/maripartner\.css\?v=20260926-cv-loading1/);
   assert.match(html, /Başvuran Adaylar/);
   assert.match(script, /data-mp-candidate-chat=.*MarSoh'ta Sohbet Et/);
   assert.match(script, /match_summaries/);

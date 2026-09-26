@@ -465,6 +465,10 @@ body.mp-body[data-theme] .mp-main article { color: var(--mp-ink) !important; }
 .mp-candidate-card__actions button { min-height: 40px; padding: 7px 10px; }
 .mp-applicant-card__result { grid-column: 1 / -1; min-width: 0; overflow-wrap: anywhere; }
 .mp-applicant-card__result:empty { display: none; }
+.mp-cv-loading { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 70px; padding: 12px; border: 1px solid #96d4e5; background: #effaff; color: #12465d; font-size: 13px; font-weight: 700; text-align: center; }
+.mp-cv-loading__spinner { width: 20px; height: 20px; flex: none; border: 2px solid #9ad8e9; border-top-color: #087aa2; border-radius: 50%; animation: mp-cv-spin .8s linear infinite; }
+@keyframes mp-cv-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .mp-cv-loading__spinner { animation: none; } }
 .mp-candidate-profile { display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: 14px; align-items: start; border-top: 1px solid var(--mp-line); padding-top: 14px; }
 .mp-candidate-profile > img, .mp-candidate-profile__initials { width: 88px; height: 88px; border-radius: 50%; object-fit: cover; background: #dceef3; }
 .mp-candidate-profile__initials { display: grid; place-items: center; font-weight: 700; color: #075d82; }
