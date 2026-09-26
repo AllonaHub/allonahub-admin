@@ -184,7 +184,7 @@ test("MariPartner exposes a real company workspace, moderated job entry and veri
   const css = read("css/maripartner.css");
   const route = read("backend/src/routes/maritime-partner-center.js");
   const migration = read("supabase/migrations/20260920223000_create_maripartner_company_logos.sql");
-  for (const label of ["Yeni İlan Oluştur", "İlanlar", "Adaylar", "Başvurular", "Bildirimler", "Şirket Profili", "MarSoh"]) assert.match(html, new RegExp(label));
+  for (const label of ["Yeni İlan Oluştur", "İlanlar", "Adaylar", "Başvurular", "Bildirimler", "Şirket Profili", "Aday Mesajları"]) assert.match(html, new RegExp(label));
   assert.match(html, /data-mp-company-name/);
   assert.match(html, /data-mp-company-avatar/);
   assert.match(html, /data-mp-verification-badge/);

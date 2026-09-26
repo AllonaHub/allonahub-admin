@@ -80,7 +80,7 @@
     if (!badge) return;
     try {
       const result = await api("/v1/maritime/connect-chat/threads");
-      const count = (result.threads || []).filter((thread) => thread.unread).length;
+      const count = (result.threads || []).filter((thread) => thread.unread).length + Number(result.pending_intro_count || 0);
       badge.hidden = !count; badge.textContent = count > 99 ? "99+" : String(count);
     } catch { badge.hidden = true; }
   }

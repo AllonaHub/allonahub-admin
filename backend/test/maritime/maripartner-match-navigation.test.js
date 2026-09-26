@@ -4,8 +4,9 @@ import { test } from "node:test";
 
 const read = (path) => readFileSync(new URL(`../../../${path}`, import.meta.url), "utf8");
 
-test("partner MarSoh returns to MariPartner instead of browser history", () => {
-  assert.match(read("pages/partner/maripartner.html"), /maritime-marsoh\.html\?source=partner/);
+test("partner entry opens private candidate conversations, not public MarSoh", () => {
+  assert.match(read("pages/partner/maripartner.html"), /maritime-firm-chat\.html\?source=partner/);
+  assert.doesNotMatch(read("pages/partner/maripartner.html"), /maritime-marsoh\.html\?source=partner/);
   const chat = read("js/marsoh.js");
   assert.match(chat, /partnerEntry \? "\.\.\/partner\/maripartner\.html"/);
   assert.doesNotMatch(chat, /history\.back\(\)/);

@@ -24,7 +24,6 @@ test("MariPartner navigation includes joining after vessels", () => {
     "İlanlar",
     "Gemiler",
     "Yerleştirme",
-    "MarSoh",
     "Bildirimler",
     "Aday Mesajları",
     "Finans ve Faturalandırma",

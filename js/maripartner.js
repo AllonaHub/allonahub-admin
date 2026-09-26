@@ -64,6 +64,37 @@
     return node.innerHTML;
   }
 
+  async function loadDiscoverableMatches(target) {
+    for (const slot of target.querySelectorAll("[data-mp-discovery-job]")) {
+      const jobId = slot.dataset.mpDiscoveryJob;
+      try {
+        const result = await api(`/v1/maritime/partner-center/discoverable-candidates?partner_id=${encodeURIComponent(state.partnerId)}&job_id=${encodeURIComponent(jobId)}`);
+        if (!slot.isConnected) continue;
+        slot.replaceChildren();
+        if (!result.candidates.length) {
+          const empty = document.createElement("p"); empty.className = "mp-note";
+          empty.textContent = "Görünürlüğünü açmış başvurmamış aday bulunmuyor."; slot.append(empty);
+        }
+        for (const candidate of result.candidates) {
+          const card = document.createElement("article"); card.className = "mp-candidate-card mp-discovery-card";
+          if (candidate.avatar_url) {
+            const photo = document.createElement("img"); photo.className = "mp-discovery-photo";
+            photo.src = candidate.avatar_url; photo.alt = ""; photo.loading = "lazy"; card.append(photo);
+          }
+          const details = document.createElement("div");
+          const title = document.createElement("strong"); title.textContent = candidate.full_name;
+          const rank = document.createElement("span"); rank.textContent = `${candidate.rank} · ${candidate.has_reference ? "Referans kaydı var" : "Referans kaydı yok"}`;
+          details.append(title, rank); card.append(details);
+          const button = document.createElement("button"); button.type = "button";
+          button.textContent = "Görüşme ve paylaşım izni iste"; button.dataset.mpIntroCandidate = candidate.id; button.dataset.jobId = jobId;
+          card.append(button); slot.append(card);
+        }
+      } catch (error) {
+        if (slot.isConnected) slot.textContent = error.message || "Adaylar yüklenemedi.";
+      }
+    }
+  }
+
   function apiBase() {
     if (/^(localhost|127\.0\.0\.1)$/i.test(location.hostname)) return "http://localhost:3000";
     return String(App.config?.apiBaseUrl || "https://api.allonahub.com").replace(/\/$/, "");
@@ -504,8 +535,9 @@
       target.innerHTML = `<h3>İlanlarınızla eşleşen adaylar</h3><p class="mp-note">Rütbe eşleşmesi Maritime CV'ye dayanır. Profil yalnız izinli başvurularda açılır; CV ve belgeler için adayın ayrıca verdiği izin denetlenir.</p>${summaries.length ? summaries.map((item) => {
         const job = (state.data.jobs || []).find((row) => row.id === item.job_id);
         const approved = rooms.filter((room) => room.job_id === item.job_id);
-        return `<section class="mp-match-group"><h4>${escape(job?.job_title || "İlan")}</h4><p>${escape(item.eligible_count)} rütbe eşleşmesi · ${escape(approved.length)} izinli başvuru</p>${approved.length ? approved.map((room) => `<article class="mp-candidate-card mp-applicant-card"><div><strong>${escape(room.candidate?.full_name || room.candidate?.public_id || "Aday")}</strong><span>${escape(room.candidate?.rank || "Rütbe belirtilmedi")}</span><div class="mp-candidate-card__facts">${candidateFacts(room).map((fact) => `<span>${escape(fact)}</span>`).join("")}</div></div><div class="mp-candidate-card__actions"><button type="button" data-mp-candidate-profile="${escape(room.id)}">Profili Gör</button><button type="button" data-mp-candidate-cv="${escape(room.id)}">CV'yi Gör</button><button type="button" data-mp-candidate-documents="${escape(room.id)}">Belgeleri Gör</button><button type="button" data-mp-document-request="${escape(room.id)}">Belge İzni İste</button><button type="button" data-mp-candidate-chat="${escape(room.id)}">MarSoh'ta Mesaj Gönder</button></div><div data-mp-profile-preview role="status" aria-live="polite"></div><div data-mp-cv-preview role="status" aria-live="polite"></div><div data-mp-document-list role="status" aria-live="polite"></div></article>`).join("") : `<p class="mp-note">Henüz izinli başvuru yok. Eşleşen diğer adayların kimliği paylaşılmıyor.</p>`}</section>`;
+        return `<section class="mp-match-group"><h4>${escape(job?.job_title || "İlan")}</h4><p>${escape(item.eligible_count)} rütbe eşleşmesi · ${escape(approved.length)} izinli aday görüşmesi</p>${approved.length ? approved.map((room) => `<article class="mp-candidate-card mp-applicant-card"><div><strong>${escape(room.candidate?.full_name || room.candidate?.public_id || "Aday")}</strong><span>${escape(room.candidate?.rank || "Rütbe belirtilmedi")}</span><div class="mp-candidate-card__facts">${candidateFacts(room).map((fact) => `<span>${escape(fact)}</span>`).join("")}</div></div><div class="mp-candidate-card__actions"><button type="button" data-mp-candidate-profile="${escape(room.id)}">Profili Gör</button><button type="button" data-mp-candidate-cv="${escape(room.id)}">CV'yi Gör</button><button type="button" data-mp-candidate-documents="${escape(room.id)}">Belgeleri Gör</button><button type="button" data-mp-document-request="${escape(room.id)}">Belge İzni İste</button><button type="button" data-mp-candidate-chat="${escape(room.id)}">Adaya Mesaj Gönder</button></div><div data-mp-profile-preview role="status" aria-live="polite"></div><div data-mp-cv-preview role="status" aria-live="polite"></div><div data-mp-document-list role="status" aria-live="polite"></div></article>`).join("") : `<p class="mp-note">Henüz izinli aday görüşmesi yok.</p>`}<h5>Başvurmamış eşleşen adaylar</h5><div data-mp-discovery-job="${escape(item.job_id)}" aria-live="polite">Adaylar yükleniyor…</div></section>`;
       }).join("") : personnelEmpty("Henüz ilanlarınızla rütbesi eşleşen kayıtlı Maritime CV bulunmuyor.")}`;
+      loadDiscoverableMatches(target);
       return;
     }
     if (panel === "pipeline") {
@@ -1651,6 +1683,17 @@
       return;
     }
     if (event.target.closest("[data-mp-close]")) closePanel();
+    const intro = event.target.closest("[data-mp-intro-candidate]");
+    if (intro) {
+      intro.disabled = true;
+      try {
+        const result = await api("/v1/maritime/partner-center/candidate-intro-requests", { method: "POST", body: {
+          partner_id: state.partnerId, job_id: intro.dataset.jobId, candidate_id: intro.dataset.mpIntroCandidate
+        } });
+        alert(result.status === "pending" ? "Adaya görüşme daveti gönderildi. Aday onay verene kadar CV ve belgeler açılmaz." : "Davet gönderildi.", "success");
+      } catch (error) { alert(error.message || "Davet gönderilemedi."); intro.disabled = false; }
+      return;
+    }
     const inspectCandidate = event.target.closest("[data-mp-candidate-inspect]");
     if (inspectCandidate) {
       state.selectedRoomId = inspectCandidate.dataset.mpCandidateInspect;

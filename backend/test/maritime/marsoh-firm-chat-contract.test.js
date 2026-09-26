@@ -36,3 +36,16 @@ test("firm chat shows unread and renders message bodies as text", async () => {
   assert.match(page, /data-firm-notify/);
   assert.doesNotMatch(page, /type="file"|accept="image|accept="audio/);
 });
+
+test("private chat requests document consent and shows the candidate an explicit approval action", async () => {
+  const ui = await source("js/marsoh-firms.js");
+  const chatRoute = await source("backend/src/routes/maritime-connect-chat.js");
+  const partnerRoute = await source("backend/src/routes/maritime-partner-center.js");
+  assert.match(ui, /CV ve Belge İzni İste/);
+  assert.match(ui, /candidate-rooms\/\$\{encodeURIComponent\(state\.active\.candidate_room_id\)\}\/document-request/);
+  assert.match(ui, /\["accepted", "Onaylıyorum"\]/);
+  assert.match(ui, /document_permission_status/);
+  assert.match(chatRoute, /partnerPermission/);
+  assert.match(partnerRoute, /await activeApplicationForRoom\(room\)/);
+  assert.match(partnerRoute, /await documentPermission\(room\)/);
+});

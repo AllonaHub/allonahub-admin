@@ -6,6 +6,8 @@ import { classifyMarsohMessage, sanitizeMarsohText } from "../lib/marsoh-moderat
 const uuid = z.string().uuid();
 const createSchema = z.object({ partner_id: uuid, candidate_room_id: uuid }).strict();
 const sendSchema = z.object({ idempotency_key: uuid, body: z.string().min(1).max(2000) }).strict();
+const disclosureFields = ["vessel_type", "flag_state", "deadweight_tonnage", "gross_tonnage", "trading_area", "joining_port", "vessel_name", "imo_number", "current_port", "next_port"];
+const disclosureSchema = z.object({ visible_fields: z.array(z.enum(disclosureFields)).max(disclosureFields.length) }).strict();
 
 function fail(message, statusCode = 403, code = "MARITIME_CHAT_FORBIDDEN") {
   const error = new Error(message); error.statusCode = statusCode; error.code = code; error.exposeCode = true; return error;
@@ -25,15 +27,24 @@ async function memberOf(userId, partnerId) {
 
 async function authorizedRoom(ctx, roomId, partnerId = null) {
   const room = db(await supabaseAdmin.from("maritime_private_candidate_rooms")
-    .select("id,partner_id,application_id,seafarer_user_id,status,candidate_visible,expires_at")
+    .select("id,partner_id,job_id,application_id,seafarer_user_id,status,candidate_visible,expires_at")
     .eq("id", roomId).maybeSingle());
   if (!room || (partnerId && room.partner_id !== partnerId) || room.candidate_visible !== true
       || !["active", "offer", "hired"].includes(room.status)
-      || (room.expires_at && Date.parse(room.expires_at) <= Date.now()) || !room.application_id) throw fail("Bu görüşme açık değil.");
-  const application = db(await supabaseAdmin.from("maritime_hiring_applications")
-    .select("status,candidate_consent_snapshot").eq("id", room.application_id).maybeSingle());
-  if (!application || !["submitted", "shortlisted", "interviewing", "offer_sent", "offer_accepted", "hired"].includes(application.status)
-      || application.candidate_consent_snapshot?.final_submission_confirmed !== true) throw fail("Adayın görüşme izni bulunmuyor.");
+      || (room.expires_at && Date.parse(room.expires_at) <= Date.now())) throw fail("Bu görüşme açık değil.");
+  if (room.application_id) {
+    const application = db(await supabaseAdmin.from("maritime_hiring_applications")
+      .select("status,candidate_consent_snapshot").eq("id", room.application_id).maybeSingle());
+    if (!application || !["submitted", "shortlisted", "interviewing", "offer_sent", "offer_accepted", "hired"].includes(application.status)
+        || application.candidate_consent_snapshot?.final_submission_confirmed !== true) throw fail("Adayın görüşme izni bulunmuyor.");
+  } else {
+    const intro = db(await supabaseAdmin.from("maritime_candidate_intro_requests")
+      .select("status").eq("partner_id", room.partner_id).eq("job_id", room.job_id)
+      .eq("seafarer_user_id", room.seafarer_user_id).maybeSingle());
+    const grant = db(await supabaseAdmin.from("maritime_candidate_document_grants")
+      .select("status,expires_at").eq("candidate_room_id", room.id).maybeSingle());
+    if (intro?.status !== "accepted" || grant?.status !== "accepted" || Date.parse(grant.expires_at) <= Date.now()) throw fail("Adayın görüşme izni bulunmuyor.");
+  }
   let company = null;
   if (ctx.user.id === room.seafarer_user_id && hasRole(ctx.profile, "customer")) {
     company = db(await supabaseAdmin.from("partner_businesses")
@@ -82,15 +93,54 @@ async function listThreads(ctx, partnerId) {
     const pendingPermission = !isPartner ? db(await supabaseAdmin.from("maritime_candidate_document_grants")
       .select("id").eq("candidate_room_id", thread.candidate_room_id).eq("seafarer_user_id", ctx.user.id)
       .eq("status", "pending").gt("expires_at", new Date().toISOString()).maybeSingle()) : null;
+    const partnerPermission = isPartner ? db(await supabaseAdmin.from("maritime_candidate_document_grants")
+      .select("status,expires_at").eq("candidate_room_id", thread.candidate_room_id)
+      .eq("partner_id", thread.partner_id).maybeSingle()) : null;
     const unread = Number(unreadResult.count || 0) > 0 || Boolean(pendingPermission);
     const candidateProfile = isPartner ? db(await supabaseAdmin.from("profiles").select("full_name").eq("id", thread.seafarer_user_id).maybeSingle()) : null;
     result.push({ id: thread.id, candidate_room_id: thread.candidate_room_id, company_name: access.company.display_name, candidate_user_id: thread.seafarer_user_id,
-      candidate_name: candidateProfile?.full_name || "Aday", partner_id: thread.partner_id, last_message: latest?.body?.slice(0, 120) || "Belge erişim talebi", last_message_at: latest?.created_at || thread.created_at, unread });
+      candidate_name: candidateProfile?.full_name || "Aday", partner_id: thread.partner_id, last_message: latest?.body?.slice(0, 120) || "Belge erişim talebi", last_message_at: latest?.created_at || thread.created_at, unread,
+      document_permission_status: partnerPermission && Date.parse(partnerPermission.expires_at) > Date.now() ? partnerPermission.status : null });
   }
   return result;
 }
 
 export function registerMaritimeConnectChatRoutes(app) {
+  app.get("/v1/maritime/connect-chat/threads/:threadId/disclosure", async (request) => {
+    const { room, company, candidate } = await threadAccess(request, uuid.parse(request.params.threadId));
+    const saved = db(await supabaseAdmin.from("maritime_conversation_disclosures")
+      .select("visible_fields,updated_at").eq("candidate_room_id", room.id).eq("partner_id", room.partner_id).maybeSingle());
+    const job = room.job_id ? db(await supabaseAdmin.from("maritime_jobs")
+      .select("vessel_profile_id,structured_requirements").eq("id", room.job_id).eq("partner_id", room.partner_id).maybeSingle()) : null;
+    const vessel = job?.vessel_profile_id ? db(await supabaseAdmin.from("maritime_vessel_profiles")
+      .select("vessel_name,imo_number,vessel_type,flag_state,metadata")
+      .eq("id", job.vessel_profile_id).eq("partner_id", room.partner_id).maybeSingle()) : null;
+    const available = {
+      vessel_type: vessel?.vessel_type, flag_state: vessel?.flag_state,
+      deadweight_tonnage: vessel?.metadata?.deadweight, gross_tonnage: vessel?.metadata?.gross_tonnage,
+      trading_area: job?.structured_requirements?.trading_area_label || job?.structured_requirements?.trading_area,
+      joining_port: job?.structured_requirements?.joining_port,
+      vessel_name: vessel?.vessel_name, imo_number: vessel?.imo_number,
+      current_port: vessel?.metadata?.current_port, next_port: job?.structured_requirements?.next_port
+    };
+    const permitted = new Set(saved?.visible_fields || []);
+    const fields = Object.fromEntries(disclosureFields.filter((key) => available[key] !== null && available[key] !== undefined && available[key] !== "")
+      .filter((key) => !candidate || permitted.has(key)).map((key) => [key, String(available[key]).slice(0, 160)]));
+    return { ok: true, company_name: company.display_name, fields, visible_fields: candidate ? undefined : [...permitted], updated_at: saved?.updated_at || null };
+  });
+
+  app.put("/v1/maritime/connect-chat/threads/:threadId/disclosure", async (request) => {
+    const { ctx, room, candidate } = await threadAccess(request, uuid.parse(request.params.threadId));
+    if (candidate) throw fail("Bu paylaşımı yalnız şirket yönetebilir.");
+    const { visible_fields: visibleFields } = disclosureSchema.parse(request.body || {});
+    const uniqueFields = [...new Set(visibleFields)];
+    db(await supabaseAdmin.from("maritime_conversation_disclosures").upsert({
+      candidate_room_id: room.id, partner_id: room.partner_id, visible_fields: uniqueFields,
+      updated_by: ctx.user.id, updated_at: new Date().toISOString()
+    }, { onConflict: "candidate_room_id" }));
+    return { ok: true, visible_fields: uniqueFields };
+  });
+
   app.get("/v1/maritime/connect-chat/eligible-rooms", async (request) => {
     const ctx = await authContext(request);
     if (!ctx?.profilePersisted || ctx.profile.account_status !== "active" || !hasRole(ctx.profile, "partner") || !hasMfa(ctx)) throw fail("Şirket yetkisi doğrulanamadı.", 401);
@@ -114,7 +164,12 @@ export function registerMaritimeConnectChatRoutes(app) {
     const ctx = await authContext(request);
     if (!ctx?.profilePersisted || ctx.profile.account_status !== "active") throw fail("Giriş yapmanız gerekiyor.", 401);
     const partnerId = request.query?.partner_id ? uuid.parse(request.query.partner_id) : null;
-    return { ok: true, threads: await listThreads(ctx, partnerId) };
+    const threads = await listThreads(ctx, partnerId);
+    const pendingIntro = !partnerId && hasRole(ctx.profile, "customer") ? await supabaseAdmin.from("maritime_candidate_intro_requests")
+      .select("id", { count: "exact", head: true }).eq("seafarer_user_id", ctx.user.id)
+      .eq("status", "pending").gt("expires_at", new Date().toISOString()) : null;
+    if (pendingIntro?.error) throw fail("Firma davetleri okunamadı.", 503);
+    return { ok: true, threads, pending_intro_count: Number(pendingIntro?.count || 0) };
   });
 
   app.post("/v1/maritime/connect-chat/threads", async (request) => {
