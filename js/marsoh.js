@@ -799,7 +799,16 @@
   }
 
   function bind() {
-    $("[data-marsoh-back]")?.addEventListener("click", () => { if (document.referrer && new URL(document.referrer).origin === window.location.origin) history.back(); else window.location.href = "allonadenizcilik.html"; });
+    const partnerEntry = new URLSearchParams(window.location.search).get("source") === "partner";
+    const returnPath = partnerEntry ? "../partner/maripartner.html" : "allonadenizcilik.html";
+    const returnLink = $("[data-marsoh-return]");
+    const updateReturnLink = () => { if (!returnLink || !partnerEntry) return;
+      returnLink.href = returnPath;
+      returnLink.removeAttribute("data-marsoh-copy");
+      returnLink.textContent = ({ tr: "Panele Dön", az: "Panelə qayıt", en: "Back to Panel", de: "Zum Panel", ru: "В панель", ar: "العودة إلى اللوحة", kk: "Панельге оралу", uz: "Panelga qaytish", ky: "Панелге кайтуу" })[state.locale] || "Back to Panel";
+    };
+    updateReturnLink();
+    $("[data-marsoh-back]")?.addEventListener("click", () => { window.location.href = returnPath; });
     $("[data-marsoh-open-channels]")?.addEventListener("click", () => $("[data-marsoh-channels-panel]")?.classList.add("is-open"));
     $("[data-marsoh-close-channels]")?.addEventListener("click", () => $("[data-marsoh-channels-panel]")?.classList.remove("is-open"));
     $("[data-marsoh-open-info]")?.addEventListener("click", () => $("[data-marsoh-info]")?.classList.add("is-open"));
@@ -809,6 +818,7 @@
     document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !$('[data-marsoh-action-modal]')?.hidden) closeModal(); });
     $("[data-marsoh-language]")?.addEventListener("change", (event) => {
       state.locale = I18n.normalize(event.target.value);
+      updateReturnLink();
       localStorage.setItem("allona.language", state.locale);
       I18n.apply(state.locale);
       setChatMode(document.body.dataset.chatMode);

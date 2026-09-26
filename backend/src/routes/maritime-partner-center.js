@@ -622,7 +622,12 @@ async function partnerDashboard(partnerId, userId) {
   const slaRows = (assertDb(slas, "Süreç süreleri okunamadı.") || []).map((item) => ({ ...item, status: slaStatus({ dueAt: item.extended_until || item.due_at, completedAt: item.completed_at, now }) }));
   const passRows = (assertDb(passes, "İnceleme geçişleri okunamadı.") || []).map((item) => ({ ...item, status: reviewerPassState(item) }));
   const refreshRequestRows = assertDb(refreshRequests, "Aday güncelleme yanıtları okunamadı.") || [];
-  const pendingRefresh = refreshRequestRows.filter((item) => ["scheduled", "sent"].includes(item.status)).length;
+  const refreshCampaignRows = assertDb(refreshes, "Yenileme kayıtları okunamadı.") || [];
+  const pendingRefresh = refreshRequestRows.filter((item) => {
+    const campaign = refreshCampaignRows.find((row) => row.id === item.campaign_id);
+    return ["scheduled", "sent"].includes(item.status) && campaign && ["scheduled", "sent"].includes(campaign.status)
+      && (!campaign.expires_at || Date.parse(campaign.expires_at) > Date.now());
+  }).length;
   const pendingEvidence = (evidence.data || []).filter((item) => ["requested", "candidate_action"].includes(item.status)).length;
   const overdueSteps = slaRows.filter((item) => item.status === "overdue").length;
   const [historicalMatches, referencesResult, authorityResult, notificationsResult, metricsResult, applicationsResult, interviewsResult, offersResult, urgentResult, crewRoomsResult, reliefResult, relationshipsResult, favoritesResult, savedSearchesResult] = await Promise.all([

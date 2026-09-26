@@ -499,9 +499,13 @@
       return;
     }
     if (panel === "matches") {
-      const rows = (state.data.matches || []).map((match) => ({ match, room: roomForUser(match.seafarer_user_id, match.job_id) })).filter((item) => item.room);
       const summaries = (state.data.match_summaries || []).filter((item) => item.eligible_count > 0);
-      target.innerHTML = `<h3>İlanlarınızla rütbesi eşleşen adaylar</h3><p class="mp-note">Bu eşleşme kayıtlı Maritime CV rütbesine göredir. Başvuru yapmamış adayların kimlik ve belgeleri paylaşılmaz; diğer koşulları şirket değerlendirir.</p>${summaries.length ? summaries.map((item) => { const job = (state.data.jobs || []).find((row) => row.id === item.job_id); return historyCard(job?.job_title || "İlan", `${item.eligible_count} rütbe eşleşmesi`, `${item.authorized_count} izinli başvuru`); }).join("") : personnelEmpty("Henüz ilanlarınızla rütbesi eşleşen kayıtlı Maritime CV bulunmuyor.")}${rows.length ? `<h3>İzinli eşleşmeler</h3>${rows.map(({ room, match }) => personnelCandidateCard(room, match)).join("")}` : ""}`;
+      const rooms = state.data.candidate_rooms || [];
+      target.innerHTML = `<h3>İlanlarınızla eşleşen adaylar</h3><p class="mp-note">Rütbe eşleşmesi Maritime CV'ye dayanır. Profil yalnız izinli başvurularda açılır; CV ve belgeler için adayın ayrıca verdiği izin denetlenir.</p>${summaries.length ? summaries.map((item) => {
+        const job = (state.data.jobs || []).find((row) => row.id === item.job_id);
+        const approved = rooms.filter((room) => room.job_id === item.job_id);
+        return `<section class="mp-match-group"><h4>${escape(job?.job_title || "İlan")}</h4><p>${escape(item.eligible_count)} rütbe eşleşmesi · ${escape(approved.length)} izinli başvuru</p>${approved.length ? approved.map((room) => `<article class="mp-candidate-card mp-applicant-card"><div><strong>${escape(room.candidate?.full_name || room.candidate?.public_id || "Aday")}</strong><span>${escape(room.candidate?.rank || "Rütbe belirtilmedi")}</span><div class="mp-candidate-card__facts">${candidateFacts(room).map((fact) => `<span>${escape(fact)}</span>`).join("")}</div></div><div class="mp-candidate-card__actions"><button type="button" data-mp-candidate-profile="${escape(room.id)}">Profili Gör</button><button type="button" data-mp-candidate-cv="${escape(room.id)}">CV'yi Gör</button><button type="button" data-mp-candidate-documents="${escape(room.id)}">Belgeleri Gör</button><button type="button" data-mp-document-request="${escape(room.id)}">Belge İzni İste</button><button type="button" data-mp-candidate-chat="${escape(room.id)}">MarSoh'ta Mesaj Gönder</button></div><div data-mp-profile-preview role="status" aria-live="polite"></div><div data-mp-cv-preview role="status" aria-live="polite"></div><div data-mp-document-list role="status" aria-live="polite"></div></article>`).join("") : `<p class="mp-note">Henüz izinli başvuru yok. Eşleşen diğer adayların kimliği paylaşılmıyor.</p>`}</section>`;
+      }).join("") : personnelEmpty("Henüz ilanlarınızla rütbesi eşleşen kayıtlı Maritime CV bulunmuyor.")}`;
       return;
     }
     if (panel === "pipeline") {
@@ -834,16 +838,16 @@
   function openPanel(panel, trigger) {
     const template = document.getElementById(templates[panel]);
     if (!template) return;
-    if (!state.routeSync && state.activePanel !== panel) state.panelOrigin = state.activePanel || "operations";
     state.activePanel = panel;
     setActiveNavigation(panel);
     const wrap = $("[data-mp-drawer-wrap]");
     $("[data-mp-drawer]")?.classList.toggle("mp-drawer--bulk", panel === "job-bulk-create");
     $("[data-mp-drawer]")?.classList.toggle("mp-drawer--joining", panel === "joining");
+    $("[data-mp-drawer]")?.classList.toggle("mp-drawer--matches", panel === "matches");
     if (wrap.hidden) state.lastFocus = trigger || document.activeElement;
     const body = $("[data-mp-drawer-body]");
     $("[data-mp-drawer-title]").textContent = t(titles[panel]);
-    $("[data-mp-back]").hidden = standalonePanels.has(panel);
+    $("[data-mp-back]").hidden = false;
     body.replaceChildren(template.content.cloneNode(true));
     if (panel === "joining") loadJoining(body);
     if (panel === "private-pool") {
@@ -876,7 +880,7 @@
     document.body.style.overflow = "hidden";
     applyI18n(body);
     $("[data-mp-close]", wrap).focus();
-    setRoute(panel, null, false);
+    setRoute(panel, null, true);
   }
 
   async function loadPrivatePool(root, more = false) {
@@ -1643,11 +1647,7 @@
       return;
     }
     if (event.target.closest("[data-mp-back]")) {
-      const origin = state.panelOrigin;
-      state.panelOrigin = "";
-      if (origin === "center") openCenter();
-      else if (origin && templates[origin]) openPanel(origin);
-      else closePanel();
+      closePanel();
       return;
     }
     if (event.target.closest("[data-mp-close]")) closePanel();
