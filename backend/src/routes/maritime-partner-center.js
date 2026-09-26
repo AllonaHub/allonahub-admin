@@ -6,6 +6,7 @@ import { MARSOH_SUPPORTED_LANGUAGES, translateMarsohTextDetailed } from "../lib/
 import { matchVerifiedFormerWorkers, parsePrivatePoolFile, validatePoolRows } from "../lib/maritime-private-pool.js";
 import { canViewCandidateDocuments } from "../lib/maritime-candidate-document-access.js";
 import { MARITIME_PROFILE_PHOTO_BUCKET } from "../lib/maritime-document-doctor.js";
+import { summarizePartnerRankMatches } from "../lib/maritime-partner-rank-matches.js";
 import {
   MARIPARTNER_REFERENCE_CATEGORIES,
   MARIPARTNER_REFERENCE_QUESTIONS,
@@ -537,6 +538,27 @@ async function filterAuthorizedRooms(rooms, filters) {
   });
 }
 
+async function partnerRankSummaries(jobs, authorizedRooms) {
+  if (!jobs.some((job) => job.status === "open")) return [];
+  const cvProfiles = [];
+  for (let offset = 0; offset < 10000; offset += 500) {
+    const page = assertDb(await supabaseAdmin.from("maritime_cv_profiles")
+      .select("seafarer_user_id,profile_status,rank:profile_payload->>rank,data_origin:profile_payload->>data_origin")
+      .in("profile_status", ["draft", "user_confirmed", "verification_pending", "verified"])
+      .order("seafarer_user_id").range(offset, offset + 499), "Maritime CV rütbeleri okunamadı.") || [];
+    cvProfiles.push(...page.map((row) => ({ ...row, profile_payload: { rank: row.rank, data_origin: row.data_origin } })));
+    if (page.length < 500) break;
+    if (offset === 9500) throw httpError("Aday eşleştirme kapasitesi doldu; sayılar eksik gösterilmeyecek.", 503, "MARITIME_MATCH_CAPACITY_REACHED");
+  }
+  const activeIds = new Set();
+  for (let offset = 0; offset < cvProfiles.length; offset += 100) {
+    const ids = cvProfiles.slice(offset, offset + 100).map((row) => row.seafarer_user_id);
+    const profiles = assertDb(await supabaseAdmin.from("profiles").select("id").in("id", ids).eq("account_status", "active"), "Aktif aday hesapları doğrulanamadı.") || [];
+    profiles.forEach((profile) => activeIds.add(profile.id));
+  }
+  return summarizePartnerRankMatches(jobs, cvProfiles, activeIds, authorizedRooms);
+}
+
 async function partnerDashboard(partnerId, userId) {
   const now = new Date().toISOString();
   const [jobs, rooms, matches, refreshes, refreshRequests, evidence, templates, policies, slas, handovers, passes, team, vesselsResult, vesselRelationshipsResult] = await Promise.all([
@@ -596,11 +618,7 @@ async function partnerDashboard(partnerId, userId) {
   });
   const currentMatches = (assertDb(matches, "Eşleşmeler okunamadı.") || []).filter((match) => match.hard_gate_status === "passed" && match.metadata?.eligible === true && (!match.stale_after || new Date(match.stale_after).getTime() > Date.now()));
   const matchRows = currentMatches.filter((match) => roomRows.some((room) => room.seafarer_user_id === match.seafarer_user_id && room.job_id === match.job_id));
-  const matchSummaries = jobRows.filter((job) => job.status === "open").map((job) => ({
-    job_id: job.id,
-    eligible_count: new Set(currentMatches.filter((match) => match.job_id === job.id).map((match) => match.seafarer_user_id)).size,
-    authorized_count: new Set(matchRows.filter((match) => match.job_id === job.id).map((match) => match.seafarer_user_id)).size
-  }));
+  const matchSummaries = await partnerRankSummaries(jobRows, roomRows);
   const slaRows = (assertDb(slas, "Süreç süreleri okunamadı.") || []).map((item) => ({ ...item, status: slaStatus({ dueAt: item.extended_until || item.due_at, completedAt: item.completed_at, now }) }));
   const passRows = (assertDb(passes, "İnceleme geçişleri okunamadı.") || []).map((item) => ({ ...item, status: reviewerPassState(item) }));
   const refreshRequestRows = assertDb(refreshRequests, "Aday güncelleme yanıtları okunamadı.") || [];
